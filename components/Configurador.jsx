@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Visor3D from './Visor3D';
 import ListaPiezas from './ListaPiezas';
 import DiagramaCorte from './DiagramaCorte';
@@ -61,14 +62,20 @@ const VALORES_POR_MODULO = {
   },
 };
 
-const VALORES_INICIALES = {
-  modulo: 'bajo_cocina',
-  ...VALORES_POR_MODULO.bajo_cocina,
-  plancha: 'CL', anchoCustom: 1830, altoCustom: 2500,
-};
+const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
 
 export default function Configurador() {
-  const [form, setForm] = useState(VALORES_INICIALES);
+  // Si se entra desde una tarjeta de la portada (/configurador?modulo=closet),
+  // arranca directo en ese tipo de mueble en vez del genérico por defecto.
+  const searchParams = useSearchParams();
+  const moduloParam = searchParams.get('modulo');
+  const moduloInicial = VALORES_POR_MODULO[moduloParam] ? moduloParam : 'bajo_cocina';
+
+  const [form, setForm] = useState(() => ({
+    modulo: moduloInicial,
+    ...VALORES_POR_MODULO[moduloInicial],
+    ...VALORES_COMUNES,
+  }));
   const [resultado, setResultado] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);

@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 const MODULOS = [
-  { nombre: 'Mueble bajo de cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros y cubiertos' },
-  { nombre: 'Mueble alto de cocina', detalle: 'alacena con baldas y colgado a pared' },
-  { nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
-  { nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },
-  { nombre: 'Esquinero bajo de cocina', detalle: 'ciego, en dos brazos a 90°' },
+  { valor: 'bajo_cocina', nombre: 'Mueble bajo de cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros y cubiertos' },
+  { valor: 'alto_cocina', nombre: 'Mueble alto de cocina', detalle: 'alacena con baldas y colgado a pared' },
+  { valor: 'vanitorio_bano', nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
+  { valor: 'closet', nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },
+  { valor: 'esquinero_bajo_cocina', nombre: 'Esquinero bajo de cocina', detalle: 'ciego, en dos brazos a 90°' },
 ];
 
 export default function Home() {
@@ -57,13 +57,21 @@ export default function Home() {
       </section>
 
       <section>
-        <h3 style={{ marginBottom: 16 }}>Módulos disponibles</h3>
+        <h3 style={{ marginBottom: 6 }}>Módulos disponibles</h3>
+        <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-muted)' }}>
+          Elige el tipo de mueble y entras directo al configurador con esa opción ya seleccionada.
+        </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
           {MODULOS.map(m => (
-            <div key={m.nombre} className="card">
-              <h4 style={{ marginBottom: 6 }}>{m.nombre}</h4>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{m.detalle}</p>
-            </div>
+            <Link key={m.valor} href={`/configurador?modulo=${m.valor}`} className="modulo-card-link">
+              <div className="card modulo-card">
+                <h4 style={{ marginBottom: 6 }}>{m.nombre}</h4>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{m.detalle}</p>
+                <p style={{ margin: '10px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--color-accent)' }}>
+                  Configurar →
+                </p>
+              </div>
+            </Link>
           ))}
         </div>
       </section>

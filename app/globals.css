@@ -165,6 +165,19 @@ th { background: #faf7f2; color: var(--color-text-muted); font-weight: 600; text
 
 .site-nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
+.modulo-card-link { text-decoration: none; display: block; height: 100%; }
+
+.modulo-card {
+  height: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.modulo-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
 .site-footer {
   margin-top: 48px;
   border-top: 1px solid var(--color-border);
