@@ -283,6 +283,7 @@ export default function Configurador() {
   // campo oculto (nC o nP) puede conservar un valor viejo de una config anterior.
   // Se fuerza a 0 el que no corresponde para que siempre calcen con `config`.
   function nPyNCporConfig(config, nP, nC) {
+    if (config === 'abierto') return { nP: 0, nC: 0 };
     if (config === 'solo_puertas') return { nP, nC: 0 };
     if (config === 'solo_cajones') return { nP: 0, nC };
     return { nP, nC }; // mixto
@@ -341,7 +342,7 @@ export default function Configurador() {
           const ancho = s.ancho ? Number(s.ancho) : undefined;
           if (s.tipo === 'estandar') {
             const { nP, nC } = nPyNCporConfig(s.config, Number(s.nP) || 0, Number(s.nC) || 0);
-            const repisas = nP > 0 ? Number(s.repisas) || 0 : 0;
+            const repisas = (nP > 0 || s.config === 'abierto') ? Number(s.repisas) || 0 : 0;
             return { tipo: 'estandar', config: s.config, nP, nC, repisas, ancho };
           }
           if (s.tipo === 'cajones_olleros' || s.tipo === 'cajones_cubiertos') {
@@ -365,7 +366,7 @@ export default function Configurador() {
     }
     if (form.modulo === 'vanitorio_bano') {
       const { nP, nC } = nPyNCporConfig(form.config, Number(form.nP), Number(form.nC));
-      const repisas = nP > 0 ? Number(form.repisas) || 0 : 0;
+      const repisas = (nP > 0 || form.config === 'abierto') ? Number(form.repisas) || 0 : 0;
       return {
         ...base,
         nP, nC, repisas, config: form.config,
@@ -636,6 +637,7 @@ export default function Configurador() {
                         <option value="solo_cajones">Solo cajones</option>
                         <option value="solo_puertas">Solo puertas</option>
                         <option value="mixto">Cajones abajo + puertas arriba</option>
+                        <option value="abierto">Sin puerta (hueco abierto)</option>
                       </select>
 
                       {(s.config === 'solo_cajones' || s.config === 'mixto') && (
@@ -648,7 +650,10 @@ export default function Configurador() {
                         <>
                           <label>Cantidad de puertas</label>
                           <input type="number" min={1} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
-
+                        </>
+                      )}
+                      {(s.config === 'solo_puertas' || s.config === 'mixto' || s.config === 'abierto') && (
+                        <>
                           <label>Repisas interiores (además del piso)</label>
                           <input type="number" min={0} value={s.repisas ?? 0} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
                         </>
@@ -700,6 +705,7 @@ export default function Configurador() {
                 <option value="solo_cajones">Solo cajones</option>
                 <option value="solo_puertas">Solo puertas</option>
                 <option value="mixto">Cajón superior + puertas</option>
+                <option value="abierto">Sin puerta (hueco abierto)</option>
               </select>
 
               {(form.config === 'solo_cajones' || form.config === 'mixto') && (
@@ -713,7 +719,11 @@ export default function Configurador() {
                 <>
                   <label>Cantidad de puertas</label>
                   <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+                </>
+              )}
 
+              {(form.config === 'solo_puertas' || form.config === 'mixto' || form.config === 'abierto') && (
+                <>
                   <label>Repisas interiores (además del piso)</label>
                   <input type="number" min={0} value={form.repisas} onChange={e => actualizar('repisas', e.target.value)} />
                 </>
