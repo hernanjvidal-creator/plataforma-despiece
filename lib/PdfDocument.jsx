@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, StyleSheet, Svg, Rect, G } from '@react-pdf/renderer';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble bajo de cocina',
@@ -37,6 +37,45 @@ function Tabla({ columnas, filas }) {
         </View>
       ))}
     </View>
+  );
+}
+
+// Diagrama de corte gráfico (misma idea que components/DiagramaCorte.jsx en
+// pantalla): un rectángulo por plancha con cada pieza dibujada a escala en su
+// posición real, en vez de solo listar los nombres en texto — mucho más fácil
+// de seguir para armar el corte.
+const MAX_ANCHO_DIAGRAMA = 470;
+const MAX_ALTO_DIAGRAMA = 600;
+
+function DiagramaPlanchaPdf({ ancho, alto, piezas = [] }) {
+  if (!ancho || !alto) return null;
+  const escala = Math.min(MAX_ANCHO_DIAGRAMA / ancho, MAX_ALTO_DIAGRAMA / alto);
+  const anchoPx = ancho * escala;
+  const altoPx = alto * escala;
+
+  return (
+    <Svg width={anchoPx} height={altoPx} style={{ marginTop: 4, marginBottom: 4 }}>
+      <Rect x={0} y={0} width={anchoPx} height={altoPx} fill="#ffffff" stroke="#e7e0d6" strokeWidth={1} />
+      {piezas.map((p, i) => {
+        const w = p.ancho * escala;
+        const h = p.alto * escala;
+        const fontSize = Math.max(3.5, Math.min(6.5, Math.min(w, h) / 5));
+        return (
+          <G key={i}>
+            <Rect x={p.x * escala} y={p.y * escala} width={w} height={h} fill="#f3e4d9" stroke="#a8552f" strokeWidth={1} />
+            <Text
+              x={p.x * escala + w / 2}
+              y={p.y * escala + h / 2 + fontSize / 3}
+              fontSize={fontSize}
+              fill="#5c3018"
+              textAnchor="middle"
+            >
+              {p.id}
+            </Text>
+          </G>
+        );
+      })}
+    </Svg>
   );
 }
 
@@ -130,7 +169,7 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
                   <Text style={styles.planchaTitulo}>
                     Plancha #{p.numero} — aprovechamiento {p.aprovechamientoPct}%
                   </Text>
-                  <Text style={styles.nota}>{p.piezas.map(pz => pz.id).join(', ')}</Text>
+                  <DiagramaPlanchaPdf ancho={corte.plancha?.ancho} alto={corte.plancha?.alto} piezas={p.piezas} />
                 </View>
               ))}
             </View>
