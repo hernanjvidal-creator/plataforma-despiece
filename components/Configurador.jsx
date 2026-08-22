@@ -356,6 +356,7 @@ export default function Configurador() {
 
       const { error: errItem } = await supabase.from('pedido_items').insert({
         pedido_id: pedido.id,
+        user_id: usuario.id,
         mueble_id: muebleActualId,
         nombre,
         modulo: form.modulo,

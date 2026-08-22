@@ -69,9 +69,13 @@ create policy "insert_propios_pedidos"
 
 -- Copia congelada de los parámetros al momento de pagar, para que una edición
 -- posterior al mueble guardado no cambie lo que el cliente ya compró.
+-- user_id va repetido acá (además de en pedidos) para que la política de
+-- RLS sea la misma comparación directa auth.uid() = user_id que ya usan
+-- muebles y pedidos, en vez de un subquery cruzado a otra tabla con RLS.
 create table public.pedido_items (
   id uuid primary key default gen_random_uuid(),
   pedido_id uuid not null references public.pedidos(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   mueble_id uuid references public.muebles(id) on delete set null,
   nombre text not null,
   modulo text not null,
@@ -81,25 +85,13 @@ create table public.pedido_items (
 
 alter table public.pedido_items enable row level security;
 
-create policy "select_items_propios_pedidos"
+create policy "select_propios_pedido_items"
   on public.pedido_items for select
-  using (
-    exists (
-      select 1 from public.pedidos
-      where pedidos.id = pedido_items.pedido_id
-      and pedidos.user_id = auth.uid()
-    )
-  );
+  using (auth.uid() = user_id);
 
-create policy "insert_items_propios_pedidos"
+create policy "insert_propios_pedido_items"
   on public.pedido_items for insert
-  with check (
-    exists (
-      select 1 from public.pedidos
-      where pedidos.id = pedido_items.pedido_id
-      and pedidos.user_id = auth.uid()
-    )
-  );
+  with check (auth.uid() = user_id);
 
 -- ---------- Storage: bucket para las fotos del espacio del cliente ----------
 -- 1. Crear el bucket manualmente: Dashboard → Storage → New bucket → nombre
