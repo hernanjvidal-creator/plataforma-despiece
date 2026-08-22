@@ -22,7 +22,7 @@ const MODULOS = [
   { value: 'alto_cocina', label: 'Mueble alto de cocina (alacena)' },
   { value: 'vanitorio_bano', label: 'Vanitorio de baño' },
   { value: 'closet', label: 'Closet / armario ropero' },
-  { value: 'esquinero_bajo_cocina', label: 'Esquinero bajo de cocina (ciego)' },
+  { value: 'esquinero_bajo_cocina', label: 'Esquinero bajo de cocina (esquina interior)' },
 ];
 
 const COLORES_INTERIOR = [
@@ -106,7 +106,7 @@ const VALORES_POR_MODULO = {
   },
   esquinero_bajo_cocina: {
     H: 700, P: 560,
-    anchoA: 900, anchoB: 900, zonaCiega: 300,
+    anchoA: 900, anchoB: 900,
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
   },
@@ -124,7 +124,7 @@ function formDesdeParametros(modulo, parametros) {
     return {
       ...base,
       H: parametros.H, P: parametros.P,
-      anchoA: parametros.anchoA, anchoB: parametros.anchoB, zonaCiega: parametros.zonaCiega,
+      anchoA: parametros.anchoA, anchoB: parametros.anchoB,
       colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
       espesorPuertas: parametros.espesorPuertas ?? 15,
     };
@@ -315,7 +315,7 @@ export default function Configurador() {
     if (form.modulo === 'esquinero_bajo_cocina') {
       return {
         H: Number(form.H), P: Number(form.P),
-        anchoA: Number(form.anchoA), anchoB: Number(form.anchoB), zonaCiega: Number(form.zonaCiega),
+        anchoA: Number(form.anchoA), anchoB: Number(form.anchoB),
         colorInterior: form.colorInterior, colorExterior: form.colorExterior,
         espesorPuertas: Number(form.espesorPuertas) || 15,
       };
@@ -517,12 +517,6 @@ export default function Configurador() {
           <label>Profundidad (mm)</label>
           <input type="number" value={form.P} onChange={e => actualizar('P', e.target.value)} />
 
-          {form.modulo === 'esquinero_bajo_cocina' && (
-            <>
-              <label>Zona ciega en brazo B (mm, sin puerta junto a la esquina)</label>
-              <input type="number" min={0} value={form.zonaCiega} onChange={e => actualizar('zonaCiega', e.target.value)} />
-            </>
-          )}
 
           {form.modulo === 'alto_cocina' && (
             <>

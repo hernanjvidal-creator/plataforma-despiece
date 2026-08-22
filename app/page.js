@@ -5,7 +5,7 @@ const MODULOS = [
   { valor: 'alto_cocina', nombre: 'Mueble alto de cocina', detalle: 'alacena con baldas y colgado a pared' },
   { valor: 'vanitorio_bano', nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
   { valor: 'closet', nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },
-  { valor: 'esquinero_bajo_cocina', nombre: 'Esquinero bajo de cocina', detalle: 'ciego, en dos brazos a 90°' },
+  { valor: 'esquinero_bajo_cocina', nombre: 'Esquinero bajo de cocina', detalle: 'esquina interior, en dos brazos a 90° con puerta plegable de rincón' },
 ];
 
 export default function Home() {
