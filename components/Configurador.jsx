@@ -25,6 +25,49 @@ const MODULOS = [
   { value: 'esquinero_bajo_cocina', label: 'Esquinero bajo de cocina (ciego)' },
 ];
 
+const COLORES_INTERIOR = [
+  { value: 'blanco', label: 'Blanco' },
+  { value: 'gris_claro', label: 'Gris claro' },
+  { value: 'gris_ceniza', label: 'Gris ceniza' },
+  { value: 'aluminio', label: 'Aluminio' },
+];
+
+// Paleta ampliada inspirada en la línea de melaminas Masisa (nombres reales
+// de su catálogo de colores).
+const COLORES_EXTERIOR = [
+  {
+    grupo: 'Neutros', opciones: [
+      { value: 'blanco', label: 'Blanco' },
+      { value: 'gris_claro', label: 'Gris claro' },
+      { value: 'gris_ceniza', label: 'Gris ceniza' },
+      { value: 'aluminio', label: 'Aluminio' },
+      { value: 'concreto_metropolitan', label: 'Concreto Metropolitan' },
+      { value: 'vison', label: 'Visón' },
+      { value: 'gris_grafito', label: 'Gris grafito' },
+      { value: 'negro', label: 'Negro' },
+    ],
+  },
+  {
+    grupo: 'Maderas', opciones: [
+      { value: 'sahara', label: 'Sahara' },
+      { value: 'olmo_alpino', label: 'Olmo Alpino' },
+      { value: 'coigue', label: 'Coigüe' },
+      { value: 'roble', label: 'Roble' },
+      { value: 'nogal', label: 'Nogal' },
+      { value: 'nogal_africano', label: 'Nogal Africano' },
+      { value: 'cerezo', label: 'Cerezo' },
+      { value: 'fresno_humo', label: 'Fresno Humo' },
+    ],
+  },
+  {
+    grupo: 'Colores', opciones: [
+      { value: 'terracota_charyn', label: 'Terracota Charyn' },
+      { value: 'azul_acero', label: 'Azul Acero' },
+      { value: 'verde_glaciar', label: 'Verde Glaciar' },
+    ],
+  },
+];
+
 const VALORES_POR_MODULO = {
   bajo_cocina: {
     A: 600, H: 700, P: 560,
@@ -34,11 +77,13 @@ const VALORES_POR_MODULO = {
       { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    espesorPuertas: 15,
   },
   alto_cocina: {
     A: 600, H: 700, P: 320,
     nP: 2, nBaldas: 1,
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    espesorPuertas: 15,
   },
   vanitorio_bano: {
     A: 600, H: 550, P: 450,
@@ -46,6 +91,7 @@ const VALORES_POR_MODULO = {
     soporte: 'patas', sifon: true,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    espesorPuertas: 15,
   },
   closet: {
     A: 2400, H: 2200, P: 580,
@@ -56,11 +102,13 @@ const VALORES_POR_MODULO = {
       { cajones: 2, repisas: 2, colgador: false },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
+    espesorPuertas: 15,
   },
   esquinero_bajo_cocina: {
     H: 700, P: 560,
     anchoA: 900, anchoB: 900, zonaCiega: 300,
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    espesorPuertas: 15,
   },
 };
 
@@ -78,12 +126,14 @@ function formDesdeParametros(modulo, parametros) {
       H: parametros.H, P: parametros.P,
       anchoA: parametros.anchoA, anchoB: parametros.anchoB, zonaCiega: parametros.zonaCiega,
       colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
+      espesorPuertas: parametros.espesorPuertas ?? 15,
     };
   }
 
   const comunes = {
     A: parametros.A, H: parametros.H, P: parametros.P,
     colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
+    espesorPuertas: parametros.espesorPuertas ?? 15,
   };
 
   if (modulo === 'bajo_cocina') {
@@ -142,15 +192,34 @@ export default function Configurador() {
   const visor3DRef = useRef(null);
 
   // Si se entra desde "Mis muebles" (/configurador?muebleId=...), carga ese
-  // diseño guardado en vez de empezar desde cero.
+  // diseño guardado y genera el despiece de una vez — no hace falta apretar
+  // "Generar despiece" de nuevo para ver el mueble.
   useEffect(() => {
     if (!muebleIdParam) return;
     let cancelado = false;
 
-    supabase.from('muebles').select('*').eq('id', muebleIdParam).single().then(({ data, error: err }) => {
+    supabase.from('muebles').select('*').eq('id', muebleIdParam).single().then(async ({ data, error: err }) => {
       if (cancelado || err || !data) return;
       setForm(formDesdeParametros(data.modulo, data.parametros));
       setMuebleActualId(data.id);
+
+      setCargando(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/despiece', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modulo: data.modulo, parametros: data.parametros, opcionesCorte: { plancha: 'CL' } }),
+        });
+        const resultadoData = await res.json();
+        if (cancelado) return;
+        if (!res.ok) throw new Error(resultadoData.error || 'Error generando el despiece');
+        setResultado(resultadoData);
+      } catch (e) {
+        if (!cancelado) setError(e.message);
+      } finally {
+        if (!cancelado) setCargando(false);
+      }
     });
 
     return () => { cancelado = true; };
@@ -247,12 +316,14 @@ export default function Configurador() {
         H: Number(form.H), P: Number(form.P),
         anchoA: Number(form.anchoA), anchoB: Number(form.anchoB), zonaCiega: Number(form.zonaCiega),
         colorInterior: form.colorInterior, colorExterior: form.colorExterior,
+        espesorPuertas: Number(form.espesorPuertas) || 15,
       };
     }
 
     const base = {
       A: Number(form.A), H: Number(form.H), P: Number(form.P),
       colorInterior: form.colorInterior, colorExterior: form.colorExterior,
+      espesorPuertas: form.puertasGruesas ? 18 : 15,
     };
 
     const cubierta = {
@@ -700,18 +771,28 @@ export default function Configurador() {
             </>
           )}
 
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="checkbox"
+              style={{ width: 'auto' }}
+              checked={Number(form.espesorPuertas) === 18}
+              onChange={e => actualizar('espesorPuertas', e.target.checked ? 18 : 15)}
+            />
+            Puertas más gruesas (18mm en vez de 15mm estándar)
+          </label>
+
           <label>Color interior (cajones/bandejas/baldas)</label>
           <select value={form.colorInterior} onChange={e => actualizar('colorInterior', e.target.value)}>
-            <option value="blanco">Blanco</option>
-            <option value="gris_claro">Gris claro</option>
+            {COLORES_INTERIOR.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
 
           <label>Color exterior (frentes/puertas/zócalo)</label>
           <select value={form.colorExterior} onChange={e => actualizar('colorExterior', e.target.value)}>
-            <option value="blanco">Blanco</option>
-            <option value="gris_grafito">Gris grafito</option>
-            <option value="nogal">Nogal</option>
-            <option value="roble">Roble</option>
+            {COLORES_EXTERIOR.map(g => (
+              <optgroup key={g.grupo} label={g.grupo}>
+                {g.opciones.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </optgroup>
+            ))}
           </select>
 
           <label>Plancha de melamina</label>

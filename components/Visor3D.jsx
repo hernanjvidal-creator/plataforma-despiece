@@ -6,12 +6,28 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Mapea el color lógico de la pieza a un color real para el render.
 // Los nombres deben calzar con las opciones del formulario en Configurador.jsx.
+// Paleta inspirada en la línea de melaminas Masisa (nombres reales de su
+// catálogo; los tonos son una aproximación visual, no una muestra oficial).
 const COLOR_MAP = {
   blanco: '#f2f1ec',
   gris_claro: '#c9c9c4',
   gris_grafito: '#3f3f3f',
   nogal: '#5b3a29',
   roble: '#b98a53',
+  gris_ceniza: '#c8c6c0',
+  vison: '#8d7c6a',
+  negro: '#1c1c1c',
+  aluminio: '#b3b3ae',
+  concreto_metropolitan: '#9b9b93',
+  terracota_charyn: '#b5573c',
+  azul_acero: '#45606e',
+  verde_glaciar: '#93a99a',
+  sahara: '#c8a874',
+  olmo_alpino: '#d9c9ac',
+  coigue: '#b98f5e',
+  nogal_africano: '#4a3123',
+  cerezo: '#8a4a3c',
+  fresno_humo: '#a99f92',
 };
 
 // Colores por material para piezas/accesorios sin `color` lógico (cubiertas
@@ -214,6 +230,38 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       });
     }
 
+    // ---------- Manillas (solo decorativas, no seleccionables) ----------
+    // Toda puerta lleva una manilla negra vertical; todo frente de cajón,
+    // una manilla negra horizontal. Se agregan como hijos del cubo de la
+    // pieza para heredar su posición/rotación sin recalcular transformadas.
+    const manillaMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35 });
+    const REGEX_PUERTA = /puerta/;
+    const REGEX_CAJON_FRENTE = /frente_cajon/;
+
+    function agregarManillaPuerta(cubo, dimX, dimY, dimZ, id) {
+      const largo = Math.min(120 * ESCALA, dimY * 0.5);
+      const grosor = 10 * ESCALA;
+      const separacion = 5 * ESCALA;
+      const inset = Math.min(60 * ESCALA, dimX * 0.3);
+      const match = id.match(/(\d+)$/);
+      const indice = match ? parseInt(match[1], 10) : 1;
+      const haciaLaDerecha = indice % 2 === 1; // alterna lado según el número de puerta
+      const x = haciaLaDerecha ? (dimX / 2 - inset) : -(dimX / 2 - inset);
+      const barra = new THREE.Mesh(new THREE.BoxGeometry(grosor, largo, grosor), manillaMaterial);
+      barra.position.set(x, 0, dimZ / 2 + grosor / 2 + separacion);
+      cubo.add(barra);
+    }
+
+    function agregarManillaCajon(cubo, dimX, dimY, dimZ) {
+      const largo = Math.min(96 * ESCALA, dimX * 0.4);
+      const grosor = 10 * ESCALA;
+      const separacion = 5 * ESCALA;
+      const y = dimY / 2 - Math.min(35 * ESCALA, dimY * 0.3);
+      const barra = new THREE.Mesh(new THREE.BoxGeometry(largo, grosor, grosor), manillaMaterial);
+      barra.position.set(0, y, dimZ / 2 + grosor / 2 + separacion);
+      cubo.add(barra);
+    }
+
     const mallas = [];
     piezasRender.forEach(({ pieza, dimX, dimY, dimZ, x, y, z }) => {
       const geometry = new THREE.BoxGeometry(dimX, dimY, dimZ);
@@ -227,6 +275,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
         new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.15, transparent: true })
       );
       cubo.add(bordes);
+
+      if (REGEX_CAJON_FRENTE.test(pieza.id)) {
+        agregarManillaCajon(cubo, dimX, dimY, dimZ);
+      }
 
       scene.add(cubo);
       mallas.push(cubo);
