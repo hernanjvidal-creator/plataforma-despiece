@@ -1,4 +1,5 @@
 import { Fraunces, Inter } from 'next/font/google';
+import { AuthProvider } from '@/components/AuthProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import './globals.css';
@@ -26,9 +27,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${fuenteSerif.variable} ${fuenteSans.variable}`}>
       <body>
-        <Header />
-        {children}
-        <Footer />
+        <AuthProvider>
+          <Header />
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

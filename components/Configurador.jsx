@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Visor3D from './Visor3D';
 import ListaPiezas from './ListaPiezas';
 import DiagramaCorte from './DiagramaCorte';
+import { useAuth } from './AuthProvider';
+import { supabase } from '@/lib/supabaseClient';
 
 const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
@@ -64,11 +66,63 @@ const VALORES_POR_MODULO = {
 
 const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
 
+// Inversa de construirParametros(): reconstruye el estado plano del
+// formulario a partir de los `parametros` guardados de un mueble.
+function formDesdeParametros(modulo, parametros) {
+  const base = { modulo, ...VALORES_POR_MODULO[modulo], ...VALORES_COMUNES };
+  if (!parametros) return base;
+
+  if (modulo === 'esquinero_bajo_cocina') {
+    return {
+      ...base,
+      H: parametros.H, P: parametros.P,
+      anchoA: parametros.anchoA, anchoB: parametros.anchoB, zonaCiega: parametros.zonaCiega,
+      colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
+    };
+  }
+
+  const comunes = {
+    A: parametros.A, H: parametros.H, P: parametros.P,
+    colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
+  };
+
+  if (modulo === 'bajo_cocina') {
+    return {
+      ...base, ...comunes,
+      isla: parametros.isla,
+      cubiertaIncluir: parametros.cubierta?.incluir ?? false,
+      cubiertaMaterial: parametros.cubierta?.material ?? 'melamina',
+      cubiertaEspesor: parametros.cubierta?.espesor ?? 20,
+      secciones: parametros.secciones,
+    };
+  }
+  if (modulo === 'alto_cocina') {
+    return { ...base, ...comunes, nP: parametros.nP, nBaldas: parametros.nBaldas };
+  }
+  if (modulo === 'vanitorio_bano') {
+    return {
+      ...base, ...comunes,
+      nP: parametros.nP, nC: parametros.nC, repisas: parametros.repisas, config: parametros.config,
+      soporte: parametros.soporte, sifon: parametros.sifon,
+      cubiertaIncluir: parametros.cubierta?.incluir ?? false,
+      cubiertaMaterial: parametros.cubierta?.material ?? 'melamina',
+      cubiertaEspesor: parametros.cubierta?.espesor ?? 20,
+    };
+  }
+  if (modulo === 'closet') {
+    return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
+  }
+  return base;
+}
+
 export default function Configurador() {
   // Si se entra desde una tarjeta de la portada (/configurador?modulo=closet),
   // arranca directo en ese tipo de mueble en vez del genérico por defecto.
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { usuario } = useAuth();
   const moduloParam = searchParams.get('modulo');
+  const muebleIdParam = searchParams.get('muebleId');
   const moduloInicial = VALORES_POR_MODULO[moduloParam] ? moduloParam : 'bajo_cocina';
 
   const [form, setForm] = useState(() => ({
@@ -79,6 +133,25 @@ export default function Configurador() {
   const [resultado, setResultado] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+  const [muebleActualId, setMuebleActualId] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [guardadoOk, setGuardadoOk] = useState(false);
+
+  // Si se entra desde "Mis muebles" (/configurador?muebleId=...), carga ese
+  // diseño guardado en vez de empezar desde cero.
+  useEffect(() => {
+    if (!muebleIdParam) return;
+    let cancelado = false;
+
+    supabase.from('muebles').select('*').eq('id', muebleIdParam).single().then(({ data, error: err }) => {
+      if (cancelado || err || !data) return;
+      setForm(formDesdeParametros(data.modulo, data.parametros));
+      setMuebleActualId(data.id);
+    });
+
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [muebleIdParam]);
 
   function actualizar(campo, valor) {
     setForm(f => ({ ...f, [campo]: valor }));
@@ -91,6 +164,45 @@ export default function Configurador() {
       ...VALORES_POR_MODULO[modulo],
     }));
     setResultado(null);
+    setMuebleActualId(null);
+    setGuardadoOk(false);
+  }
+
+  async function guardarMueble() {
+    if (!usuario) {
+      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
+      return;
+    }
+    const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+    const nombre = window.prompt('Nombre para este mueble:', nombreSugerido);
+    if (!nombre) return;
+
+    setGuardando(true);
+    setGuardadoOk(false);
+    setError(null);
+    try {
+      const parametros = construirParametros();
+      if (muebleActualId) {
+        const { error: err } = await supabase
+          .from('muebles')
+          .update({ nombre, modulo: form.modulo, parametros })
+          .eq('id', muebleActualId);
+        if (err) throw err;
+      } else {
+        const { data, error: err } = await supabase
+          .from('muebles')
+          .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros })
+          .select()
+          .single();
+        if (err) throw err;
+        setMuebleActualId(data.id);
+      }
+      setGuardadoOk(true);
+    } catch (e) {
+      setError('No se pudo guardar el mueble: ' + e.message);
+    } finally {
+      setGuardando(false);
+    }
   }
 
   // La config "solo_puertas"/"solo_cajones" solo admite un tipo de frente, pero el
@@ -534,6 +646,16 @@ export default function Configurador() {
           <button onClick={generar} disabled={cargando}>
             {cargando ? 'Generando...' : 'Generar despiece'}
           </button>
+
+          <button
+            type="button"
+            onClick={guardarMueble}
+            disabled={guardando}
+            style={{ background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+          >
+            {guardando ? 'Guardando...' : muebleActualId ? 'Actualizar mueble guardado' : 'Guardar mueble'}
+          </button>
+          {guardadoOk && <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 8 }}>Mueble guardado ✓</p>}
 
           {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
         </div>

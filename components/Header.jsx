@@ -1,4 +1,9 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from './AuthProvider';
+import { supabase } from '@/lib/supabaseClient';
 
 function MarcaIcono() {
   return (
@@ -12,6 +17,15 @@ function MarcaIcono() {
 }
 
 export default function Header() {
+  const { usuario, cargando } = useAuth();
+  const router = useRouter();
+
+  async function cerrarSesion() {
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  }
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
@@ -22,6 +36,17 @@ export default function Header() {
         <nav className="site-nav">
           <Link href="/">Inicio</Link>
           <Link href="/configurador">Configurador</Link>
+          {!cargando && usuario && <Link href="/mis-muebles">Mis muebles</Link>}
+          {!cargando && !usuario && <Link href="/login">Iniciar sesión</Link>}
+          {!cargando && usuario && (
+            <button
+              type="button"
+              onClick={cerrarSesion}
+              style={{ margin: 0, width: 'auto', padding: '6px 0', background: 'none', color: 'var(--color-text-muted)', fontSize: 14, fontWeight: 600 }}
+            >
+              Salir
+            </button>
+          )}
         </nav>
       </div>
     </header>
