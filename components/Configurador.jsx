@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Visor3D from './Visor3D';
 import ListaPiezas from './ListaPiezas';
@@ -136,6 +136,10 @@ export default function Configurador() {
   const [muebleActualId, setMuebleActualId] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
+  const [desbloqueado, setDesbloqueado] = useState(false);
+  const [comprando, setComprando] = useState(false);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const visor3DRef = useRef(null);
 
   // Si se entra desde "Mis muebles" (/configurador?muebleId=...), carga ese
   // diseño guardado en vez de empezar desde cero.
@@ -166,6 +170,7 @@ export default function Configurador() {
     setResultado(null);
     setMuebleActualId(null);
     setGuardadoOk(false);
+    setDesbloqueado(false);
   }
 
   async function guardarMueble() {
@@ -303,6 +308,7 @@ export default function Configurador() {
   async function generar() {
     setCargando(true);
     setError(null);
+    setDesbloqueado(false);
     try {
       const parametros = construirParametros();
       const opcionesCorte = form.plancha === 'custom'
@@ -322,6 +328,84 @@ export default function Configurador() {
       setResultado(null);
     } finally {
       setCargando(false);
+    }
+  }
+
+  // ---------- Fase 2: "compra" (simulada por ahora) + descarga del PDF ----------
+  // El listado de piezas y el diagrama de corte se ocultan hasta que el
+  // cliente "compra" el despiece. Por ahora la compra es simulada (queda
+  // registrada igual en pedidos/pedido_items) — el pago real con Lemon
+  // Squeezy es la fase siguiente.
+  async function simularCompra() {
+    if (!usuario) {
+      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
+      return;
+    }
+    setComprando(true);
+    setError(null);
+    try {
+      const parametros = construirParametros();
+      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+
+      const { data: pedido, error: errPedido } = await supabase
+        .from('pedidos')
+        .insert({ user_id: usuario.id, estado: 'pagado', total: 0, paid_at: new Date().toISOString() })
+        .select()
+        .single();
+      if (errPedido) throw errPedido;
+
+      const { error: errItem } = await supabase.from('pedido_items').insert({
+        pedido_id: pedido.id,
+        mueble_id: muebleActualId,
+        nombre,
+        modulo: form.modulo,
+        parametros_congelados: parametros,
+        precio: 0,
+      });
+      if (errItem) throw errItem;
+
+      setDesbloqueado(true);
+    } catch (e) {
+      setError('No se pudo procesar la compra: ' + e.message);
+    } finally {
+      setComprando(false);
+    }
+  }
+
+  async function descargarPdf() {
+    if (!resultado) return;
+    setDescargandoPdf(true);
+    setError(null);
+    try {
+      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+      const imagen3D = visor3DRef.current?.capturarImagen() || null;
+
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre,
+          modulo: form.modulo,
+          despiece: resultado.despiece,
+          corte: resultado.corte,
+          imagen3D,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error generando el PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `despiece_${form.modulo}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError('No se pudo descargar el PDF: ' + e.message);
+    } finally {
+      setDescargandoPdf(false);
     }
   }
 
@@ -674,21 +758,48 @@ export default function Configurador() {
               <div className="card" style={{ marginBottom: 20 }}>
                 <h3>Plano 3D</h3>
                 <Visor3D
+                  ref={visor3DRef}
                   piezas={resultado.despiece.piezas}
                   accesorios={resultado.despiece.accesorios}
                   parametros={resultado.despiece.parametros}
                 />
               </div>
 
-              <div className="card" style={{ marginBottom: 20 }}>
-                <h3>Listado de piezas y herrajes</h3>
-                <ListaPiezas despiece={resultado.despiece} />
-              </div>
+              {!desbloqueado && (
+                <div className="card" style={{ textAlign: 'center' }}>
+                  <h3>Listado de piezas, herrajes y diagrama de corte</h3>
+                  <p style={{ color: '#888', fontSize: 14 }}>
+                    Desbloquea el despiece completo para ver el detalle de piezas, herrajes,
+                    material y el diagrama de corte, y descargar el PDF de entrega.
+                  </p>
+                  <button onClick={simularCompra} disabled={comprando} style={{ maxWidth: 320, margin: '0 auto' }}>
+                    {comprando ? 'Procesando...' : 'Simular compra y desbloquear'}
+                  </button>
+                  <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
+                    Pago simulado por ahora — la pasarela de pago real se habilita en la próxima etapa.
+                  </p>
+                </div>
+              )}
 
-              <div className="card">
-                <h3>Diagrama de corte</h3>
-                <DiagramaCorte corte={resultado.corte} />
-              </div>
+              {desbloqueado && (
+                <>
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <h3>Listado de piezas y herrajes</h3>
+                    <ListaPiezas despiece={resultado.despiece} />
+                  </div>
+
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <h3>Diagrama de corte</h3>
+                    <DiagramaCorte corte={resultado.corte} />
+                  </div>
+
+                  <div className="card" style={{ textAlign: 'center' }}>
+                    <button onClick={descargarPdf} disabled={descargandoPdf} style={{ maxWidth: 320, margin: '0 auto' }}>
+                      {descargandoPdf ? 'Generando PDF...' : 'Descargar PDF de entrega'}
+                    </button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

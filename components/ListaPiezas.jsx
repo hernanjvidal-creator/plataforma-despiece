@@ -11,8 +11,32 @@ const COLOR_BADGE = {
 export default function ListaPiezas({ despiece }) {
   const { piezas, accesorios, herrajes, resumen, notas } = despiece;
 
+  // Excel en configuración regional chilena/latam usa la coma como separador
+  // decimal, así que espera ";" como separador de columnas en un CSV — si se
+  // usa "," ahí, Excel mete la fila entera en una sola celda. Por eso el
+  // separador acá es ";", cada valor va entre comillas (por si trae acentos,
+  // espacios o algún ";" propio) y se agrega BOM UTF-8 para que Excel
+  // reconozca bien las tildes/ñ.
+  function celda(valor) {
+    return `"${String(valor).replace(/"/g, '""')}"`;
+  }
+
+  function filasACSV(encabezado, filas) {
+    return '﻿' + [encabezado, ...filas].map(f => f.map(celda).join(';')).join('\r\n');
+  }
+
+  function descargarCSV(nombreArchivo, contenido) {
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function exportarCSV() {
-    const encabezado = ['id', 'ancho_mm', 'alto_mm', 'espesor_mm', 'material', 'color', 'cara', 'cantos'];
+    const encabezado = ['Pieza', 'Ancho (mm)', 'Alto (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
     const filas = piezas.map(p => [
       p.id,
       Math.round(p.ancho),
@@ -21,16 +45,15 @@ export default function ListaPiezas({ despiece }) {
       p.material || 'melamina',
       p.color || '-',
       p.cara || '-',
-      (p.cantos || []).join('|') || '-',
+      (p.cantos || []).join(' / ') || '-',
     ]);
-    const csv = [encabezado, ...filas].map(f => f.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'despiece.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    descargarCSV('despiece_piezas.csv', filasACSV(encabezado, filas));
+  }
+
+  function exportarHerrajesCSV() {
+    const encabezado = ['Tipo', 'Cantidad', 'Unidad'];
+    const filas = herrajes.map(h => [h.tipo, h.cantidad, h.unidad || '-']);
+    descargarCSV('despiece_herrajes.csv', filasACSV(encabezado, filas));
   }
 
   return (
@@ -70,7 +93,7 @@ export default function ListaPiezas({ despiece }) {
       </table>
 
       <button onClick={exportarCSV} style={{ maxWidth: 220 }}>
-        Descargar CSV (ferretería)
+        Descargar piezas (Excel/CSV)
       </button>
 
       {accesorios && accesorios.length > 0 && (
@@ -105,6 +128,9 @@ export default function ListaPiezas({ despiece }) {
           ))}
         </tbody>
       </table>
+      <button onClick={exportarHerrajesCSV} style={{ maxWidth: 220 }}>
+        Descargar herrajes (Excel/CSV)
+      </button>
 
       <h4 style={{ marginTop: 24 }}>Material requerido</h4>
       <table>

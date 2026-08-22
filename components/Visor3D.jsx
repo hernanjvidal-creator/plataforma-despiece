@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -34,8 +34,25 @@ function colorDePieza(pieza) {
 // Escala de mm a unidades de escena (mm * ESCALA)
 const ESCALA = 0.005;
 
-export default function Visor3D({ piezas, accesorios, parametros }) {
+const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, ref) {
   const contenedorRef = useRef(null);
+  const rendererRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    // Devuelve un PNG en base64 (dataURL) del cuadro actual del visor, para
+    // incrustarlo en el PDF de entrega. Requiere que el renderer se haya
+    // creado con preserveDrawingBuffer: true (ver más abajo).
+    capturarImagen() {
+      const renderer = rendererRef.current;
+      const scene = sceneRef.current;
+      const camera = cameraRef.current;
+      if (!renderer || !scene || !camera) return null;
+      renderer.render(scene, camera);
+      return renderer.domElement.toDataURL('image/png');
+    },
+  }));
 
   useEffect(() => {
     const todasLasPiezas = [...(piezas || []), ...(accesorios || [])];
@@ -107,12 +124,16 @@ export default function Visor3D({ piezas, accesorios, parametros }) {
     camera.position.set(centroX + distancia, centroY + distancia * 0.7, centroZ + distancia);
     camera.lookAt(centroX, centroY, centroZ);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(ancho, alto);
     contenedor.innerHTML = '';
     contenedor.style.position = 'relative';
     contenedor.appendChild(renderer.domElement);
     renderer.domElement.style.cursor = 'pointer';
+
+    rendererRef.current = renderer;
+    sceneRef.current = scene;
+    cameraRef.current = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(centroX, centroY, centroZ);
@@ -258,8 +279,13 @@ export default function Visor3D({ piezas, accesorios, parametros }) {
       renderer.domElement.removeEventListener('dblclick', alDobleClick);
       renderer.dispose();
       contenedor.innerHTML = '';
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
     };
   }, [piezas, accesorios, parametros]);
 
   return <div ref={contenedorRef} style={{ width: '100%', height: 460, borderRadius: 8, overflow: 'hidden' }} />;
-}
+});
+
+export default Visor3D;
