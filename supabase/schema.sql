@@ -91,6 +91,16 @@ create policy "select_items_propios_pedidos"
     )
   );
 
+create policy "insert_items_propios_pedidos"
+  on public.pedido_items for insert
+  with check (
+    exists (
+      select 1 from public.pedidos
+      where pedidos.id = pedido_items.pedido_id
+      and pedidos.user_id = auth.uid()
+    )
+  );
+
 -- ---------- Storage: bucket para las fotos del espacio del cliente ----------
 -- 1. Crear el bucket manualmente: Dashboard → Storage → New bucket → nombre
 --    "fotos-espacio" → Private (no marcar "Public bucket").

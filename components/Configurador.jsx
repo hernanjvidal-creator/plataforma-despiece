@@ -778,6 +778,7 @@ export default function Configurador() {
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
                     Pago simulado por ahora — la pasarela de pago real se habilita en la próxima etapa.
                   </p>
+                  {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>
               )}
 
@@ -797,6 +798,7 @@ export default function Configurador() {
                     <button onClick={descargarPdf} disabled={descargandoPdf} style={{ maxWidth: 320, margin: '0 auto' }}>
                       {descargandoPdf ? 'Generando PDF...' : 'Descargar PDF de entrega'}
                     </button>
+                    {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                   </div>
                 </>
               )}
