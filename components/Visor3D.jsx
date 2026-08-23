@@ -276,7 +276,9 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       );
       cubo.add(bordes);
 
-      if (REGEX_CAJON_FRENTE.test(pieza.id)) {
+      if (REGEX_PUERTA.test(pieza.id)) {
+        agregarManillaPuerta(cubo, dimX, dimY, dimZ, pieza.id);
+      } else if (REGEX_CAJON_FRENTE.test(pieza.id)) {
         agregarManillaCajon(cubo, dimX, dimY, dimZ);
       }
 
