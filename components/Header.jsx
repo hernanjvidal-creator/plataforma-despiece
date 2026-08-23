@@ -36,6 +36,7 @@ export default function Header() {
         <nav className="site-nav">
           <Link href="/">Inicio</Link>
           <Link href="/configurador">Configurador</Link>
+          <Link href="/guia-armado">Guía de armado</Link>
           {!cargando && usuario && <Link href="/mis-muebles">Mis muebles</Link>}
           {!cargando && !usuario && <Link href="/login">Iniciar sesión</Link>}
           {!cargando && usuario && (

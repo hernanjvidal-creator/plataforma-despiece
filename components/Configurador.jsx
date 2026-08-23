@@ -884,6 +884,12 @@ export default function Configurador() {
                     <button onClick={descargarPdf} disabled={descargandoPdf} style={{ maxWidth: 320, margin: '0 auto' }}>
                       {descargandoPdf ? 'Generando PDF...' : 'Descargar PDF de entrega'}
                     </button>
+                    <p style={{ fontSize: 13, marginTop: 12 }}>
+                      <a href="/guia-armado" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
+                        Ver guía general de armado
+                      </a>
+                      {' '}— cómo unir las piezas, instalar correderas/bisagras y fijar el mueble
+                    </p>
                     {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                   </div>
                 </>
