@@ -25,6 +25,11 @@ const MODULOS = [
   { value: 'esquinero_bajo_cocina', label: 'Esquinero bajo de cocina (esquina interior)' },
 ];
 
+// El checkout real de Lemon Squeezy está en pruebas — mientras se termina
+// de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
+// botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
+const EMAIL_PAGOS_REAL = 'hernanjvidal@gmail.com';
+
 const COLORES_INTERIOR = [
   { value: 'blanco', label: 'Blanco' },
   { value: 'gris_claro', label: 'Gris claro' },
@@ -173,6 +178,7 @@ export default function Configurador() {
   const { usuario } = useAuth();
   const moduloParam = searchParams.get('modulo');
   const muebleIdParam = searchParams.get('muebleId');
+  const pedidoPagoParam = searchParams.get('pedidoPago');
   const moduloInicial = VALORES_POR_MODULO[moduloParam] ? moduloParam : 'bajo_cocina';
 
   const [form, setForm] = useState(() => ({
@@ -188,6 +194,8 @@ export default function Configurador() {
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [desbloqueado, setDesbloqueado] = useState(false);
   const [comprando, setComprando] = useState(false);
+  const [comprandoReal, setComprandoReal] = useState(false);
+  const [verificandoPago, setVerificandoPago] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const visor3DRef = useRef(null);
 
@@ -225,6 +233,43 @@ export default function Configurador() {
     return () => { cancelado = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [muebleIdParam]);
+
+  // Al volver del checkout de Lemon Squeezy (?pedidoPago=...), el webhook
+  // puede tardar un par de segundos en confirmar el pago. Se consulta el
+  // estado del pedido cada 2s (hasta 15 intentos) en vez de confiar en que
+  // ya esté "pagado" apenas se vuelve a esta página.
+  useEffect(() => {
+    if (!pedidoPagoParam) return;
+    let cancelado = false;
+    let intentos = 0;
+
+    async function verificar() {
+      const { data, error: err } = await supabase
+        .from('pedidos')
+        .select('estado')
+        .eq('id', pedidoPagoParam)
+        .single();
+      if (cancelado) return;
+
+      if (!err && data?.estado === 'pagado') {
+        setDesbloqueado(true);
+        setVerificandoPago(false);
+        return;
+      }
+      intentos += 1;
+      if (intentos < 15) {
+        setTimeout(verificar, 2000);
+      } else {
+        setVerificandoPago(false);
+        setError('Tu pago está siendo confirmado — si no se desbloquea en un momento, recarga la página.');
+      }
+    }
+
+    setVerificandoPago(true);
+    verificar();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoPagoParam]);
 
   function actualizar(campo, valor) {
     setForm(f => ({ ...f, [campo]: valor }));
@@ -442,6 +487,37 @@ export default function Configurador() {
       setError('No se pudo procesar la compra: ' + e.message);
     } finally {
       setComprando(false);
+    }
+  }
+
+  // ---------- Checkout real de Lemon Squeezy (en pruebas, ver EMAIL_PAGOS_REAL) ----------
+  async function iniciarCheckoutReal() {
+    if (!usuario) {
+      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
+      return;
+    }
+    setComprandoReal(true);
+    setError(null);
+    try {
+      const { data: sesion } = await supabase.auth.getSession();
+      const accessToken = sesion.session?.access_token;
+      if (!accessToken) throw new Error('Sesión no encontrada, vuelve a iniciar sesión');
+
+      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+      const parametros = construirParametros();
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, muebleId: muebleActualId, nombre, modulo: form.modulo, parametros }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
+
+      window.location.href = data.checkoutUrl;
+    } catch (e) {
+      setError('No se pudo iniciar el pago: ' + e.message);
+      setComprandoReal(false);
     }
   }
 
@@ -858,11 +934,31 @@ export default function Configurador() {
                     Desbloquea el despiece completo para ver el detalle de piezas, herrajes,
                     material y el diagrama de corte, y descargar el PDF de entrega.
                   </p>
-                  <button onClick={simularCompra} disabled={comprando} style={{ maxWidth: 320, margin: '0 auto' }}>
+
+                  {verificandoPago && (
+                    <p style={{ color: 'var(--color-accent)', fontSize: 14 }}>Confirmando tu pago…</p>
+                  )}
+
+                  {usuario?.email === EMAIL_PAGOS_REAL && (
+                    <>
+                      <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
+                        {comprandoReal ? 'Redirigiendo a pago...' : 'Pagar con Lemon Squeezy (modo prueba)'}
+                      </button>
+                      <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
+                        Checkout real de Lemon Squeezy en modo test — usa una tarjeta de prueba, no se cobra nada real.
+                      </p>
+                    </>
+                  )}
+
+                  <button
+                    onClick={simularCompra}
+                    disabled={comprando}
+                    style={{ maxWidth: 320, margin: usuario?.email === EMAIL_PAGOS_REAL ? '16px auto 0' : '0 auto' }}
+                  >
                     {comprando ? 'Procesando...' : 'Simular compra y desbloquear'}
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
-                    Pago simulado por ahora — la pasarela de pago real se habilita en la próxima etapa.
+                    Pago simulado por ahora — la pasarela de pago real se está probando antes de habilitarla para todos.
                   </p>
                   {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>
