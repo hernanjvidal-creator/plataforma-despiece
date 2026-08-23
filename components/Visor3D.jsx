@@ -171,7 +171,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     contenedor.appendChild(capaEtiquetas);
 
     const pista = document.createElement('div');
-    pista.textContent = 'Doble clic en una pieza para ver su nombre';
+    pista.textContent = 'Doble clic: nombre de la pieza, o abre/cierra puertas y cajones';
     Object.assign(pista.style, {
       position: 'absolute', top: '8px', left: '8px', pointerEvents: 'none',
       fontSize: '12px', color: '#666', background: 'rgba(255,255,255,0.85)',
@@ -183,6 +183,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     botonLimpiar.textContent = 'Limpiar etiquetas';
     Object.assign(botonLimpiar.style, {
       position: 'absolute', top: '8px', right: '8px', pointerEvents: 'auto',
+      width: 'auto', marginTop: '0',
       fontSize: '12px', padding: '4px 10px', border: 'none', borderRadius: '5px',
       background: '#fff', color: '#a8552f', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
     });
@@ -218,10 +219,11 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       [...etiquetasActivas.keys()].forEach(quitarEtiqueta);
     }
 
+    const vectorMundial = new THREE.Vector3();
     function actualizarPosicionEtiquetas() {
       const w = contenedor.clientWidth;
       etiquetasActivas.forEach(({ div, mesh }) => {
-        const proyeccion = mesh.position.clone().project(camera);
+        const proyeccion = mesh.getWorldPosition(vectorMundial).clone().project(camera);
         const visible = proyeccion.z < 1;
         div.style.display = visible ? 'block' : 'none';
         if (!visible) return;
@@ -238,14 +240,21 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     const REGEX_PUERTA = /puerta/;
     const REGEX_CAJON_FRENTE = /frente_cajon/;
 
+    // La manilla va en el lado contrario a la bisagra (la puerta se abre
+    // tirando desde el lado opuesto a donde gira). Mismo cálculo lo usa
+    // luego la apertura interactiva para saber de qué lado poner el eje.
+    function manillaVaALaDerecha(id) {
+      const match = id.match(/(\d+)$/);
+      const indice = match ? parseInt(match[1], 10) : 1;
+      return indice % 2 === 1; // alterna lado según el número de puerta
+    }
+
     function agregarManillaPuerta(cubo, dimX, dimY, dimZ, id) {
       const largo = Math.min(120 * ESCALA, dimY * 0.5);
       const grosor = 10 * ESCALA;
       const separacion = 5 * ESCALA;
       const inset = Math.min(60 * ESCALA, dimX * 0.3);
-      const match = id.match(/(\d+)$/);
-      const indice = match ? parseInt(match[1], 10) : 1;
-      const haciaLaDerecha = indice % 2 === 1; // alterna lado según el número de puerta
+      const haciaLaDerecha = manillaVaALaDerecha(id);
       const x = haciaLaDerecha ? (dimX / 2 - inset) : -(dimX / 2 - inset);
       const barra = new THREE.Mesh(new THREE.BoxGeometry(grosor, largo, grosor), manillaMaterial);
       barra.position.set(x, 0, dimZ / 2 + grosor / 2 + separacion);
@@ -262,12 +271,31 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       cubo.add(barra);
     }
 
+    // ---------- Apertura interactiva de puertas y cajones ----------
+    // Doble clic en una puerta la abre girándola sobre su bisagra (el lado
+    // contrario a la manilla); doble clic en un cajón lo desliza hacia
+    // afuera. Así se puede revisar cómo queda el interior armado — útil de
+    // referencia al momento de armar en terreno.
+    const ANGULO_APERTURA_PUERTA = (100 * Math.PI) / 180;
+    const DESPLAZAMIENTO_APERTURA_CAJON = 320 * ESCALA;
+    const piezasInteractivas = new Map(); // mesh -> { tipo, ...datos, abierto }
+
+    function alternarApertura(mesh) {
+      const datos = piezasInteractivas.get(mesh);
+      if (!datos) return;
+      datos.abierto = !datos.abierto;
+      if (datos.tipo === 'puerta') {
+        datos.pivot.rotation.y = datos.abierto ? datos.anguloAbierto : 0;
+      } else {
+        mesh.position.z = datos.abierto ? datos.zAbierto : datos.zCerrado;
+      }
+    }
+
     const mallas = [];
     piezasRender.forEach(({ pieza, dimX, dimY, dimZ, x, y, z }) => {
       const geometry = new THREE.BoxGeometry(dimX, dimY, dimZ);
       const material = new THREE.MeshStandardMaterial({ color: colorDePieza(pieza) });
       const cubo = new THREE.Mesh(geometry, material);
-      cubo.position.set(x, y, z);
       cubo.userData.pieza = pieza;
 
       const bordes = new THREE.LineSegments(
@@ -278,13 +306,54 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
 
       if (REGEX_PUERTA.test(pieza.id)) {
         agregarManillaPuerta(cubo, dimX, dimY, dimZ, pieza.id);
-      } else if (REGEX_CAJON_FRENTE.test(pieza.id)) {
-        agregarManillaCajon(cubo, dimX, dimY, dimZ);
+
+        // La bisagra va del lado contrario a la manilla. Se arma un pivote
+        // en esa arista y la puerta cuelga de él desplazada — así girar el
+        // pivote gira la puerta sobre su bisagra en vez de sobre su centro.
+        const bisagraIzquierda = manillaVaALaDerecha(pieza.id);
+        const hingeLocalX = bisagraIzquierda ? -dimX / 2 : dimX / 2;
+        const pivot = new THREE.Group();
+        pivot.position.set(x + hingeLocalX, y, z);
+        cubo.position.set(-hingeLocalX, 0, 0);
+        pivot.add(cubo);
+        scene.add(pivot);
+
+        // Ángulo con signo tal que el canto libre siempre gire hacia +Z
+        // (afuera del mueble, hacia la sala), sin importar de qué lado
+        // quedó la bisagra.
+        const anguloAbierto = hingeLocalX > 0 ? ANGULO_APERTURA_PUERTA : -ANGULO_APERTURA_PUERTA;
+        piezasInteractivas.set(cubo, { tipo: 'puerta', pivot, anguloAbierto, abierto: false });
+      } else {
+        cubo.position.set(x, y, z);
+        if (REGEX_CAJON_FRENTE.test(pieza.id)) {
+          agregarManillaCajon(cubo, dimX, dimY, dimZ);
+          piezasInteractivas.set(cubo, {
+            tipo: 'cajon', zCerrado: z, zAbierto: z + DESPLAZAMIENTO_APERTURA_CAJON, abierto: false,
+          });
+        }
+        scene.add(cubo);
       }
 
-      scene.add(cubo);
       mallas.push(cubo);
     });
+
+    const botonAbrirTodo = document.createElement('button');
+    botonAbrirTodo.textContent = 'Abrir puertas y cajones';
+    Object.assign(botonAbrirTodo.style, {
+      position: 'absolute', top: '40px', right: '8px', pointerEvents: 'auto',
+      width: 'auto', marginTop: '0',
+      fontSize: '12px', padding: '4px 10px', border: 'none', borderRadius: '5px',
+      background: '#fff', color: '#a8552f', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+    });
+    let todoAbierto = false;
+    botonAbrirTodo.onclick = () => {
+      todoAbierto = !todoAbierto;
+      piezasInteractivas.forEach((datos, mesh) => {
+        if (datos.abierto !== todoAbierto) alternarApertura(mesh);
+      });
+      botonAbrirTodo.textContent = todoAbierto ? 'Cerrar puertas y cajones' : 'Abrir puertas y cajones';
+    };
+    capaEtiquetas.appendChild(botonAbrirTodo);
 
     const raycaster = new THREE.Raycaster();
     function alDobleClick(event) {
@@ -298,6 +367,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       if (intersecciones.length === 0) return;
 
       const mesh = intersecciones[0].object;
+      if (piezasInteractivas.has(mesh)) {
+        alternarApertura(mesh);
+        return;
+      }
       if (etiquetasActivas.has(mesh)) {
         quitarEtiqueta(mesh);
       } else {
