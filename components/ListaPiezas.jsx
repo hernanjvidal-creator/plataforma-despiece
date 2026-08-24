@@ -36,11 +36,11 @@ export default function ListaPiezas({ despiece }) {
   }
 
   function exportarCSV() {
-    const encabezado = ['Pieza', 'Ancho (mm)', 'Alto (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
+    const encabezado = ['Pieza', 'Alto (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
     const filas = piezas.map(p => [
       p.id,
-      Math.round(p.ancho),
       Math.round(p.alto),
+      Math.round(p.ancho),
       p.espesor,
       p.material || 'melamina',
       p.color || '-',
@@ -62,8 +62,8 @@ export default function ListaPiezas({ despiece }) {
         <thead>
           <tr>
             <th>Pieza</th>
-            <th>Ancho (mm)</th>
             <th>Alto (mm)</th>
+            <th>Ancho (mm)</th>
             <th>Esp.</th>
             <th>Color</th>
             <th>Cantos</th>
@@ -73,8 +73,8 @@ export default function ListaPiezas({ despiece }) {
           {piezas.map((p, i) => (
             <tr key={i}>
               <td>{p.id}</td>
-              <td>{Math.round(p.ancho)}</td>
               <td>{Math.round(p.alto)}</td>
+              <td>{Math.round(p.ancho)}</td>
               <td>{p.espesor}mm {p.material || ''}</td>
               <td>
                 {p.color && (

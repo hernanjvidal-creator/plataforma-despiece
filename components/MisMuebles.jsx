@@ -7,11 +7,10 @@ import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 
 const NOMBRE_MODULO = {
-  bajo_cocina: 'Mueble bajo de cocina',
-  alto_cocina: 'Mueble alto de cocina',
+  bajo_cocina: 'Mueble cocina',
+  alto_cocina: 'Mueble aéreo',
   vanitorio_bano: 'Vanitorio de baño',
   closet: 'Closet / armario ropero',
-  esquinero_bajo_cocina: 'Esquinero bajo de cocina',
 };
 
 export default function MisMuebles() {

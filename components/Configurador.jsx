@@ -18,11 +18,10 @@ const PLANCHAS = [
 ];
 
 const MODULOS = [
-  { value: 'bajo_cocina', label: 'Mueble bajo de cocina' },
-  { value: 'alto_cocina', label: 'Mueble alto de cocina (alacena)' },
+  { value: 'bajo_cocina', label: 'Mueble cocina' },
+  { value: 'alto_cocina', label: 'Mueble aéreo' },
   { value: 'vanitorio_bano', label: 'Vanitorio de baño' },
   { value: 'closet', label: 'Closet / armario ropero' },
-  { value: 'esquinero_bajo_cocina', label: 'Esquinero bajo de cocina (esquina interior)' },
 ];
 
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
@@ -109,12 +108,6 @@ const VALORES_POR_MODULO = {
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
   },
-  esquinero_bajo_cocina: {
-    H: 700, P: 560,
-    anchoA: 900, anchoB: 900,
-    colorInterior: 'blanco', colorExterior: 'gris_grafito',
-    espesorPuertas: 15,
-  },
 };
 
 const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
@@ -124,16 +117,6 @@ const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
 function formDesdeParametros(modulo, parametros) {
   const base = { modulo, ...VALORES_POR_MODULO[modulo], ...VALORES_COMUNES };
   if (!parametros) return base;
-
-  if (modulo === 'esquinero_bajo_cocina') {
-    return {
-      ...base,
-      H: parametros.H, P: parametros.P,
-      anchoA: parametros.anchoA, anchoB: parametros.anchoB,
-      colorInterior: parametros.colorInterior, colorExterior: parametros.colorExterior,
-      espesorPuertas: parametros.espesorPuertas ?? 15,
-    };
-  }
 
   const comunes = {
     A: parametros.A, H: parametros.H, P: parametros.P,
@@ -357,15 +340,6 @@ export default function Configurador() {
   }
 
   function construirParametros() {
-    if (form.modulo === 'esquinero_bajo_cocina') {
-      return {
-        H: Number(form.H), P: Number(form.P),
-        anchoA: Number(form.anchoA), anchoB: Number(form.anchoB),
-        colorInterior: form.colorInterior, colorExterior: form.colorExterior,
-        espesorPuertas: Number(form.espesorPuertas) || 15,
-      };
-    }
-
     const base = {
       A: Number(form.A), H: Number(form.H), P: Number(form.P),
       colorInterior: form.colorInterior, colorExterior: form.colorExterior,
@@ -384,6 +358,9 @@ export default function Configurador() {
         isla: !!form.isla,
         cubierta,
         secciones: form.secciones.map(s => {
+          if (s.tipo === 'esquinero') {
+            return { tipo: 'esquinero', giro: s.giro || 'derecha' };
+          }
           const ancho = s.ancho ? Number(s.ancho) : undefined;
           if (s.tipo === 'estandar') {
             const { nP, nC } = nPyNCporConfig(s.config, Number(s.nP) || 0, Number(s.nC) || 0);
@@ -572,19 +549,12 @@ export default function Configurador() {
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
 
-          {form.modulo === 'esquinero_bajo_cocina' ? (
-            <>
-              <label>Largo brazo A (mm, desde la esquina)</label>
-              <input type="number" value={form.anchoA} onChange={e => actualizar('anchoA', e.target.value)} />
-
-              <label>Largo brazo B (mm, desde la esquina)</label>
-              <input type="number" value={form.anchoB} onChange={e => actualizar('anchoB', e.target.value)} />
-            </>
-          ) : (
-            <>
-              <label>Ancho (mm)</label>
-              <input type="number" value={form.A} onChange={e => actualizar('A', e.target.value)} />
-            </>
+          <label>Ancho (mm)</label>
+          <input type="number" value={form.A} onChange={e => actualizar('A', e.target.value)} />
+          {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') && (
+            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+              Con una esquina agregada, este ancho ya no se usa — cada sección de cada brazo necesita su propio "Ancho fijo" más abajo.
+            </p>
           )}
 
           <label>Alto (mm)</label>
@@ -698,7 +668,23 @@ export default function Configurador() {
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
                     <option value="cajones_olleros">Cajones olleros (altos)</option>
                     <option value="cajones_cubiertos">Cajones cubiertos (bajos)</option>
+                    <option value="esquinero">Esquina (dobla 90° acá)</option>
                   </select>
+
+                  {s.tipo === 'esquinero' && (
+                    <>
+                      <label>Gira hacia</label>
+                      <select value={s.giro || 'derecha'} onChange={e => actualizarSeccion(i, 'giro', e.target.value)}>
+                        <option value="derecha">Derecha</option>
+                        <option value="izquierda">Izquierda</option>
+                      </select>
+                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
+                        No es un frente: acá el mueble dobla 90° y sigue con las secciones que pongas después
+                        (nuevo brazo, "esquinero interior" con bisagra plegable de rincón). Tiene que haber al
+                        menos una sección antes y después de cada esquina.
+                      </p>
+                    </>
+                  )}
 
                   {s.tipo === 'estandar' && (
                     <>
@@ -750,12 +736,18 @@ export default function Configurador() {
                     </p>
                   )}
 
-                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
-                  <input
-                    type="number" min={0}
-                    value={s.ancho ?? ''}
-                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
-                  />
+                  {s.tipo !== 'esquinero' && (
+                    <>
+                      <label>
+                        Ancho fijo (mm{form.secciones.some(sec => sec.tipo === 'esquinero') ? ', obligatorio con esquinas' : ', opcional — vacío = automático'})
+                      </label>
+                      <input
+                        type="number" min={0}
+                        value={s.ancho ?? ''}
+                        onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
+                      />
+                    </>
+                  )}
                 </div>
               ))}
               <button

@@ -1,11 +1,10 @@
 import { Document, Page, Text, View, Image, StyleSheet, Svg, Rect, G } from '@react-pdf/renderer';
 
 const NOMBRE_MODULO = {
-  bajo_cocina: 'Mueble bajo de cocina',
-  alto_cocina: 'Mueble alto de cocina (alacena)',
+  bajo_cocina: 'Mueble cocina',
+  alto_cocina: 'Mueble aéreo',
   vanitorio_bano: 'Vanitorio de baño',
   closet: 'Closet / armario ropero',
-  esquinero_bajo_cocina: 'Esquinero bajo de cocina',
 };
 
 const styles = StyleSheet.create({
@@ -114,11 +113,11 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
       <Page size="A4" style={styles.page}>
         <Text style={styles.h2}>Listado de piezas</Text>
         <Tabla
-          columnas={['Pieza', 'Ancho (mm)', 'Alto (mm)', 'Esp.', 'Color', 'Cantos']}
+          columnas={['Pieza', 'Alto (mm)', 'Ancho (mm)', 'Esp.', 'Color', 'Cantos']}
           filas={piezas.map(p => [
             p.id,
-            String(Math.round(p.ancho)),
             String(Math.round(p.alto)),
+            String(Math.round(p.ancho)),
             `${p.espesor}mm ${p.material || ''}`.trim(),
             p.color || '—',
             (p.cantos || []).join(', ') || '—',

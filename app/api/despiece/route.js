@@ -3,7 +3,6 @@ import { generarDespiece as generarBajoCocina } from '@/lib/muebleBajoCocina';
 import { generarDespiece as generarAltoCocina } from '@/lib/muebleAltoCocina';
 import { generarDespiece as generarVanitorioBano } from '@/lib/vanitorioBano';
 import { generarDespiece as generarCloset } from '@/lib/closet';
-import { generarDespiece as generarEsquineroBajoCocina } from '@/lib/esquineroBajoCocina';
 import { optimizarCorte } from '@/lib/optimizadorCorte';
 
 const MOTORES = {
@@ -11,7 +10,6 @@ const MOTORES = {
   alto_cocina: generarAltoCocina,
   vanitorio_bano: generarVanitorioBano,
   closet: generarCloset,
-  esquinero_bajo_cocina: generarEsquineroBajoCocina,
 };
 
 /**

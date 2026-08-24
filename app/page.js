@@ -1,11 +1,10 @@
 import Link from 'next/link';
 
 const MODULOS = [
-  { valor: 'bajo_cocina', nombre: 'Mueble bajo de cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros y cubiertos' },
-  { valor: 'alto_cocina', nombre: 'Mueble alto de cocina', detalle: 'alacena con baldas y colgado a pared' },
+  { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros/cubiertos y esquinas (incluso en U)' },
+  { valor: 'alto_cocina', nombre: 'Mueble aéreo', detalle: 'alacena con baldas y colgado a pared' },
   { valor: 'vanitorio_bano', nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
   { valor: 'closet', nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },
-  { valor: 'esquinero_bajo_cocina', nombre: 'Esquinero bajo de cocina', detalle: 'esquina interior, en dos brazos a 90° con puerta plegable de rincón' },
 ];
 
 export default function Home() {
