@@ -548,9 +548,13 @@ export default function Configurador() {
 
           <label>Ancho (mm)</label>
           <input type="number" value={form.A} onChange={e => actualizar('A', e.target.value)} />
-          {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') && (
+          {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') ? (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
               Con una esquina agregada, este ancho ya no se usa — cada sección de cada brazo necesita su propio "Ancho fijo" más abajo.
+            </p>
+          ) : (
+            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+              Este es el ancho exterior del mueble completo (de canto a canto, incluyendo los 2 laterales). El "Ancho fijo" de cada sección es el hueco interior de esa sección, sin contar laterales.
             </p>
           )}
 
@@ -736,6 +740,9 @@ export default function Configurador() {
                         value={s.ancho ?? ''}
                         onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                       />
+                      <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                        Ancho interior de esta sección (el hueco donde van puertas/cajones), sin contar los laterales.
+                      </p>
                     </>
                   )}
                 </div>
