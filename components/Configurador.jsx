@@ -554,7 +554,7 @@ export default function Configurador() {
             </p>
           ) : (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Este es el ancho exterior del mueble completo (de canto a canto, incluyendo los 2 laterales). El "Ancho fijo" de cada sección es el hueco interior de esa sección, sin contar laterales.
+              Este es el ancho exterior del mueble completo.
             </p>
           )}
 
