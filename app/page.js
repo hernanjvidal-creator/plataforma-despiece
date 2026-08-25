@@ -1,10 +1,14 @@
 import Link from 'next/link';
 
 const MODULOS = [
-  { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros/cubiertos y esquinas (incluso en U)' },
-  { valor: 'alto_cocina', nombre: 'Mueble aéreo', detalle: 'alacena con baldas y colgado a pared' },
+  { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno, cajones olleros y esquinas (incluso en U)' },
+  { valor: 'alto_cocina', nombre: 'Mueble aéreo', detalle: 'alacena con repisas y colgado a pared' },
   { valor: 'vanitorio_bano', nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
   { valor: 'closet', nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },
+  { valor: 'despensa', nombre: 'Despensa', detalle: 'armario de cocina sobre zócalo, solo repisas ajustables' },
+  { valor: 'velador', nombre: 'Velador', detalle: 'cajón arriba + puerta, repisa o abierto abajo, sobre patas' },
+  { valor: 'escritorio', nombre: 'Escritorio', detalle: 'cajones/puertas a elección + cubierta de superficie, sobre patas' },
+  { valor: 'librero', nombre: 'Librero', detalle: 'cuerpo abierto por secciones, solo repisas ajustables' },
 ];
 
 export default function Home() {
@@ -22,7 +26,7 @@ export default function Home() {
       >
         <div>
           <p style={{ color: 'var(--color-accent)', fontWeight: 700, fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>
-            Configurador de muebles en melamina
+            Diseña muebles en melamina
           </p>
           <h1>Del parámetro al plano de corte, en un solo lugar</h1>
           <p style={{ fontSize: 16, color: 'var(--color-text-muted)', lineHeight: 1.6, maxWidth: 520 }}>
@@ -32,7 +36,7 @@ export default function Home() {
           </p>
           <Link href="/configurador">
             <button style={{ maxWidth: 240, marginTop: 24 }}>
-              Ir al configurador →
+              Ir a diseñar →
             </button>
           </Link>
         </div>
@@ -58,7 +62,7 @@ export default function Home() {
       <section>
         <h3 style={{ marginBottom: 6 }}>Módulos disponibles</h3>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-text-muted)' }}>
-          Elige el tipo de mueble y entras directo al configurador con esa opción ya seleccionada.
+          Elige el tipo de mueble y entras directo a diseñar con esa opción ya seleccionada.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
           {MODULOS.map(m => (
@@ -67,7 +71,7 @@ export default function Home() {
                 <h4 style={{ marginBottom: 6 }}>{m.nombre}</h4>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{m.detalle}</p>
                 <p style={{ margin: '10px 0 0', fontSize: 13, fontWeight: 700, color: 'var(--color-accent)' }}>
-                  Configurar →
+                  Diseñar →
                 </p>
               </div>
             </Link>

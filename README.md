@@ -39,7 +39,7 @@ un divisor vertical — un panel del mismo tipo que un lateral — que es una
 Además, en `bajo_cocina` (por sección, config `solo_puertas`/`mixto`) y en
 `vanitorio_bano` (`config` + `repisas`), el hueco de puertas admite repisas
 intermedias (`repisas`, además del piso que ya trae el cuerpo) — se reparten
-en partes iguales dentro de la zona libre de puertas, con soportes de balda
+en partes iguales dentro de la zona libre de puertas, con soportes de repisa
 como herraje.
 
 ### Cubierta (superficie) y accesorios
@@ -96,7 +96,7 @@ en el selector "Tipo de mueble".
 lib/
   shared.js              → utilidades compartidas entre motores (resumen de m² por plancha)
   muebleBajoCocina.js    → motor de reglas: mueble bajo de cocina
-  muebleAltoCocina.js    → motor de reglas: alacena (cuerpo cerrado, baldas, colgado a pared)
+  muebleAltoCocina.js    → motor de reglas: alacena (cuerpo cerrado, repisas, colgado a pared)
   vanitorioBano.js       → motor de reglas: vanitorio (patas o suspendido, nota de sifón)
   closet.js              → motor de reglas: closet por secciones (cajones/repisas/colgador,
                             puertas batientes o correderas)

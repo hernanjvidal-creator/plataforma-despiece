@@ -22,6 +22,10 @@ const MODULOS = [
   { value: 'alto_cocina', label: 'Mueble aéreo' },
   { value: 'vanitorio_bano', label: 'Vanitorio de baño' },
   { value: 'closet', label: 'Closet / armario ropero' },
+  { value: 'despensa', label: 'Despensa' },
+  { value: 'velador', label: 'Velador' },
+  { value: 'escritorio', label: 'Escritorio' },
+  { value: 'librero', label: 'Librero' },
 ];
 
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
@@ -108,6 +112,37 @@ const VALORES_POR_MODULO = {
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
   },
+  despensa: {
+    A: 900, H: 2000, P: 450,
+    nP: 2, tipoPuerta: 'batiente',
+    secciones: [
+      { repisas: 5 },
+      { repisas: 5 },
+    ],
+    colorInterior: 'blanco', colorExterior: 'blanco',
+    espesorPuertas: 15,
+  },
+  velador: {
+    A: 450, H: 500, P: 400,
+    tipoInferior: 'puerta',
+    colorInterior: 'blanco', colorExterior: 'blanco',
+    espesorPuertas: 15,
+  },
+  escritorio: {
+    A: 1200, H: 720, P: 550,
+    nP: 0, nC: 3, repisas: 0, config: 'solo_cajones',
+    cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
+    colorInterior: 'blanco', colorExterior: 'blanco',
+    espesorPuertas: 15,
+  },
+  librero: {
+    A: 900, H: 1800, P: 300,
+    secciones: [
+      { repisas: 5 },
+      { repisas: 5 },
+    ],
+    colorInterior: 'blanco', colorExterior: 'blanco',
+  },
 };
 
 const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
@@ -149,6 +184,23 @@ function formDesdeParametros(modulo, parametros) {
   }
   if (modulo === 'closet') {
     return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
+  }
+  if (modulo === 'despensa') {
+    return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
+  }
+  if (modulo === 'velador') {
+    return { ...base, ...comunes, tipoInferior: parametros.tipoInferior };
+  }
+  if (modulo === 'escritorio') {
+    return {
+      ...base, ...comunes,
+      nP: parametros.nP, nC: parametros.nC, repisas: parametros.repisas, config: parametros.config,
+      cubiertaMaterial: parametros.cubierta?.material ?? 'melamina',
+      cubiertaEspesor: parametros.cubierta?.espesor ?? 20,
+    };
+  }
+  if (modulo === 'librero') {
+    return { ...base, ...comunes, secciones: parametros.secciones };
   }
   return base;
 }
@@ -321,6 +373,8 @@ export default function Configurador() {
   function agregarSeccion() {
     const nueva = form.modulo === 'closet'
       ? { cajones: 0, repisas: 1, colgador: false }
+      : (form.modulo === 'despensa' || form.modulo === 'librero')
+      ? { repisas: 5 }
       : { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 2 };
     setForm(f => ({ ...f, secciones: [...f.secciones, nueva] }));
   }
@@ -391,6 +445,31 @@ export default function Configurador() {
         nP, nC, repisas, config: form.config,
         soporte: form.soporte, sifon: !!form.sifon,
         cubierta,
+      };
+    }
+    if (form.modulo === 'despensa') {
+      return {
+        ...base,
+        nP: Number(form.nP), tipoPuerta: form.tipoPuerta,
+        secciones: form.secciones.map(s => ({ repisas: Number(s.repisas) })),
+      };
+    }
+    if (form.modulo === 'velador') {
+      return { ...base, tipoInferior: form.tipoInferior };
+    }
+    if (form.modulo === 'escritorio') {
+      const { nP, nC } = nPyNCporConfig(form.config, Number(form.nP), Number(form.nC));
+      const repisas = (nP > 0 || form.config === 'abierto') ? Number(form.repisas) || 0 : 0;
+      return {
+        ...base,
+        nP, nC, repisas, config: form.config,
+        cubierta,
+      };
+    }
+    if (form.modulo === 'librero') {
+      return {
+        ...base,
+        secciones: form.secciones.map(s => ({ repisas: Number(s.repisas) })),
       };
     }
     return base;
@@ -536,7 +615,7 @@ export default function Configurador() {
 
   return (
     <main className="container">
-      <h1>Configurador — {moduloLabel}</h1>
+      <h1>Diseñar — {moduloLabel}</h1>
 
       <div className="grid-2">
         {/* ---------- Panel de parámetros ---------- */}
@@ -570,7 +649,7 @@ export default function Configurador() {
               <label>Cantidad de puertas</label>
               <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
 
-              <label>Cantidad de baldas interiores</label>
+              <label>Cantidad de repisas interiores</label>
               <input type="number" min={0} value={form.nBaldas} onChange={e => actualizar('nBaldas', e.target.value)} />
             </>
           )}
@@ -619,6 +698,51 @@ export default function Configurador() {
               </button>
 
               <label style={{ marginTop: 18 }}>Cantidad de puertas (0 = closet abierto)</label>
+              <input type="number" min={0} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+
+              {Number(form.nP) > 0 && (
+                <>
+                  <label>Tipo de puerta</label>
+                  <select value={form.tipoPuerta} onChange={e => actualizar('tipoPuerta', e.target.value)}>
+                    <option value="batiente">Batiente (con bisagra)</option>
+                    <option value="corredera">Corredera (sobre riel)</option>
+                  </select>
+                </>
+              )}
+            </>
+          )}
+
+          {form.modulo === 'despensa' && (
+            <>
+              <label>Secciones del interior (de izquierda a derecha)</label>
+              {form.secciones.map((s, i) => (
+                <div key={i} style={{ border: '1px solid #e4e2dc', borderRadius: 8, padding: 10, marginTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: 13 }}>Sección {i + 1}</strong>
+                    {form.secciones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => quitarSeccion(i)}
+                        style={{ margin: 0, width: 'auto', padding: '2px 8px', fontSize: 12, background: 'var(--color-danger)' }}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+
+                  <label>Repisas</label>
+                  <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={agregarSeccion}
+                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+              >
+                + Agregar sección
+              </button>
+
+              <label style={{ marginTop: 18 }}>Cantidad de puertas (0 = despensa abierta)</label>
               <input type="number" min={0} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
 
               {Number(form.nP) > 0 && (
@@ -810,6 +934,93 @@ export default function Configurador() {
             </>
           )}
 
+          {form.modulo === 'escritorio' && (
+            <>
+              <label>Configuración de frentes</label>
+              <select value={form.config} onChange={e => actualizar('config', e.target.value)}>
+                <option value="solo_cajones">Solo cajones</option>
+                <option value="solo_puertas">Solo puertas</option>
+                <option value="mixto">Cajón superior + puertas</option>
+                <option value="abierto">Sin puerta (hueco abierto)</option>
+              </select>
+
+              {(form.config === 'solo_cajones' || form.config === 'mixto') && (
+                <>
+                  <label>Cantidad de cajones</label>
+                  <input type="number" min={1} value={form.nC} onChange={e => actualizar('nC', e.target.value)} />
+                </>
+              )}
+
+              {(form.config === 'solo_puertas' || form.config === 'mixto') && (
+                <>
+                  <label>Cantidad de puertas</label>
+                  <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+                </>
+              )}
+
+              {(form.config === 'solo_puertas' || form.config === 'mixto' || form.config === 'abierto') && (
+                <>
+                  <label>Repisas interiores (además del piso)</label>
+                  <input type="number" min={0} value={form.repisas} onChange={e => actualizar('repisas', e.target.value)} />
+                </>
+              )}
+
+              <label>Material de la cubierta (superficie de trabajo)</label>
+              <select value={form.cubiertaMaterial} onChange={e => actualizar('cubiertaMaterial', e.target.value)}>
+                <option value="melamina">Melamina (se corta y anida con el resto)</option>
+                <option value="cuarzo">Cuarzo (proveedor aparte, no se anida)</option>
+                <option value="granito">Granito (proveedor aparte, no se anida)</option>
+                <option value="marmol">Mármol (proveedor aparte, no se anida)</option>
+              </select>
+
+              <label>Espesor cubierta (mm)</label>
+              <input type="number" min={10} value={form.cubiertaEspesor} onChange={e => actualizar('cubiertaEspesor', e.target.value)} />
+            </>
+          )}
+
+          {form.modulo === 'velador' && (
+            <>
+              <label>Compartimento inferior (bajo el cajón)</label>
+              <select value={form.tipoInferior} onChange={e => actualizar('tipoInferior', e.target.value)}>
+                <option value="puerta">Con puerta (cerrado)</option>
+                <option value="repisa">Repisa fija (abierto)</option>
+                <option value="abierto">Abierto, sin repisa</option>
+              </select>
+            </>
+          )}
+
+          {form.modulo === 'librero' && (
+            <>
+              <label>Secciones del interior (de izquierda a derecha)</label>
+              {form.secciones.map((s, i) => (
+                <div key={i} style={{ border: '1px solid #e4e2dc', borderRadius: 8, padding: 10, marginTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: 13 }}>Sección {i + 1}</strong>
+                    {form.secciones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => quitarSeccion(i)}
+                        style={{ margin: 0, width: 'auto', padding: '2px 8px', fontSize: 12, background: 'var(--color-danger)' }}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+
+                  <label>Repisas</label>
+                  <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={agregarSeccion}
+                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+              >
+                + Agregar sección
+              </button>
+            </>
+          )}
+
           {(form.modulo === 'bajo_cocina' || form.modulo === 'vanitorio_bano') && (
             <>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -840,21 +1051,25 @@ export default function Configurador() {
             </>
           )}
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="checkbox"
-              style={{ width: 'auto' }}
-              checked={Number(form.espesorPuertas) === 18}
-              onChange={e => actualizar('espesorPuertas', e.target.checked ? 18 : 15)}
-            />
-            Puertas más gruesas (18mm en vez de 15mm estándar)
-          </label>
+          {form.modulo !== 'librero' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                style={{ width: 'auto' }}
+                checked={Number(form.espesorPuertas) === 18}
+                onChange={e => actualizar('espesorPuertas', e.target.checked ? 18 : 15)}
+              />
+              Puertas más gruesas (18mm en vez de 15mm estándar)
+            </label>
+          )}
 
-          <label>Color interior (cajones/bandejas/baldas)</label>
+          <label>Color interior (cajones/bandejas/repisas)</label>
           <select value={form.colorInterior} onChange={e => actualizar('colorInterior', e.target.value)}>
             {COLORES_INTERIOR.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
 
+          {form.modulo !== 'librero' && (
+          <>
           <label>Color exterior (frentes/puertas/zócalo)</label>
           <select value={form.colorExterior} onChange={e => actualizar('colorExterior', e.target.value)}>
             {COLORES_EXTERIOR.map(g => (
@@ -863,6 +1078,8 @@ export default function Configurador() {
               </optgroup>
             ))}
           </select>
+          </>
+          )}
 
           <label>Plancha de melamina</label>
           <select value={form.plancha} onChange={e => actualizar('plancha', e.target.value)}>

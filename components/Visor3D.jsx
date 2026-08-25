@@ -85,7 +85,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     // IMPORTANTE: pieza.ancho/alto/espesor son medidas "de plancha" (largo x ancho x espesor
     // del tablero), no ejes X/Y/Z de la escena. El campo `rotacion` indica cómo esa plancha
     // está orientada en el espacio; hay que mapear cada caso al eje que corresponde o los
-    // paneles horizontales (piso/techo/traviesas/baldas) quedan parados y los laterales
+    // paneles horizontales (piso/techo/traviesas/repisas) quedan parados y los laterales
     // quedan de frente en vez de de canto — que es justo lo que se veía "desarmado".
     //
     // La cámara se centra según el bounding box real de las piezas (no según parametros.A/H/P,
@@ -104,7 +104,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       let dimX, dimY, dimZ, x, y, z;
 
       if (rotacion === 'horizontal') {
-        // Panel acostado (piso, techo, traviesa, balda): ancho->X, alto->profundidad (Z), espesor->Y
+        // Panel acostado (piso, techo, traviesa, repisa): ancho->X, alto->profundidad (Z), espesor->Y
         dimX = anchoPz; dimY = espesor; dimZ = altoPz;
         x = px * ESCALA + dimX / 2;
         y = py * ESCALA + dimY / 2;

@@ -3,6 +3,10 @@ import { generarDespiece as generarBajoCocina } from '@/lib/muebleBajoCocina';
 import { generarDespiece as generarAltoCocina } from '@/lib/muebleAltoCocina';
 import { generarDespiece as generarVanitorioBano } from '@/lib/vanitorioBano';
 import { generarDespiece as generarCloset } from '@/lib/closet';
+import { generarDespiece as generarDespensa } from '@/lib/despensa';
+import { generarDespiece as generarVelador } from '@/lib/velador';
+import { generarDespiece as generarEscritorio } from '@/lib/escritorio';
+import { generarDespiece as generarLibrero } from '@/lib/librero';
 import { optimizarCorte } from '@/lib/optimizadorCorte';
 
 const MOTORES = {
@@ -10,6 +14,10 @@ const MOTORES = {
   alto_cocina: generarAltoCocina,
   vanitorio_bano: generarVanitorioBano,
   closet: generarCloset,
+  despensa: generarDespensa,
+  velador: generarVelador,
+  escritorio: generarEscritorio,
+  librero: generarLibrero,
 };
 
 /**

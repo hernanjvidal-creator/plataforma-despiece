@@ -11,6 +11,10 @@ const NOMBRE_MODULO = {
   alto_cocina: 'Mueble aéreo',
   vanitorio_bano: 'Vanitorio de baño',
   closet: 'Closet / armario ropero',
+  despensa: 'Despensa',
+  velador: 'Velador',
+  escritorio: 'Escritorio',
+  librero: 'Librero',
 };
 
 export default function MisMuebles() {
