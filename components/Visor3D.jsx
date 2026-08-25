@@ -319,11 +319,22 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       if (datos.tipo === 'puerta') {
         datos.pivot.rotation.y = datos.abierto ? datos.anguloAbierto : 0;
       } else {
-        mesh.position[datos.eje] = datos.abierto ? datos.abiertoValor : datos.cerradoValor;
+        // 'cajon': todas las piezas del grupo (frente + caja) se mueven
+        // juntas, como una sola unidad — no solo el frente.
+        datos.piezas.forEach(({ mesh: m, cerradoValor }) => {
+          m.position[datos.eje] = datos.abierto ? cerradoValor + datos.delta : cerradoValor;
+        });
       }
     }
 
     const mallas = [];
+    // El frente de un cajón y su caja interior (costados, trasera, fondo)
+    // comparten `pieza.grupo` (ver piezasCajasSeccion en cada módulo) — se
+    // recolectan acá para que, al abrir/cerrar, se muevan todos juntos
+    // como una sola unidad en vez de que solo se desplace el frente.
+    const gruposCajon = new Map(); // grupoId -> [mesh, mesh, ...]
+    const frentesCajon = new Map(); // grupoId -> { mesh, ejeEspesor, dOut }
+
     piezasRender.forEach(({ pieza, dimX, dimY, dimZ, x, y, z }) => {
       const geometry = new THREE.BoxGeometry(dimX, dimY, dimZ);
       const material = new THREE.MeshStandardMaterial({ color: colorDePieza(pieza) });
@@ -370,17 +381,33 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
         if (REGEX_CAJON_FRENTE.test(pieza.id)) {
           const dOut = signoHaciaAfuera(pieza, ejeEspesor);
           agregarManillaCajon(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut);
-          const cerradoValor = ejeEspesor === 'x' ? x : z;
-          piezasInteractivas.set(cubo, {
-            tipo: 'cajon', eje: ejeEspesor,
-            cerradoValor, abiertoValor: cerradoValor + dOut * DESPLAZAMIENTO_APERTURA_CAJON,
-            abierto: false,
-          });
+          frentesCajon.set(pieza.grupo || pieza.id, { mesh: cubo, ejeEspesor, dOut });
         }
         scene.add(cubo);
       }
 
+      if (pieza.grupo) {
+        if (!gruposCajon.has(pieza.grupo)) gruposCajon.set(pieza.grupo, []);
+        gruposCajon.get(pieza.grupo).push(cubo);
+      }
+
       mallas.push(cubo);
+    });
+
+    // Registrar la apertura interactiva UNA VEZ por grupo (no por pieza):
+    // la dirección/eje la define siempre el frente (la única cara real
+    // "hacia afuera"), y se aplica igual a todas las piezas del grupo —
+    // así se abren juntas como si fueran un solo cajón, no solo la tapa.
+    frentesCajon.forEach(({ mesh: meshFrente, ejeEspesor, dOut }, grupoId) => {
+      const miembros = gruposCajon.get(grupoId) || [meshFrente];
+      const datosCompartidos = {
+        tipo: 'cajon',
+        eje: ejeEspesor,
+        delta: dOut * DESPLAZAMIENTO_APERTURA_CAJON,
+        piezas: miembros.map(m => ({ mesh: m, cerradoValor: m.position[ejeEspesor] })),
+        abierto: false,
+      };
+      miembros.forEach(m => piezasInteractivas.set(m, datosCompartidos));
     });
 
     const botonAbrirTodo = document.createElement('button');
