@@ -249,25 +249,57 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       return indice % 2 === 1; // alterna lado según el número de puerta
     }
 
-    function agregarManillaPuerta(cubo, dimX, dimY, dimZ, id) {
-      const largo = Math.min(120 * ESCALA, dimY * 0.5);
+    // En un mueble sin esquinas, el "ancho" de un frente siempre corre en
+    // X y su cara mira hacia +Z (por eso el código original de manillas y
+    // apertura interactiva asumía justo eso). Un brazo rotado 90° en una
+    // esquina (ver "transformarPiezaHeading" en muebleBajoCocina.js)
+    // cambia esto: el ancho puede pasar a correr en Z, y la cara puede
+    // mirar hacia +X o -X en vez de +Z. `ejesDePieza` determina cuál eje
+    // de render es cuál para una pieza dada, y `signoHaciaAfuera` calcula
+    // hacia dónde es "afuera" comparando contra el respaldo del mismo
+    // brazo (que siempre queda del lado de adentro) en vez de asumir +Z.
+    function ejesDePieza(pieza) {
+      return pieza.rotacion === 'vertical_profundidad'
+        ? { ejeAncho: 'z', ejeEspesor: 'x' }
+        : { ejeAncho: 'x', ejeEspesor: 'z' };
+    }
+
+    const mapaRespaldos = new Map();
+    piezas.forEach(pz => {
+      const m = pz.id.match(/^(brazo\d+_)?respaldo$/);
+      if (m) mapaRespaldos.set(m[1] || '', pz);
+    });
+
+    function signoHaciaAfuera(pieza, ejeEspesor) {
+      const prefijo = (pieza.id.match(/^(brazo\d+_)/) || [null, ''])[1];
+      const respaldo = mapaRespaldos.get(prefijo);
+      if (!respaldo) return 1;
+      return pieza.posicion[ejeEspesor] >= respaldo.posicion[ejeEspesor] ? 1 : -1;
+    }
+
+    function agregarManillaPuerta(cubo, dimAncho, dimAlto, dimEspesor, ejeAncho, dOut, id) {
+      const largo = Math.min(120 * ESCALA, dimAlto * 0.5);
       const grosor = 10 * ESCALA;
       const separacion = 5 * ESCALA;
-      const inset = Math.min(60 * ESCALA, dimX * 0.3);
+      const inset = Math.min(60 * ESCALA, dimAncho * 0.3);
       const haciaLaDerecha = manillaVaALaDerecha(id);
-      const x = haciaLaDerecha ? (dimX / 2 - inset) : -(dimX / 2 - inset);
+      const offsetAncho = haciaLaDerecha ? (dimAncho / 2 - inset) : -(dimAncho / 2 - inset);
+      const offsetEspesor = dOut * (dimEspesor / 2 + grosor / 2 + separacion);
       const barra = new THREE.Mesh(new THREE.BoxGeometry(grosor, largo, grosor), manillaMaterial);
-      barra.position.set(x, 0, dimZ / 2 + grosor / 2 + separacion);
+      if (ejeAncho === 'x') barra.position.set(offsetAncho, 0, offsetEspesor);
+      else barra.position.set(offsetEspesor, 0, offsetAncho);
       cubo.add(barra);
     }
 
-    function agregarManillaCajon(cubo, dimX, dimY, dimZ) {
-      const largo = Math.min(96 * ESCALA, dimX * 0.4);
+    function agregarManillaCajon(cubo, dimAncho, dimAlto, dimEspesor, ejeAncho, dOut) {
+      const largo = Math.min(96 * ESCALA, dimAncho * 0.4);
       const grosor = 10 * ESCALA;
       const separacion = 5 * ESCALA;
-      const y = dimY / 2 - Math.min(35 * ESCALA, dimY * 0.3);
+      const y = dimAlto / 2 - Math.min(35 * ESCALA, dimAlto * 0.3);
+      const offsetEspesor = dOut * (dimEspesor / 2 + grosor / 2 + separacion);
       const barra = new THREE.Mesh(new THREE.BoxGeometry(largo, grosor, grosor), manillaMaterial);
-      barra.position.set(0, y, dimZ / 2 + grosor / 2 + separacion);
+      if (ejeAncho === 'x') barra.position.set(0, y, offsetEspesor);
+      else barra.position.set(offsetEspesor, y, 0);
       cubo.add(barra);
     }
 
@@ -287,7 +319,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       if (datos.tipo === 'puerta') {
         datos.pivot.rotation.y = datos.abierto ? datos.anguloAbierto : 0;
       } else {
-        mesh.position.z = datos.abierto ? datos.zAbierto : datos.zCerrado;
+        mesh.position[datos.eje] = datos.abierto ? datos.abiertoValor : datos.cerradoValor;
       }
     }
 
@@ -304,31 +336,45 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       );
       cubo.add(bordes);
 
+      const { ejeAncho, ejeEspesor } = ejesDePieza(pieza);
+      const dimAncho = ejeAncho === 'x' ? dimX : dimZ;
+      const dimEspesor = ejeEspesor === 'x' ? dimX : dimZ;
+
       if (REGEX_PUERTA.test(pieza.id)) {
-        agregarManillaPuerta(cubo, dimX, dimY, dimZ, pieza.id);
+        const dOut = signoHaciaAfuera(pieza, ejeEspesor);
+        agregarManillaPuerta(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut, pieza.id);
 
         // La bisagra va del lado contrario a la manilla. Se arma un pivote
         // en esa arista y la puerta cuelga de él desplazada — así girar el
         // pivote gira la puerta sobre su bisagra en vez de sobre su centro.
         const bisagraIzquierda = manillaVaALaDerecha(pieza.id);
-        const hingeLocalX = bisagraIzquierda ? -dimX / 2 : dimX / 2;
+        const hingeLocal = bisagraIzquierda ? -dimAncho / 2 : dimAncho / 2;
+        const pivotPos = { x, y, z };
+        pivotPos[ejeAncho] += hingeLocal;
         const pivot = new THREE.Group();
-        pivot.position.set(x + hingeLocalX, y, z);
-        cubo.position.set(-hingeLocalX, 0, 0);
+        pivot.position.set(pivotPos.x, pivotPos.y, pivotPos.z);
+        const cuboPos = { x: 0, y: 0, z: 0 };
+        cuboPos[ejeAncho] = -hingeLocal;
+        cubo.position.set(cuboPos.x, cuboPos.y, cuboPos.z);
         pivot.add(cubo);
         scene.add(pivot);
 
-        // Ángulo con signo tal que el canto libre siempre gire hacia +Z
-        // (afuera del mueble, hacia la sala), sin importar de qué lado
-        // quedó la bisagra.
-        const anguloAbierto = hingeLocalX > 0 ? ANGULO_APERTURA_PUERTA : -ANGULO_APERTURA_PUERTA;
+        // Ángulo con signo tal que el canto libre siempre gire hacia afuera
+        // (dOut), sin importar de qué lado quedó la bisagra ni si el ancho
+        // de este frente corre en X o en Z (brazo recto vs. rotado 90°).
+        const factorEje = ejeAncho === 'x' ? 1 : -1;
+        const anguloAbierto = dOut * Math.sign(hingeLocal) * factorEje * ANGULO_APERTURA_PUERTA;
         piezasInteractivas.set(cubo, { tipo: 'puerta', pivot, anguloAbierto, abierto: false });
       } else {
         cubo.position.set(x, y, z);
         if (REGEX_CAJON_FRENTE.test(pieza.id)) {
-          agregarManillaCajon(cubo, dimX, dimY, dimZ);
+          const dOut = signoHaciaAfuera(pieza, ejeEspesor);
+          agregarManillaCajon(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut);
+          const cerradoValor = ejeEspesor === 'x' ? x : z;
           piezasInteractivas.set(cubo, {
-            tipo: 'cajon', zCerrado: z, zAbierto: z + DESPLAZAMIENTO_APERTURA_CAJON, abierto: false,
+            tipo: 'cajon', eje: ejeEspesor,
+            cerradoValor, abiertoValor: cerradoValor + dOut * DESPLAZAMIENTO_APERTURA_CAJON,
+            abierto: false,
           });
         }
         scene.add(cubo);
