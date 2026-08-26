@@ -34,6 +34,13 @@ const MODULOS = [
 // botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
 const EMAIL_PAGOS_REAL = 'hernanjvidal@gmail.com';
 
+// Fase de validación: el pago está desactivado y todo el despiece queda
+// disponible gratis para cualquier usuario, para probar el flujo completo y
+// juntar feedback antes de cobrar. Para reactivar el cobro más adelante,
+// basta con volver esto a `false` — el resto de la lógica de pago (Lemon
+// Squeezy, el carrito, el bloqueo de edición post-compra) sigue intacta.
+const MODO_GRATIS_TEMPORAL = true;
+
 const COLORES_INTERIOR = [
   { value: 'blanco', label: 'Blanco' },
   { value: 'gris_claro', label: 'Gris claro' },
@@ -1151,7 +1158,7 @@ export default function Configurador() {
                 />
               </div>
 
-              {!desbloqueado && !esAdmin && (
+              {!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL && (
                 <div className="card" style={{ textAlign: 'center' }}>
                   <h3>Listado de piezas, herrajes y diagrama de corte</h3>
                   <p style={{ color: '#888', fontSize: 14 }}>
@@ -1188,7 +1195,7 @@ export default function Configurador() {
                 </div>
               )}
 
-              {(desbloqueado || esAdmin) && (
+              {(desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL) && (
                 <>
                   {esAdmin && !desbloqueado && (
                     <div className="card" style={{ textAlign: 'center', marginBottom: 20 }}>

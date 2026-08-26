@@ -23,6 +23,10 @@ const NOMBRE_MODULO = {
 // pedido (ver LEMONSQUEEZY_PRECIO_USD en app/api/checkout/route.js).
 const PRECIO_UNITARIO_USD = 5;
 
+// Fase de validación: el pago está desactivado (ver el mismo flag en
+// Configurador.jsx) — se oculta toda la UI de compra/carrito mientras dure.
+const MODO_GRATIS_TEMPORAL = true;
+
 export default function MisMuebles() {
   const { usuario, cargando: cargandoAuth } = useAuth();
   const router = useRouter();
@@ -161,7 +165,7 @@ export default function MisMuebles() {
         </div>
       )}
 
-      {muebles && muebles.length > 0 && (
+      {!MODO_GRATIS_TEMPORAL && muebles && muebles.length > 0 && (
         <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 0 }}>
           Marca los muebles que quieras comprar y paga todos juntos en un solo checkout.
         </p>
@@ -174,7 +178,7 @@ export default function MisMuebles() {
             <div key={m.id} className="card" style={seleccionados.has(m.id) ? { borderColor: 'var(--color-accent)' } : undefined}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <h4 style={{ margin: '0 0 4px' }}>{m.nombre}</h4>
-                {!pagado && (
+                {!MODO_GRATIS_TEMPORAL && !pagado && (
                   <input
                     type="checkbox"
                     style={{ width: 'auto', marginTop: 4 }}
@@ -190,7 +194,7 @@ export default function MisMuebles() {
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)' }}>
                 Editado {new Date(m.updated_at).toLocaleDateString('es-CL')}
               </p>
-              {pagado ? (
+              {!MODO_GRATIS_TEMPORAL && (pagado ? (
                 <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>
                   ✓ Despiece disponible
                 </p>
@@ -198,7 +202,7 @@ export default function MisMuebles() {
                 <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
                   Pendiente de pago
                 </p>
-              )}
+              ))}
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <Link href={`/configurador?muebleId=${m.id}`} style={{ flex: 1 }}>
                   <button style={{ marginTop: 0 }}>Abrir</button>
@@ -216,7 +220,7 @@ export default function MisMuebles() {
         })}
       </div>
 
-      {seleccionados.size > 0 && (
+      {!MODO_GRATIS_TEMPORAL && seleccionados.size > 0 && (
         <div
           style={{
             position: 'fixed', left: 0, right: 0, bottom: 0, background: '#fff',
