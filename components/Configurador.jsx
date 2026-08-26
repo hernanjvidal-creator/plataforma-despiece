@@ -212,6 +212,7 @@ export default function Configurador() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { usuario } = useAuth();
+  const esAdmin = usuario?.email === EMAIL_PAGOS_REAL;
   const moduloParam = searchParams.get('modulo');
   const muebleIdParam = searchParams.get('muebleId');
   const pedidoPagoParam = searchParams.get('pedidoPago');
@@ -229,6 +230,7 @@ export default function Configurador() {
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [desbloqueado, setDesbloqueado] = useState(false);
+  const [soloLectura, setSoloLectura] = useState(false);
   const [comprando, setComprando] = useState(false);
   const [comprandoReal, setComprandoReal] = useState(false);
   const [verificandoPago, setVerificandoPago] = useState(false);
@@ -248,9 +250,14 @@ export default function Configurador() {
       setMuebleActualId(data.id);
 
       // Si este mueble ya se compró antes, desbloquea de una vez — evita que
-      // se le vuelva a cobrar por algo que ya pagó en una compra anterior.
+      // se le vuelva a cobrar por algo que ya pagó en una compra anterior —
+      // y lo deja de solo lectura, para que no se pueda editar y volver a
+      // sacar un despiece distinto del mismo diseño ya comprado.
       if (await muebleEstaPagado(data.id)) {
-        if (!cancelado) setDesbloqueado(true);
+        if (!cancelado) {
+          setDesbloqueado(true);
+          setSoloLectura(true);
+        }
       }
 
       setCargando(true);
@@ -626,6 +633,12 @@ export default function Configurador() {
       <div className="grid-2">
         {/* ---------- Panel de parámetros ---------- */}
         <div className="card">
+          {soloLectura && (
+            <p style={{ background: '#fff4e5', border: '1px solid #f0c987', borderRadius: 6, padding: 10, fontSize: 13, marginBottom: 14 }}>
+              Este despiece ya fue comprado — queda de solo lectura para que no se pueda modificar y sacar un plano distinto del mismo diseño ya pagado. Crea un mueble nuevo si quieres otro diseño.
+            </p>
+          )}
+          <fieldset disabled={soloLectura} style={{ border: 'none', margin: 0, padding: 0 }}>
           <label>Tipo de mueble</label>
           <select value={form.modulo} onChange={e => cambiarModulo(e.target.value)}>
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
@@ -1114,6 +1127,7 @@ export default function Configurador() {
           {guardadoOk && <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 8 }}>Mueble guardado ✓</p>}
 
           {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
+          </fieldset>
         </div>
 
         {/* ---------- Panel de resultados ---------- */}
@@ -1137,7 +1151,7 @@ export default function Configurador() {
                 />
               </div>
 
-              {!desbloqueado && (
+              {!desbloqueado && !esAdmin && (
                 <div className="card" style={{ textAlign: 'center' }}>
                   <h3>Listado de piezas, herrajes y diagrama de corte</h3>
                   <p style={{ color: '#888', fontSize: 14 }}>
@@ -1174,8 +1188,24 @@ export default function Configurador() {
                 </div>
               )}
 
-              {desbloqueado && (
+              {(desbloqueado || esAdmin) && (
                 <>
+                  {esAdmin && !desbloqueado && (
+                    <div className="card" style={{ textAlign: 'center', marginBottom: 20 }}>
+                      <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>
+                        Modo administrador: nunca se te cobra por sacar un plano.
+                        {' '}
+                        <button
+                          type="button"
+                          onClick={iniciarCheckoutReal}
+                          disabled={comprandoReal}
+                          style={{ width: 'auto', padding: '4px 10px', fontSize: 12, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+                        >
+                          {comprandoReal ? 'Redirigiendo...' : 'Probar el pago real igual'}
+                        </button>
+                      </p>
+                    </div>
+                  )}
                   <div className="card" style={{ marginBottom: 20 }}>
                     <h3>Listado de piezas y herrajes</h3>
                     <ListaPiezas despiece={resultado.despiece} />
