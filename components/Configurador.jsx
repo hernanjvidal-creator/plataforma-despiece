@@ -130,7 +130,7 @@ const VALORES_POR_MODULO = {
   },
   escritorio: {
     A: 1200, H: 720, P: 550,
-    anchoCajonera: 450, ladoCajonera: 'derecha', nC: 3,
+    anchoCajonera: 450, ladoCajonera: 'derecha', configCajonera: 'solo_cajones', nC: 3,
     cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
@@ -193,7 +193,8 @@ function formDesdeParametros(modulo, parametros) {
   if (modulo === 'escritorio') {
     return {
       ...base, ...comunes,
-      anchoCajonera: parametros.anchoCajonera, ladoCajonera: parametros.ladoCajonera, nC: parametros.nC,
+      anchoCajonera: parametros.anchoCajonera, ladoCajonera: parametros.ladoCajonera,
+      configCajonera: parametros.configCajonera, nC: parametros.nC,
       cubiertaMaterial: parametros.cubierta?.material ?? 'melamina',
       cubiertaEspesor: parametros.cubierta?.espesor ?? 20,
     };
@@ -459,7 +460,8 @@ export default function Configurador() {
     if (form.modulo === 'escritorio') {
       return {
         ...base,
-        anchoCajonera: Number(form.anchoCajonera), ladoCajonera: form.ladoCajonera, nC: Number(form.nC),
+        anchoCajonera: Number(form.anchoCajonera), ladoCajonera: form.ladoCajonera,
+        configCajonera: form.configCajonera, nC: Number(form.nC),
         cubierta,
       };
     }
@@ -946,8 +948,19 @@ export default function Configurador() {
               <label>Ancho de la cajonera (mm)</label>
               <input type="number" min={250} value={form.anchoCajonera} onChange={e => actualizar('anchoCajonera', e.target.value)} />
 
-              <label>Cantidad de cajones</label>
-              <input type="number" min={1} value={form.nC} onChange={e => actualizar('nC', e.target.value)} />
+              <label>Configuración de la cajonera</label>
+              <select value={form.configCajonera} onChange={e => actualizar('configCajonera', e.target.value)}>
+                <option value="solo_cajones">Solo cajones</option>
+                <option value="cajon_puerta">Cajón superior + puerta abajo</option>
+                <option value="cajon_repisa">Cajón superior + repisa fija abajo</option>
+              </select>
+
+              {form.configCajonera === 'solo_cajones' && (
+                <>
+                  <label>Cantidad de cajones</label>
+                  <input type="number" min={1} value={form.nC} onChange={e => actualizar('nC', e.target.value)} />
+                </>
+              )}
 
               <label>Material de la cubierta (superficie de trabajo)</label>
               <select value={form.cubiertaMaterial} onChange={e => actualizar('cubiertaMaterial', e.target.value)}>
