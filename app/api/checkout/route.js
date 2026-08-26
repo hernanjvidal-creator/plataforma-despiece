@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabaseClient';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
 import { crearCheckoutLemonSqueezy, lemonsqueezyConfigurado } from '@/lib/lemonsqueezy';
 
-const PRECIO_DESPIECE_CLP = Number(process.env.LEMONSQUEEZY_PRECIO_CLP || 0);
+// Solo informativo (queda guardado en pedidos/pedido_items) — lo que
+// realmente cobra Lemon Squeezy lo define la variante en su propio dashboard.
+const PRECIO_DESPIECE_USD = Number(process.env.LEMONSQUEEZY_PRECIO_USD || 0);
 
 /**
  * POST /api/checkout
@@ -42,7 +44,7 @@ export async function POST(request) {
   try {
     const { data: pedido, error: errPedido } = await supabaseAdmin
       .from('pedidos')
-      .insert({ user_id: user.id, estado: 'pendiente', total: PRECIO_DESPIECE_CLP })
+      .insert({ user_id: user.id, estado: 'pendiente', total: PRECIO_DESPIECE_USD })
       .select()
       .single();
     if (errPedido) throw errPedido;
@@ -54,7 +56,7 @@ export async function POST(request) {
       nombre: nombre || 'Mueble',
       modulo,
       parametros_congelados: parametros,
-      precio: PRECIO_DESPIECE_CLP,
+      precio: PRECIO_DESPIECE_USD,
     });
     if (errItem) throw errItem;
 
