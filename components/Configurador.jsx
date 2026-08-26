@@ -8,6 +8,7 @@ import DiagramaCorte from './DiagramaCorte';
 import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { muebleEstaPagado } from '@/lib/pedidosCliente';
+import { EMAIL_ADMIN } from '@/lib/admin';
 
 const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
@@ -32,7 +33,7 @@ const MODULOS = [
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
 // de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
 // botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
-const EMAIL_PAGOS_REAL = 'hernanjvidal@gmail.com';
+const EMAIL_PAGOS_REAL = EMAIL_ADMIN;
 
 // Fase de validación: el pago está desactivado y todo el despiece queda
 // disponible gratis para cualquier usuario, para probar el flujo completo y
