@@ -130,10 +130,9 @@ const VALORES_POR_MODULO = {
   },
   escritorio: {
     A: 1200, H: 720, P: 550,
-    nP: 0, nC: 3, repisas: 0, config: 'solo_cajones',
+    anchoCajonera: 450, ladoCajonera: 'derecha', nC: 3,
     cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     colorInterior: 'blanco', colorExterior: 'blanco',
-    espesorPuertas: 15,
   },
   librero: {
     A: 900, H: 1800, P: 300,
@@ -194,7 +193,7 @@ function formDesdeParametros(modulo, parametros) {
   if (modulo === 'escritorio') {
     return {
       ...base, ...comunes,
-      nP: parametros.nP, nC: parametros.nC, repisas: parametros.repisas, config: parametros.config,
+      anchoCajonera: parametros.anchoCajonera, ladoCajonera: parametros.ladoCajonera, nC: parametros.nC,
       cubiertaMaterial: parametros.cubierta?.material ?? 'melamina',
       cubiertaEspesor: parametros.cubierta?.espesor ?? 20,
     };
@@ -458,11 +457,9 @@ export default function Configurador() {
       return { ...base, tipoInferior: form.tipoInferior };
     }
     if (form.modulo === 'escritorio') {
-      const { nP, nC } = nPyNCporConfig(form.config, Number(form.nP), Number(form.nC));
-      const repisas = (nP > 0 || form.config === 'abierto') ? Number(form.repisas) || 0 : 0;
       return {
         ...base,
-        nP, nC, repisas, config: form.config,
+        anchoCajonera: Number(form.anchoCajonera), ladoCajonera: form.ladoCajonera, nC: Number(form.nC),
         cubierta,
       };
     }
@@ -936,34 +933,21 @@ export default function Configurador() {
 
           {form.modulo === 'escritorio' && (
             <>
-              <label>Configuración de frentes</label>
-              <select value={form.config} onChange={e => actualizar('config', e.target.value)}>
-                <option value="solo_cajones">Solo cajones</option>
-                <option value="solo_puertas">Solo puertas</option>
-                <option value="mixto">Cajón superior + puertas</option>
-                <option value="abierto">Sin puerta (hueco abierto)</option>
+              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 8px' }}>
+                Un panel sólido de un lado y una cajonera del otro, con hueco libre para las piernas en el medio — la cubierta vuela por encima de todo.
+              </p>
+
+              <label>Lado de la cajonera</label>
+              <select value={form.ladoCajonera} onChange={e => actualizar('ladoCajonera', e.target.value)}>
+                <option value="derecha">Derecha</option>
+                <option value="izquierda">Izquierda</option>
               </select>
 
-              {(form.config === 'solo_cajones' || form.config === 'mixto') && (
-                <>
-                  <label>Cantidad de cajones</label>
-                  <input type="number" min={1} value={form.nC} onChange={e => actualizar('nC', e.target.value)} />
-                </>
-              )}
+              <label>Ancho de la cajonera (mm)</label>
+              <input type="number" min={250} value={form.anchoCajonera} onChange={e => actualizar('anchoCajonera', e.target.value)} />
 
-              {(form.config === 'solo_puertas' || form.config === 'mixto') && (
-                <>
-                  <label>Cantidad de puertas</label>
-                  <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
-                </>
-              )}
-
-              {(form.config === 'solo_puertas' || form.config === 'mixto' || form.config === 'abierto') && (
-                <>
-                  <label>Repisas interiores (además del piso)</label>
-                  <input type="number" min={0} value={form.repisas} onChange={e => actualizar('repisas', e.target.value)} />
-                </>
-              )}
+              <label>Cantidad de cajones</label>
+              <input type="number" min={1} value={form.nC} onChange={e => actualizar('nC', e.target.value)} />
 
               <label>Material de la cubierta (superficie de trabajo)</label>
               <select value={form.cubiertaMaterial} onChange={e => actualizar('cubiertaMaterial', e.target.value)}>
@@ -1051,7 +1035,7 @@ export default function Configurador() {
             </>
           )}
 
-          {form.modulo !== 'librero' && (
+          {form.modulo !== 'librero' && form.modulo !== 'escritorio' && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
                 type="checkbox"
