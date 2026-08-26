@@ -1,5 +1,10 @@
+import { Suspense } from 'react';
 import MisMuebles from '@/components/MisMuebles';
 
 export default function MisMueblesPage() {
-  return <MisMuebles />;
+  return (
+    <Suspense fallback={null}>
+      <MisMuebles />
+    </Suspense>
+  );
 }

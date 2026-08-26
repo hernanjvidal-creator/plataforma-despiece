@@ -7,6 +7,7 @@ import ListaPiezas from './ListaPiezas';
 import DiagramaCorte from './DiagramaCorte';
 import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { muebleEstaPagado } from '@/lib/pedidosCliente';
 
 const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
@@ -245,6 +246,12 @@ export default function Configurador() {
       if (cancelado || err || !data) return;
       setForm(formDesdeParametros(data.modulo, data.parametros));
       setMuebleActualId(data.id);
+
+      // Si este mueble ya se compró antes, desbloquea de una vez — evita que
+      // se le vuelva a cobrar por algo que ya pagó en una compra anterior.
+      if (await muebleEstaPagado(data.id)) {
+        if (!cancelado) setDesbloqueado(true);
+      }
 
       setCargando(true);
       setError(null);
