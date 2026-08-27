@@ -39,6 +39,7 @@ export default function Header() {
           <Link href="/configurador">Diseñar</Link>
           <Link href="/guia-armado">Guía de armado</Link>
           {!cargando && usuario && <Link href="/mis-muebles">Mis muebles</Link>}
+          {!cargando && usuario?.email === EMAIL_ADMIN && <Link href="/admin/estadisticas">Estadísticas</Link>}
           {!cargando && usuario?.email === EMAIL_ADMIN && <Link href="/admin/feedback">Feedback</Link>}
           {!cargando && !usuario && <Link href="/login">Iniciar sesión</Link>}
           {!cargando && usuario && (

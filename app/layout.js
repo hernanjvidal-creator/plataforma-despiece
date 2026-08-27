@@ -1,5 +1,6 @@
 import { Fraunces, Inter } from 'next/font/google';
 import Script from 'next/script';
+import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from '@/components/AuthProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -62,6 +63,7 @@ export default function RootLayout({ children }) {
           <Footer />
           <Feedback />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
