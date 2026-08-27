@@ -249,7 +249,20 @@ export default function Configurador() {
   // diseño guardado y genera el despiece de una vez — no hace falta apretar
   // "Generar despiece" de nuevo para ver el mueble.
   useEffect(() => {
-    if (!muebleIdParam) return;
+    if (!muebleIdParam) {
+      // Se navegó de vuelta a /configurador sin muebleId (ej. desde "Mis
+      // muebles" con un diseño ya cargado, apretando "Diseñar" en la barra
+      // superior) — sin este reset, el formulario/resultado del mueble
+      // anterior se quedaba pegado en pantalla como si el click no hubiera
+      // hecho nada.
+      setMuebleActualId(null);
+      setDesbloqueado(false);
+      setSoloLectura(false);
+      setResultado(null);
+      setError(null);
+      setForm({ modulo: moduloInicial, ...VALORES_POR_MODULO[moduloInicial], ...VALORES_COMUNES });
+      return;
+    }
     let cancelado = false;
 
     supabase.from('muebles').select('*').eq('id', muebleIdParam).single().then(async ({ data, error: err }) => {
