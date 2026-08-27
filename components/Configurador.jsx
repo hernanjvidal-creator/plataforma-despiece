@@ -905,7 +905,7 @@ export default function Configurador() {
                         onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                       />
                       <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                        Ancho interior de esta sección (el hueco donde van puertas/cajones), sin contar los laterales.
+                        Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) — sumando el de todas las secciones da el "Ancho (mm)" total de arriba.
                       </p>
                     </>
                   )}
