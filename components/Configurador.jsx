@@ -532,6 +532,18 @@ export default function Configurador() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error generando el despiece');
       setResultado(data);
+
+      // Registro de uso real: a diferencia de "muebles" (que solo se llena
+      // si además se guarda el diseño), esto cuenta a cualquiera que llegue
+      // a ver su despiece generado, se lo guarde o no — para que las
+      // estadísticas de uso reflejen la plataforma tal como se usa de
+      // verdad. Sin esperar la respuesta ni frenar la UI si falla.
+      supabase.from('generaciones_despiece').insert({
+        user_id: usuario?.id || null,
+        modulo: form.modulo,
+      }).then(({ error: errGen }) => {
+        if (errGen) console.error('No se pudo registrar la generación:', errGen.message);
+      });
     } catch (e) {
       setError(e.message);
       setResultado(null);

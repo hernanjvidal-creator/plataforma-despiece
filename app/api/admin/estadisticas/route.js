@@ -28,8 +28,12 @@ export async function GET(request) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
+  // "generaciones_despiece" registra cada vez que alguien aprieta "Generar
+  // despiece" — a diferencia de "muebles" (que solo se llena si además
+  // guarda el diseño), esto sí refleja el uso real de la plataforma, ya que
+  // guardar no es necesario para ver/descargar el despiece completo.
   const { data: muebles, error: errMuebles } = await supabaseAdmin
-    .from('muebles')
+    .from('generaciones_despiece')
     .select('modulo, user_id, created_at');
   if (errMuebles) {
     return NextResponse.json({ error: errMuebles.message }, { status: 500 });
