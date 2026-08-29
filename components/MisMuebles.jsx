@@ -16,6 +16,7 @@ const NOMBRE_MODULO = {
   velador: 'Velador',
   escritorio: 'Escritorio',
   librero: 'Librero',
+  baul: 'Baúl',
 };
 
 // Solo para mostrar el total del carrito — el monto real que se cobra lo

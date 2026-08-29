@@ -9,6 +9,7 @@ const MODULOS = [
   { valor: 'velador', nombre: 'Velador', detalle: 'cajón arriba + puerta, repisa o abierto abajo, sobre patas' },
   { valor: 'escritorio', nombre: 'Escritorio', detalle: 'cajones/puertas a elección + cubierta de superficie, sobre patas' },
   { valor: 'librero', nombre: 'Librero', detalle: 'cuerpo abierto por secciones, solo repisas ajustables' },
+  { valor: 'baul', nombre: 'Baúl', detalle: 'caja cerrada de 4 lados con tapa, sobre patas, un solo color' },
 ];
 
 export default function Home() {

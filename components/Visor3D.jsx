@@ -239,6 +239,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     const manillaMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35 });
     const REGEX_PUERTA = /puerta/;
     const REGEX_CAJON_FRENTE = /frente_cajon/;
+    const REGEX_TAPA = /^tapa$/;
 
     // La manilla va en el lado contrario a la bisagra (la puerta se abre
     // tirando desde el lado opuesto a donde gira). Mismo cálculo lo usa
@@ -303,12 +304,15 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       cubo.add(barra);
     }
 
-    // ---------- Apertura interactiva de puertas y cajones ----------
+    // ---------- Apertura interactiva de puertas, cajones y tapas ----------
     // Doble clic en una puerta la abre girándola sobre su bisagra (el lado
     // contrario a la manilla); doble clic en un cajón lo desliza hacia
-    // afuera. Así se puede revisar cómo queda el interior armado — útil de
-    // referencia al momento de armar en terreno.
+    // afuera; doble clic en una tapa (baúl) la levanta girándola sobre una
+    // bisagra horizontal en el borde trasero. Así se puede revisar cómo
+    // queda el interior armado — útil de referencia al momento de armar en
+    // terreno.
     const ANGULO_APERTURA_PUERTA = (100 * Math.PI) / 180;
+    const ANGULO_APERTURA_TAPA = (100 * Math.PI) / 180;
     const DESPLAZAMIENTO_APERTURA_CAJON = 320 * ESCALA;
     const piezasInteractivas = new Map(); // mesh -> { tipo, ...datos, abierto }
 
@@ -318,6 +322,8 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       datos.abierto = !datos.abierto;
       if (datos.tipo === 'puerta') {
         datos.pivot.rotation.y = datos.abierto ? datos.anguloAbierto : 0;
+      } else if (datos.tipo === 'tapa') {
+        datos.pivot.rotation.x = datos.abierto ? datos.anguloAbierto : 0;
       } else {
         // 'cajon': todas las piezas del grupo (frente + caja) se mueven
         // juntas, como una sola unidad — no solo el frente.
@@ -376,6 +382,17 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
         const factorEje = ejeAncho === 'x' ? 1 : -1;
         const anguloAbierto = dOut * Math.sign(hingeLocal) * factorEje * ANGULO_APERTURA_PUERTA;
         piezasInteractivas.set(cubo, { tipo: 'puerta', pivot, anguloAbierto, abierto: false });
+      } else if (REGEX_TAPA.test(pieza.id)) {
+        // La tapa (baúl) se abre girando sobre una bisagra horizontal en el
+        // borde trasero (donde queda a ras del lateral trasero) — se
+        // levanta el borde delantero, el que sobresale, como la tapa real
+        // de un baúl.
+        const pivot = new THREE.Group();
+        pivot.position.set(x, y - dimY / 2, z - dimZ / 2);
+        cubo.position.set(0, dimY / 2, dimZ / 2);
+        pivot.add(cubo);
+        scene.add(pivot);
+        piezasInteractivas.set(cubo, { tipo: 'tapa', pivot, anguloAbierto: -ANGULO_APERTURA_TAPA, abierto: false });
       } else {
         cubo.position.set(x, y, z);
         if (REGEX_CAJON_FRENTE.test(pieza.id)) {

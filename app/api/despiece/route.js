@@ -7,6 +7,7 @@ import { generarDespiece as generarDespensa } from '@/lib/despensa';
 import { generarDespiece as generarVelador } from '@/lib/velador';
 import { generarDespiece as generarEscritorio } from '@/lib/escritorio';
 import { generarDespiece as generarLibrero } from '@/lib/librero';
+import { generarDespiece as generarBaul } from '@/lib/baul';
 import { optimizarCorte } from '@/lib/optimizadorCorte';
 
 const MOTORES = {
@@ -18,6 +19,7 @@ const MOTORES = {
   velador: generarVelador,
   escritorio: generarEscritorio,
   librero: generarLibrero,
+  baul: generarBaul,
 };
 
 /**

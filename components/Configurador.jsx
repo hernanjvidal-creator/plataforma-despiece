@@ -28,6 +28,7 @@ const MODULOS = [
   { value: 'velador', label: 'Velador' },
   { value: 'escritorio', label: 'Escritorio' },
   { value: 'librero', label: 'Librero' },
+  { value: 'baul', label: 'Baúl' },
 ];
 
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
@@ -149,6 +150,10 @@ const VALORES_POR_MODULO = {
       { repisas: 5 },
       { repisas: 5 },
     ],
+    colorInterior: 'blanco', colorExterior: 'blanco',
+  },
+  baul: {
+    A: 600, H: 400, P: 400,
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
 };
@@ -1089,7 +1094,7 @@ export default function Configurador() {
             </>
           )}
 
-          {form.modulo !== 'librero' && form.modulo !== 'escritorio' && (
+          {form.modulo !== 'librero' && form.modulo !== 'escritorio' && form.modulo !== 'baul' && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
                 type="checkbox"
@@ -1101,14 +1106,18 @@ export default function Configurador() {
             </label>
           )}
 
+          {form.modulo !== 'baul' && (
+          <>
           <label>Color interior (cajones/bandejas/repisas)</label>
           <select value={form.colorInterior} onChange={e => actualizar('colorInterior', e.target.value)}>
             {COLORES_INTERIOR.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
+          </>
+          )}
 
           {form.modulo !== 'librero' && (
           <>
-          <label>Color exterior (frentes/puertas/zócalo)</label>
+          <label>{form.modulo === 'baul' ? 'Color (toda la estructura)' : 'Color exterior (frentes/puertas/zócalo)'}</label>
           <select value={form.colorExterior} onChange={e => actualizar('colorExterior', e.target.value)}>
             {COLORES_EXTERIOR.map(g => (
               <optgroup key={g.grupo} label={g.grupo}>
