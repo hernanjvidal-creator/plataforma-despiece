@@ -165,6 +165,15 @@ th { background: #faf7f2; color: var(--color-text-muted); font-weight: 600; text
 
 .site-nav a:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
+/* Botón principal del menú: hacia dónde debe ir el cliente para armar su
+   mueble, destacado del resto de los links (que son más de referencia). */
+.site-nav a.nav-cta {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-accent-dark);
+}
+.site-nav a.nav-cta:hover { color: var(--color-accent); }
+
 .modulo-card-link { text-decoration: none; display: block; height: 100%; }
 
 .modulo-card {
