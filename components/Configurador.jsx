@@ -240,6 +240,7 @@ export default function Configurador() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
   const [muebleActualId, setMuebleActualId] = useState(null);
+  const [nombreMueble, setNombreMueble] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [desbloqueado, setDesbloqueado] = useState(false);
@@ -261,6 +262,7 @@ export default function Configurador() {
       // anterior se quedaba pegado en pantalla como si el click no hubiera
       // hecho nada.
       setMuebleActualId(null);
+      setNombreMueble(null);
       setDesbloqueado(false);
       setSoloLectura(false);
       setResultado(null);
@@ -274,6 +276,7 @@ export default function Configurador() {
       if (cancelado || err || !data) return;
       setForm(formDesdeParametros(data.modulo, data.parametros));
       setMuebleActualId(data.id);
+      setNombreMueble(data.nombre);
 
       // Si este mueble ya se compró antes, desbloquea de una vez — evita que
       // se le vuelva a cobrar por algo que ya pagó en una compra anterior —
@@ -367,9 +370,6 @@ export default function Configurador() {
       router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
       return;
     }
-    const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
-    const nombre = window.prompt('Nombre para este mueble:', nombreSugerido);
-    if (!nombre) return;
 
     setGuardando(true);
     setGuardadoOk(false);
@@ -377,12 +377,19 @@ export default function Configurador() {
     try {
       const parametros = construirParametros();
       if (muebleActualId) {
+        // Actualizar un mueble ya guardado: mantiene el nombre que ya
+        // tenía, sin volver a preguntar (antes se pedía de nuevo con un
+        // window.prompt, y si se cancelaba o no se completaba, la función
+        // cortaba en silencio sin guardar ni avisar del error).
         const { error: err } = await supabase
           .from('muebles')
-          .update({ nombre, modulo: form.modulo, parametros })
+          .update({ modulo: form.modulo, parametros })
           .eq('id', muebleActualId);
         if (err) throw err;
       } else {
+        const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+        const nombre = window.prompt('Nombre para este mueble:', nombreSugerido);
+        if (!nombre) { setGuardando(false); return; }
         const { data, error: err } = await supabase
           .from('muebles')
           .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros })
@@ -390,6 +397,7 @@ export default function Configurador() {
           .single();
         if (err) throw err;
         setMuebleActualId(data.id);
+        setNombreMueble(data.nombre);
       }
       setGuardadoOk(true);
     } catch (e) {
