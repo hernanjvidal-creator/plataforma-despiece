@@ -195,7 +195,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
 
     function crearEtiqueta(pieza) {
       const div = document.createElement('div');
-      const medidas = `${Math.round(pieza.ancho)}×${Math.round(pieza.alto)}×${Math.round(pieza.espesor || 15)}mm`;
+      const medidas = `${Math.round(pieza.alto)}×${Math.round(pieza.ancho)}×${Math.round(pieza.espesor || 15)}mm`;
       div.innerHTML = `<strong>${pieza.id}</strong><br>${medidas}`;
       Object.assign(div.style, {
         position: 'absolute', transform: 'translate(-50%, -100%)',
