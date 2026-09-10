@@ -694,7 +694,7 @@ export default function Configurador() {
           <input type="number" value={form.A} onChange={e => actualizar('A', e.target.value)} />
           {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') ? (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Con una esquina agregada, este ancho ya no se usa — cada sección de cada brazo necesita su propio "Ancho fijo" más abajo.
+              Con una esquina agregada, este ancho ya no se usa — cada módulo de cada brazo necesita su propio "Ancho fijo" más abajo.
             </p>
           ) : (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
@@ -834,11 +834,11 @@ export default function Configurador() {
                 Mueble isla (independiente, respaldo terminado)
               </label>
 
-              <label>Secciones (de izquierda a derecha)</label>
+              <label>Módulos (de izquierda a derecha)</label>
               {form.secciones.map((s, i) => (
                 <div key={i} style={{ border: '1px solid #e4e2dc', borderRadius: 8, padding: 10, marginTop: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: 13 }}>Sección {i + 1}</strong>
+                    <strong style={{ fontSize: 13 }}>Módulo {i + 1}</strong>
                     {form.secciones.length > 1 && (
                       <button
                         type="button"
@@ -868,9 +868,9 @@ export default function Configurador() {
                         <option value="izquierda">Izquierda</option>
                       </select>
                       <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                        No es un frente: acá el mueble dobla 90° y sigue con las secciones que pongas después
+                        No es un frente: acá el mueble dobla 90° y sigue con los módulos que pongas después
                         (nuevo brazo, "esquinero interior" con bisagra plegable de rincón). Tiene que haber al
-                        menos una sección antes y después de cada esquina.
+                        menos un módulo antes y después de cada esquina.
                       </p>
                     </>
                   )}
@@ -930,7 +930,7 @@ export default function Configurador() {
                         onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                       />
                       <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                        Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) — sumando el de todas las secciones da el "Ancho (mm)" total de arriba.
+                        Ancho de este módulo tal como se ve por fuera (comparte la mitad de cada separador con el módulo vecino) — sumando el de todos los módulos da el "Ancho (mm)" total de arriba.
                       </p>
                     </>
                   )}
@@ -941,7 +941,7 @@ export default function Configurador() {
                 onClick={agregarSeccion}
                 style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
               >
-                + Agregar sección
+                + Agregar módulo
               </button>
             </>
           )}
