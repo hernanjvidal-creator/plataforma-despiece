@@ -55,29 +55,37 @@ export const metadata = {
   },
 };
 
+// Solo cargar analítica/ads en producción — en desarrollo local (npm run dev)
+// no queremos que las pruebas ensucien las estadísticas reales de visitas.
+const ES_PRODUCCION = process.env.NODE_ENV === 'production';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${fuenteSerif.variable} ${fuenteSans.variable}`}>
       <body>
-        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`} strategy="afterInteractive" />
-        <Script id="google-ads-tag" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GOOGLE_ADS_ID}');
-            gtag('config', '${GA4_ID}');
-          `}
-        </Script>
-        <Script id="microsoft-clarity" strategy="afterInteractive">
-          {`
-            (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
-          `}
-        </Script>
+        {ES_PRODUCCION && (
+          <>
+            <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`} strategy="afterInteractive" />
+            <Script id="google-ads-tag" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GOOGLE_ADS_ID}');
+                gtag('config', '${GA4_ID}');
+              `}
+            </Script>
+            <Script id="microsoft-clarity" strategy="afterInteractive">
+              {`
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
+              `}
+            </Script>
+          </>
+        )}
         <AuthProvider>
           <Header />
           {children}
