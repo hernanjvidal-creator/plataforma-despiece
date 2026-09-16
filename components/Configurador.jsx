@@ -552,6 +552,13 @@ export default function Configurador() {
       }).then(({ error: errGen }) => {
         if (errGen) console.error('No se pudo registrar la generación:', errGen.message);
       });
+
+      // Evento de GA4 para poder importarlo como conversión en Google Ads —
+      // esta es la acción real que le da valor a un clic (no solo entrar al
+      // sitio). Solo existe en producción (ver app/layout.js).
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag('event', 'generar_despiece', { modulo: form.modulo });
+      }
     } catch (e) {
       setError(e.message);
       setResultado(null);
