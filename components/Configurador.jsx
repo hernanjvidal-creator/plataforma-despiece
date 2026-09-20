@@ -249,6 +249,7 @@ export default function Configurador() {
   const [comprandoReal, setComprandoReal] = useState(false);
   const [verificandoPago, setVerificandoPago] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const [descargandoManual, setDescargandoManual] = useState(false);
   const visor3DRef = useRef(null);
 
   // Si se entra desde "Mis muebles" (/configurador?muebleId=...), carga ese
@@ -677,6 +678,40 @@ export default function Configurador() {
     }
   }
 
+  async function descargarManual() {
+    if (!resultado) return;
+    setDescargandoManual(true);
+    setError(null);
+    try {
+      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+
+      const res = await fetch('/api/manual-armado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre,
+          modulo: form.modulo,
+          despiece: resultado.despiece,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error generando el manual');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `manual_armado_${form.modulo}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError('No se pudo descargar el manual: ' + e.message);
+    } finally {
+      setDescargandoManual(false);
+    }
+  }
+
   const moduloLabel = MODULOS.find(m => m.value === form.modulo)?.label || '';
 
   return (
@@ -888,7 +923,7 @@ export default function Configurador() {
                       <select value={s.config} onChange={e => actualizarSeccion(i, 'config', e.target.value)}>
                         <option value="solo_cajones">Solo cajones</option>
                         <option value="solo_puertas">Solo puertas</option>
-                        <option value="mixto">Cajones abajo + puertas arriba</option>
+                        <option value="mixto">Cajones arriba + puertas abajo</option>
                         <option value="abierto">Sin puerta (hueco abierto)</option>
                       </select>
 
@@ -1276,6 +1311,13 @@ export default function Configurador() {
                   <div className="card" style={{ textAlign: 'center' }}>
                     <button onClick={descargarPdf} disabled={descargandoPdf} style={{ maxWidth: 320, margin: '0 auto' }}>
                       {descargandoPdf ? 'Generando PDF...' : 'Descargar PDF de entrega'}
+                    </button>
+                    <button
+                      onClick={descargarManual}
+                      disabled={descargandoManual}
+                      style={{ maxWidth: 320, margin: '10px auto 0', background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+                    >
+                      {descargandoManual ? 'Generando manual...' : 'Descargar manual de armado de este mueble'}
                     </button>
                     <p style={{ fontSize: 13, marginTop: 12 }}>
                       <a href="/guia-armado" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>

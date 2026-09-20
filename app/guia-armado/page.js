@@ -11,23 +11,6 @@ export const metadata = {
   description: 'Guía paso a paso para armar muebles de melamina: uniones, correderas, bisagras, puertas correderas de closet, nivelación y fijación a la pared.',
 };
 
-function DiagramaMinifix() {
-  return (
-    <svg viewBox="0 0 220 140" width="100%" height="auto">
-      <rect x="30" y="10" width="16" height="110" fill={COLOR_RELLENO} stroke={COLOR_BORDE} strokeWidth="1" />
-      <rect x="46" y="94" width="150" height="16" fill={COLOR_RELLENO} stroke={COLOR_BORDE} strokeWidth="1" />
-      <line x1="46" y1="102" x2="90" y2="102" stroke={COLOR_LINEA} strokeWidth="2" />
-      <circle cx="90" cy="102" r="7" fill="#fff" stroke={COLOR_LINEA} strokeWidth="1.2" />
-      <circle cx="90" cy="102" r="2.2" fill={COLOR_LINEA} />
-      <path d="M 90 92 A 10 10 0 1 1 82 98" stroke={COLOR_LINEA} strokeWidth="1" fill="none" />
-      <text x="108" y="100" fontSize="7" fill={COLOR_LINEA}>Cazoleta: gira 90°</text>
-      <text x="108" y="108" fontSize="7" fill={COLOR_LINEA}>para trabar el tarugo</text>
-      <text x="48" y="72" fontSize="7" fill={COLOR_LINEA}>Tarugo pegado</text>
-      <text x="48" y="80" fontSize="7" fill={COLOR_LINEA}>a presión en el canto</text>
-    </svg>
-  );
-}
-
 function DiagramaConfirmat() {
   return (
     <svg viewBox="0 0 220 140" width="100%" height="auto">
@@ -37,7 +20,7 @@ function DiagramaConfirmat() {
       <circle cx="8" cy="58" r="3" fill={COLOR_LINEA} />
       <text x="0" y="38" fontSize="7" fill={COLOR_LINEA}>Avellanar</text>
       <text x="0" y="46" fontSize="7" fill={COLOR_LINEA}>la cara</text>
-      <text x="100" y="38" fontSize="7" fill={COLOR_LINEA}>Tornillo confirmat</text>
+      <text x="100" y="38" fontSize="7" fill={COLOR_LINEA}>Tornillo directo</text>
       <text x="24" y="126" fontSize="7" fill={COLOR_LINEA}>Pre-taladrar el canto para que no raje</text>
     </svg>
   );
@@ -125,8 +108,8 @@ function DiagramaEscuadraPared() {
 
 const HERRAMIENTAS = [
   'Taladro/atornillador inalámbrico (18V recomendado)',
-  'Set de brocas: 3mm (pilotos), 5mm (tarugos/minifix/confirmat) y 8mm (patas)',
-  'Broca avellanadora, para esconder cabezas de tornillo confirmat',
+  'Set de brocas: 3mm (piloto de tornillos de montaje), 5mm (tornillo 1-5/8 y confirmat) y 8mm (patas)',
+  'Broca avellanadora, para esconder cabezas de tornillo',
   'Destornillador Phillips manual, de respaldo',
   'Mazo de goma',
   'Nivel de burbuja (idealmente de 40cm o más)',
@@ -139,13 +122,13 @@ const HERRAMIENTAS = [
 const ANTES_DE_EMPEZAR = [
   'Despeja una superficie de trabajo plana y amplia; protege el piso con cartón o una manta para no rayar las caras de melamina.',
   'Abre todos los paquetes y separa las piezas por tipo: laterales, piso, techo, repisas, puertas, frentes de cajón, fondos de cajón y respaldo.',
-  'Cuenta los herrajes (tarugos, minifix, tornillos, bisagras, correderas, patas, manillas) contra la lista de tu PDF de despiece — es más fácil pedir una pieza faltante antes de empezar que a mitad de armado.',
+  'Cuenta los herrajes (tornillos, soportes duplo o escuadras triangulares, bisagras, correderas, patas, manillas) contra la lista de tu PDF de despiece — es más fácil pedir una pieza faltante antes de empezar que a mitad de armado.',
   'Ten a mano el diagrama de corte y la vista 3D de tu proyecto como referencia mientras armas.',
 ];
 
 const ORDEN_CUERPO = [
   'Ubica las piezas base: los dos laterales, el piso y el techo (o traviesas superiores).',
-  'Une primero un lateral al piso y al techo con tarugo+minifix o confirmat (según cómo venga tu despiece), sin apretar del todo.',
+  'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.',
   'Repite con el segundo lateral, cerrando la caja del cuerpo.',
   'Si el mueble tiene divisiones verticales o repisas fijas, instálalas ahora, antes de apretar todo — es más fácil ajustar con el cuerpo "suelto".',
   'Verifica que el cuerpo quede a escuadra midiendo las dos diagonales de la caja: si ambas miden lo mismo, está cuadrado. Si no, empuja suavemente hacia el lado que corresponda hasta emparejarlas.',
@@ -153,20 +136,12 @@ const ORDEN_CUERPO = [
   'Clava o atornilla el respaldo (fondo posterior) contra el cuerpo ya escuadrado, cada 15cm aprox. — el respaldo es el que mantiene la escuadra en el tiempo, así que va siempre al final.',
 ];
 
-const PASOS_MINIFIX = [
-  'Inserta el tarugo de madera a presión en el orificio del canto de la pieza; puedes darle un golpe suave con el mazo de goma para que quede al ras.',
-  'Atornilla la cazoleta (excéntrico) minifix en el orificio de cara de la pieza opuesta, dejándola firme pero sin forzar.',
-  'Encaja las dos piezas: el tarugo entra en el agujero de la cazoleta.',
-  'Gira la cazoleta 90° en sentido horario con un destornillador plano o Phillips (según el modelo) hasta sentir que traba — eso tensa el tarugo y aprieta la unión.',
-  'Verifica que las piezas queden a ras, sin escalón entre ellas; si no, afloja, reacomoda y vuelve a apretar.',
-];
-
 const PASOS_CONFIRMAT = [
   'Marca la posición del tornillo en ambas piezas antes de taladrar (usa el orificio de fábrica si tu pieza ya viene perforada).',
   'Pre-taladra la primera pieza (la que se atraviesa) con una broca de 5mm.',
   'Avellana esa misma cara para que la cabeza del tornillo quede escondida y no sobresalga.',
   'Pre-taladra la segunda pieza (el canto que recibe el tornillo) con una broca de 5mm, sin pasar de profundidad para no rajar la melamina ni salir por el otro lado.',
-  'Atornilla el confirmat hasta que la cabeza quede al ras — no lo sobre-aprietes, el exceso de fuerza puede reventar el canto.',
+  'Atornilla (confirmat o tornillo 1-5/8, según venga en tu despiece) hasta que la cabeza quede al ras — no lo sobre-aprietes, el exceso de fuerza puede reventar el canto.',
 ];
 
 const PASOS_CORREDERAS = [
@@ -174,9 +149,9 @@ const PASOS_CORREDERAS = [
   'Atornilla el cuerpo de la corredera (la parte fija) al lateral del mueble usando primero los orificios ranurados, sin apretar del todo, para poder ajustar la posición.',
   'Verifica con el nivel que cada corredera quede horizontal, y que ambas queden a la misma altura y en paralelo.',
   'Aprieta los tornillos definitivos una vez verificada la nivelación.',
-  'Arma la caja del cajón: une los laterales con la trasera usando tarugo+minifix, desliza el fondo en el calado, y fija el frente a la caja con tarugo+minifix ajustable desde adentro.',
+  'Arma la caja del cajón: une los laterales con la trasera con tornillo directo (confirmat o tornillo 1-5/8, pre-taladrando igual que en el cuerpo), apoya el fondo sobre el marco y fíjalo con tornillo aglomerado 3,5x15, y fija el frente a la caja con tornillo directo.',
   'Atornilla la parte móvil de la corredera al lateral de la caja del cajón, alineada con la marca y a ras con el borde frontal.',
-  'Inserta el cajón en el mueble y prueba que deslice suave, sin trabarse ni rozar; ajusta el frente con los tornillos de la unión minifix hasta que quede parejo con las puertas y otros cajones.',
+  'Inserta el cajón en el mueble y prueba que deslice suave, sin trabarse ni rozar; ajusta el frente aflojando y reacomodando los tornillos hasta que quede parejo con las puertas y otros cajones.',
 ];
 
 const PASOS_BISAGRAS = [
@@ -234,7 +209,7 @@ const PASOS_MANILLAS = [
 const CONSEJOS_FINALES = [
   'Siempre pre-taladra antes de atornillar: sin pre-taladro, la melamina se raja fácil, sobre todo cerca de los cantos.',
   'Usa una broca más delgada que el tornillo (aprox. 2/3 del diámetro) y no taladres más profundo de lo necesario.',
-  'No cierres del todo las cazoletas minifix hasta haber armado todo el cuerpo — deja margen para reajustar la escuadra.',
+  'No aprietes los tornillos del todo hasta haber armado todo el cuerpo — deja margen para reajustar la escuadra.',
   'Deja los herrajes (bisagras, correderas) sin apretar del todo hasta ajustar puertas y cajones parejos, y recién ahí aprieta todo firme.',
   'En cocina, fija primero los muebles altos y los bajos por separado, a nivel, antes de instalar la cubierta — la cubierta se apoya sobre los bajos ya nivelados.',
   'Si vas a instalar el mueble sobre piso flotante o alfombra, revisa la nivelación de nuevo a la semana — puede asentarse un poco los primeros días.',
@@ -308,8 +283,12 @@ export default function GuiaArmadoPage() {
       </div>
 
       <h2>Uniones entre piezas</h2>
-      <Seccion titulo="Tarugo + minifix (cajas y cuerpos)" Diagrama={DiagramaMinifix} pasos={PASOS_MINIFIX} />
-      <Seccion titulo="Tornillo confirmat" Diagrama={DiagramaConfirmat} pasos={PASOS_CONFIRMAT} />
+      <Seccion
+        titulo="Tornillo directo (confirmat / tornillo 1-5/8)"
+        Diagrama={DiagramaConfirmat}
+        intro="Todas las uniones entre tableros de melamina (cuerpo, cajas de cajón) se hacen con un tornillo directo a través de la cara de una pieza hacia el canto de la otra — el tipo exacto (confirmat o tornillo 1-5/8) depende de tu despiece, pero se instalan igual."
+        pasos={PASOS_CONFIRMAT}
+      />
 
       <h2 style={{ marginTop: 12 }}>Cajones y puertas abatibles</h2>
       <Seccion titulo="Correderas de cajón y armado de la caja" Diagrama={DiagramaCorredera} pasos={PASOS_CORREDERAS} />
