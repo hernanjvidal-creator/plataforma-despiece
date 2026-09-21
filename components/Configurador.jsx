@@ -1302,13 +1302,13 @@ export default function Configurador() {
                   </div>
 
                   <div className="card" style={{ textAlign: 'center' }}>
-                    <button onClick={descargarPdf} disabled={descargandoPdf} style={{ maxWidth: 320, margin: '0 auto' }}>
+                    <button onClick={descargarPdf} disabled={descargandoPdf} style={{ display: 'block', width: '100%', maxWidth: 320, margin: '0 auto' }}>
                       {descargandoPdf ? 'Generando PDF...' : 'Descargar PDF de entrega'}
                     </button>
                     <button
                       onClick={descargarManual}
                       disabled={descargandoManual}
-                      style={{ maxWidth: 320, margin: '10px auto 0', background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+                      style={{ display: 'block', width: '100%', maxWidth: 320, margin: '10px auto 0' }}
                     >
                       {descargandoManual ? 'Generando manual...' : 'Descargar manual de armado de este mueble'}
                     </button>

@@ -121,14 +121,14 @@ const HERRAMIENTAS = [
 
 const ANTES_DE_EMPEZAR = [
   'Despeja una superficie de trabajo plana y amplia; protege el piso con cartón o una manta para no rayar las caras de melamina.',
-  'Abre todos los paquetes y separa las piezas por tipo: laterales, piso, techo, repisas, puertas, frentes de cajón, fondos de cajón y respaldo.',
+  'Abre todos los paquetes y separa las piezas por tipo: laterales, piso, travesaños, repisas, puertas, frentes de cajón, fondos de cajón y respaldo.',
   'Cuenta los herrajes (tornillos, soportes duplo o escuadras triangulares, bisagras, correderas, patas, manillas) contra la lista de tu PDF de despiece — es más fácil pedir una pieza faltante antes de empezar que a mitad de armado.',
   'Ten a mano el diagrama de corte y la vista 3D de tu proyecto como referencia mientras armas.',
 ];
 
 const ORDEN_CUERPO = [
-  'Ubica las piezas base: los dos laterales, el piso y el techo (o traviesas superiores).',
-  'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.',
+  'Ubica las piezas base: los dos laterales, el piso y los travesaños (delantero y trasero).',
+  'Une primero un lateral al piso y a los travesaños (delantero y trasero) con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.',
   'Repite con el segundo lateral, cerrando la caja del cuerpo.',
   'Si el mueble tiene divisiones verticales o repisas fijas, instálalas ahora, antes de apretar todo — es más fácil ajustar con el cuerpo "suelto".',
   'Verifica que el cuerpo quede a escuadra midiendo las dos diagonales de la caja: si ambas miden lo mismo, está cuadrado. Si no, empuja suavemente hacia el lado que corresponda hasta emparejarlas.',
