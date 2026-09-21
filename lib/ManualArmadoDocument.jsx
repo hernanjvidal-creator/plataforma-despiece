@@ -106,6 +106,9 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   if (techo.length > 0 && travesanosTraseros.length > 0) {
     pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso, el techo y los dos travesaños traseros (van por dentro, pegados a la parte de atrás: uno arriba y otro abajo).';
     pasoUnirLateral = 'Une primero un lateral al piso, al techo y a los dos travesaños traseros con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+  } else if (techo.length > 0 && traviesas.length > 0) {
+    pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso, el techo y los travesaños de refuerzo (delantero y trasero, uno junto al techo y otro junto al piso — y uno intermedio si tu mueble es alto).';
+    pasoUnirLateral = 'Une primero un lateral al piso, al techo y a cada travesaño de refuerzo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
   } else if (techo.length > 0) {
     pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso y el techo.';
     pasoUnirLateral = 'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
