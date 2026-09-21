@@ -44,7 +44,7 @@ export default function Home() {
 
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)', marginBottom: 8 }}>
-            ▶ Mira cómo se usa (2 min)
+            ▶ Mira cómo diseñar tu propio mueble...
           </p>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <video
