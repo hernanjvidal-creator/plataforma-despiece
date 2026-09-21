@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const MODULOS = [
-  { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas, horno y esquinas (incluso en U)' },
+  { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas y horno' },
   { valor: 'alto_cocina', nombre: 'Mueble aéreo', detalle: 'alacena con repisas y colgado a pared' },
   { valor: 'vanitorio_bano', nombre: 'Vanitorio de baño', detalle: 'con patas o suspendido, cubierta y lavamanos' },
   { valor: 'closet', nombre: 'Closet / armario ropero', detalle: 'por secciones: cajones, repisas y colgador' },

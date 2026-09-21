@@ -898,7 +898,7 @@ export default function Configurador() {
                     <option value="lavaplatos">Lavaplatos</option>
                     <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
-                    <option value="esquinero">Esquina (dobla 90° acá)</option>
+                    {esAdmin && <option value="esquinero">Esquina (dobla 90° acá)</option>}
                   </select>
 
                   {s.tipo === 'esquinero' && (
