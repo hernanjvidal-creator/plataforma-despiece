@@ -42,21 +42,20 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%', height: 'auto' }}>
-            <rect width="400" height="300" fill="var(--color-accent-soft)" />
-            <g transform="translate(70,60)">
-              <rect x="0" y="0" width="220" height="160" fill="none" stroke="var(--color-accent-dark)" strokeWidth="3" />
-              <rect x="0" y="0" width="14" height="160" fill="var(--color-accent-dark)" />
-              <rect x="206" y="0" width="14" height="160" fill="var(--color-accent-dark)" />
-              <rect x="14" y="10" width="192" height="42" fill="#fff" stroke="var(--color-accent)" strokeWidth="2" />
-              <rect x="14" y="58" width="192" height="42" fill="#fff" stroke="var(--color-accent)" strokeWidth="2" />
-              <rect x="14" y="106" width="192" height="46" fill="#fff" stroke="var(--color-accent)" strokeWidth="2" />
-              <rect x="100" y="26" width="30" height="10" rx="4" fill="var(--color-accent)" />
-              <rect x="100" y="74" width="30" height="10" rx="4" fill="var(--color-accent)" />
-              <rect x="100" y="123" width="30" height="10" rx="4" fill="var(--color-accent)" />
-            </g>
-          </svg>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)', marginBottom: 8 }}>
+            ▶ Mira cómo se usa (2 min)
+          </p>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <video
+              controls
+              preload="metadata"
+              poster="/video/tutorial-poster.jpg"
+              style={{ display: 'block', width: '100%', height: 'auto' }}
+            >
+              <source src="/video/tutorial.mp4" type="video/mp4" />
+            </video>
+          </div>
         </div>
       </section>
 
