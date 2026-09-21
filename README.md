@@ -24,8 +24,7 @@ un divisor vertical — un panel del mismo tipo que un lateral — que es una
 - **`bajo_cocina`**: cada sección tiene un `tipo`:
   `estandar` (puertas/cajones/mixto, como antes), `lavaplatos` (solo puertas,
   nota de sifón), `lavavajillas` / `horno` (sin frente propio, 600mm por
-  defecto — estándar de mercado), `cajones_olleros` (cajones altos ~300mm),
-  `cajones_cubiertos` (cajones bajos ~120mm). Las secciones sin ancho fijo se
+  defecto — estándar de mercado). Las secciones sin ancho fijo se
   reparten el resto del ancho en partes iguales. `parametros.isla = true`
   cambia el respaldo de HDF a un panel terminado (mueble independiente/isla).
 - **`closet`**: cada sección tiene `cajones` / `repisas` / `colgador`

@@ -898,7 +898,6 @@ export default function Configurador() {
                     <option value="lavaplatos">Lavaplatos</option>
                     <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
-                    <option value="cajones_olleros">Cajones olleros (2 de 300mm + 1 superior)</option>
                     <option value="esquinero">Esquina (dobla 90° acá)</option>
                   </select>
 
@@ -946,12 +945,6 @@ export default function Configurador() {
                         </>
                       )}
                     </>
-                  )}
-
-                  {s.tipo === 'cajones_olleros' && (
-                    <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                      Siempre 2 cajones de 300mm abajo, más un cajón superior con el resto del alto disponible.
-                    </p>
                   )}
 
                   {(s.tipo === 'lavaplatos' || s.tipo === 'lavavajillas' || s.tipo === 'horno') && (
