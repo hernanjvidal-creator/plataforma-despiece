@@ -40,6 +40,7 @@ export default function MisMuebles() {
   const [error, setError] = useState(null);
   const [comprando, setComprando] = useState(false);
   const [verificandoPago, setVerificandoPago] = useState(false);
+  const [linkCopiadoId, setLinkCopiadoId] = useState(null);
 
   useEffect(() => {
     if (cargandoAuth) return;
@@ -106,6 +107,20 @@ export default function MisMuebles() {
     if (err) { setError(err.message); return; }
     setMuebles(m => m.filter(x => x.id !== id));
     setSeleccionados(s => { const copia = new Set(s); copia.delete(id); return copia; });
+  }
+
+  // Link de solo lectura (sin login) — cualquiera con el link puede ver el
+  // plano 3D y el despiece, pensado para pasárselo a un maestro externo.
+  async function compartir(id) {
+    const url = `${window.location.origin}/ver/${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt('Copia este link:', url);
+      return;
+    }
+    setLinkCopiadoId(id);
+    setTimeout(() => setLinkCopiadoId(actual => (actual === id ? null : actual)), 2500);
   }
 
   function alternarSeleccion(id) {
@@ -216,6 +231,13 @@ export default function MisMuebles() {
                   Eliminar
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => compartir(m.id)}
+                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+              >
+                {linkCopiadoId === m.id ? 'Link copiado ✓' : 'Copiar link para compartir'}
+              </button>
             </div>
           );
         })}

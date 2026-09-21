@@ -243,6 +243,7 @@ export default function Configurador() {
   const [nombreMueble, setNombreMueble] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
+  const [linkCopiado, setLinkCopiado] = useState(false);
   const [desbloqueado, setDesbloqueado] = useState(false);
   const [soloLectura, setSoloLectura] = useState(false);
   const [comprando, setComprando] = useState(false);
@@ -406,6 +407,22 @@ export default function Configurador() {
     } finally {
       setGuardando(false);
     }
+  }
+
+  // Link de solo lectura (sin login) para pasarle a un maestro externo u otra
+  // persona — cualquiera con el link puede verlo, así que solo está
+  // disponible una vez que el mueble ya se guardó (necesita el id).
+  async function compartirMueble() {
+    if (!muebleActualId) return;
+    const url = `${window.location.origin}/ver/${muebleActualId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt('Copia este link:', url);
+      return;
+    }
+    setLinkCopiado(true);
+    setTimeout(() => setLinkCopiado(false), 2500);
   }
 
   // La config "solo_puertas"/"solo_cajones" solo admite un tipo de frente, pero el
@@ -1210,6 +1227,21 @@ export default function Configurador() {
             {guardando ? 'Guardando...' : muebleActualId ? 'Actualizar mueble guardado' : 'Guardar mueble'}
           </button>
           {guardadoOk && <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 8 }}>Mueble guardado ✓</p>}
+
+          {muebleActualId && (
+            <button
+              type="button"
+              onClick={compartirMueble}
+              style={{ background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)', marginTop: 10 }}
+            >
+              {linkCopiado ? 'Link copiado ✓' : 'Copiar link para compartir'}
+            </button>
+          )}
+          {muebleActualId && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginTop: 6 }}>
+              Cualquiera con este link puede ver el plano 3D y el despiece, sin necesitar cuenta — útil para pasárselo a quien te esté armando el mueble.
+            </p>
+          )}
 
           {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
           </fieldset>
