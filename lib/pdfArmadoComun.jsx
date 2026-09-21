@@ -185,9 +185,13 @@ export const ANTES_DE_EMPEZAR = [
   'Ten a mano el diagrama de corte y la vista 3D de tu proyecto como referencia mientras armas.',
 ];
 
+// Nota: estos dos primeros pasos son la versión genérica (vale para
+// cualquier módulo). El manual personalizado (ManualArmadoDocument.jsx)
+// los reemplaza por una versión exacta según si tu despiece real trae
+// techo o travesaños — ver pasosOrdenCuerpo ahí.
 export const ORDEN_CUERPO = [
-  'Ubica las piezas base: los dos laterales, el piso y los travesaños (delantero y trasero).',
-  'Une primero un lateral al piso y a los travesaños (delantero y trasero) con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.',
+  'Ubica las piezas base: los dos laterales, el piso y el techo o los travesaños (delantero y trasero) — según cómo venga tu diseño.',
+  'Une primero un lateral al piso y al techo o a los travesaños con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.',
   'Repite con el segundo lateral, cerrando la caja del cuerpo.',
   'Si el mueble tiene divisiones verticales o repisas fijas, instálalas ahora, antes de apretar todo — es más fácil ajustar con el cuerpo "suelto".',
   'Verifica que el cuerpo quede a escuadra midiendo las dos diagonales de la caja: si ambas miden lo mismo, está cuadrado. Si no, empuja suavemente hacia el lado que corresponda hasta emparejarlas.',

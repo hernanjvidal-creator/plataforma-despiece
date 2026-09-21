@@ -90,6 +90,25 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
     ? []
     : [...porPatron(piezas, 'puerta'), ...porPatron(piezas, 'tapa')];
 
+  // Los dos primeros pasos de ORDEN_CUERPO son genéricos ("techo o
+  // travesaños, según tu diseño") porque cubren cualquier módulo; acá ya
+  // sabemos qué trae ESTE despiece real, así que se reemplazan por la
+  // versión exacta (bajo_cocina y vanitorio_bano usan travesaños; el resto
+  // — despensa, alacena, closet, velador, librero — usan techo; el baúl no
+  // lleva ninguno de los dos en esta etapa, su tapa va sobre bisagras).
+  let pasoUbicarBase, pasoUnirLateral;
+  if (techo.length > 0) {
+    pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso y el techo.';
+    pasoUnirLateral = 'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+  } else if (traviesas.length > 0) {
+    pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso y los travesaños (delantero y trasero).';
+    pasoUnirLateral = 'Une primero un lateral al piso y a los travesaños (delantero y trasero) con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+  } else {
+    pasoUbicarBase = 'Ubica las piezas base: los dos laterales y el piso.';
+    pasoUnirLateral = 'Une primero un lateral al piso con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+  }
+  const pasosOrdenCuerpo = [pasoUbicarBase, pasoUnirLateral, ...ORDEN_CUERPO.slice(2)];
+
   // ---------- Qué secciones aplican, según los herrajes reales ----------
   const tieneCajones = cajones.length > 0;
   const tienePuertasAbatibles = puertasAbatibles.length > 0;
@@ -167,7 +186,7 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
           </View>
         )}
 
-        <ListaPasos items={ORDEN_CUERPO} />
+        <ListaPasos items={pasosOrdenCuerpo} />
 
         {respaldo.length > 0 && (
           <View>
