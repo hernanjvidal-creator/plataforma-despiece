@@ -1,10 +1,11 @@
 import { Document, Page, Text, View } from '@react-pdf/renderer';
 import {
   styles, Tabla, DiagramaConfirmat, DiagramaCorredera, DiagramaBisagra,
-  DiagramaRielCorredera, DiagramaPataRegulable, DiagramaEscuadraPared, ListaPasos, Seccion,
+  DiagramaRielCorredera, DiagramaPataRegulable, DiagramaEscuadraPared, DiagramaTravesanoPared,
+  ListaPasos, Seccion,
   HERRAMIENTAS, ANTES_DE_EMPEZAR, ORDEN_CUERPO, PASOS_CONFIRMAT, PASOS_CORREDERAS,
-  PASOS_BISAGRAS, PASOS_CORREDIZAS_CLOSET, PASOS_PATAS, PASOS_FIJACION_PARED, PASOS_MANILLAS,
-  CONSEJOS_FINALES,
+  PASOS_BISAGRAS, PASOS_CORREDIZAS_CLOSET, PASOS_PATAS, PASOS_FIJACION_PARED,
+  PASOS_FIJACION_TRAVESANO_PARED, PASOS_MANILLAS, CONSEJOS_FINALES,
 } from './pdfArmadoComun';
 
 // Manual de armado PERSONALIZADO — a diferencia de la guía general
@@ -78,6 +79,11 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   const piso = porPatron(piezas, 'piso');
   const techo = porPatron(piezas, 'techo');
   const traviesas = porPatron(piezas, 'traviesa');
+  // Los travesaños traseros del mueble aéreo son un patrón distinto de las
+  // "traviesa_trasera*" de mueble cocina/vanitorio: ahí son delantero+trasero
+  // y sirven de apoyo a la cubierta o cajones; acá son superior+inferior y
+  // son el punto real de fijación a la pared (no hay escuadra_colgado_pared).
+  const travesanosTraseros = porPatron(piezas, 'travesano_trasero');
   const divisores = porPatron(piezas, 'divisor');
   const respaldo = porPatron(piezas, 'respaldo');
   const cajones = agruparCajones(piezas);
@@ -97,7 +103,10 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   // — despensa, alacena, closet, velador, librero — usan techo; el baúl no
   // lleva ninguno de los dos en esta etapa, su tapa va sobre bisagras).
   let pasoUbicarBase, pasoUnirLateral;
-  if (techo.length > 0) {
+  if (techo.length > 0 && travesanosTraseros.length > 0) {
+    pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso, el techo y los dos travesaños traseros (van por dentro, pegados a la parte de atrás: uno arriba y otro abajo).';
+    pasoUnirLateral = 'Une primero un lateral al piso, al techo y a los dos travesaños traseros con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+  } else if (techo.length > 0) {
     pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso y el techo.';
     pasoUnirLateral = 'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
   } else if (traviesas.length > 0) {
@@ -113,7 +122,9 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   const tieneCajones = cajones.length > 0;
   const tienePuertasAbatibles = puertasAbatibles.length > 0;
   const tienePatas = herrajes.some(h => h.tipo === 'pata_regulable');
-  const tieneFijacionPared = herrajes.some(h => h.tipo === 'escuadra_colgado_pared');
+  const tieneFijacionParedEscuadra = herrajes.some(h => h.tipo === 'escuadra_colgado_pared');
+  const tieneFijacionParedTravesano = travesanosTraseros.length > 0;
+  const tieneFijacionPared = tieneFijacionParedEscuadra || tieneFijacionParedTravesano;
   const tieneManillas = herrajes.some(h => h.tipo.includes('manilla'));
   const tieneCubierta = !!parametros?.cubierta?.incluir;
 
@@ -177,6 +188,12 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
           <View style={{ marginBottom: 6 }}>
             <Text style={styles.h3}>Travesaños</Text>
             <ListaPiezasPersonalizada piezas={traviesas} />
+          </View>
+        )}
+        {travesanosTraseros.length > 0 && (
+          <View style={{ marginBottom: 6 }}>
+            <Text style={styles.h3}>Travesaños traseros (fijación a pared)</Text>
+            <ListaPiezasPersonalizada piezas={travesanosTraseros} />
           </View>
         )}
         {divisores.length > 0 && (
@@ -268,7 +285,15 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
           {tienePatas && (
             <Seccion titulo="Patas regulables y nivelación" Diagrama={DiagramaPataRegulable} pasos={PASOS_PATAS} />
           )}
-          {tieneFijacionPared && (
+          {tieneFijacionParedTravesano && (
+            <Seccion
+              titulo="Fijación a la pared (a través de los travesaños traseros)"
+              Diagrama={DiagramaTravesanoPared}
+              intro="Tu mueble no lleva escuadras de colgado: los dos travesaños traseros (superior e inferior) son el punto de fijación real — se atornillan directo a la pared desde dentro del cuerpo."
+              pasos={PASOS_FIJACION_TRAVESANO_PARED}
+            />
+          )}
+          {tieneFijacionParedEscuadra && (
             <Seccion titulo="Fijación a la pared" Diagrama={DiagramaEscuadraPared} pasos={PASOS_FIJACION_PARED} />
           )}
           <Pie />

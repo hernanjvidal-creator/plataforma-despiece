@@ -138,6 +138,26 @@ export function DiagramaEscuadraPared({ w = 220, h = 140 }) {
   );
 }
 
+export function DiagramaTravesanoPared({ w = 220, h = 140 }) {
+  return (
+    <Svg width={w} height={h} viewBox="0 0 220 140">
+      <Rect x={150} y={0} width={10} height={140} fill="#ddd" stroke="#bbb" strokeWidth={0.6} />
+      <Rect x={40} y={18} width={110} height={18} fill={COLOR_RELLENO} stroke={COLOR_BORDE} strokeWidth={1} />
+      <Rect x={40} y={104} width={110} height={18} fill={COLOR_RELLENO} stroke={COLOR_BORDE} strokeWidth={1} />
+      <Line x1={95} y1={27} x2={155} y2={27} stroke={COLOR_LINEA} strokeWidth={2} />
+      <Circle cx={155} cy={27} r={2.5} fill={COLOR_LINEA} />
+      <Line x1={95} y1={113} x2={155} y2={113} stroke={COLOR_LINEA} strokeWidth={2} />
+      <Circle cx={155} cy={113} r={2.5} fill={COLOR_LINEA} />
+      <Text x={2} y={13} fontSize={7} fill={COLOR_LINEA}>Travesaño superior</Text>
+      <Text x={2} y={98} fontSize={7} fill={COLOR_LINEA}>Travesaño inferior</Text>
+      <Text x={160} y={60} fontSize={7} fill={COLOR_LINEA}>Tornillo directo</Text>
+      <Text x={160} y={68} fontSize={7} fill={COLOR_LINEA}>desde adentro,</Text>
+      <Text x={160} y={76} fontSize={7} fill={COLOR_LINEA}>al taco fischer</Text>
+      <Text x={160} y={84} fontSize={7} fill={COLOR_LINEA}>en el muro</Text>
+    </Svg>
+  );
+}
+
 export function ListaPasos({ items }) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -259,6 +279,18 @@ export const PASOS_FIJACION_PARED = [
   'Atornilla la escuadra o riel de fijación a la pared, y luego al mueble (o al revés, según el orden que permita tu herraje).',
   'Usa al menos 2 puntos de anclaje por mueble, y un tercero al centro si el mueble es ancho (más de 1 metro) o va a cargar mucho peso.',
   'Verifica la fijación tirando suavemente del borde superior del mueble hacia adelante — no debería moverse ni separarse de la pared.',
+  'Si el muro es de yeso-cartón y no hay un montante donde lo necesitas, usa tacos especiales con garra (tipo mariposa o metálicos de expansión) — nunca tacos plásticos comunes en muebles con peso.',
+];
+
+export const PASOS_FIJACION_TRAVESANO_PARED = [
+  'Ubica los pies derechos o montantes de la pared con un detector, o golpeando suave con los nudillos y escuchando el cambio de sonido (hueco vs. macizo) si no tienes detector.',
+  'Con el mueble sostenido en su posición final (pide ayuda o apóyalo sobre un soporte temporal — no lo sueltes sin fijar), marca en la pared la altura de los dos travesaños traseros mirando por dentro del cuerpo, con nivel de burbuja.',
+  'Verifica el tipo de muro (albañilería, hormigón, tabique de yeso-cartón) para elegir el taco correcto — un taco para yeso-cartón no sirve en hormigón, ni al revés.',
+  'Taladra la pared con la broca indicada para ese taco e insértalo con un golpe suave de martillo si es necesario.',
+  'Atornilla directo desde dentro del mueble, a través de cada travesaño trasero y hacia el taco en la pared — no lleva escuadras intermedias, el travesaño mismo es el punto de fijación.',
+  'Usa al menos 2 tornillos por travesaño (uno cerca de cada lateral), y un tercero al centro si el mueble es ancho (más de 90cm).',
+  'Repite en el travesaño inferior — nunca cuelgues el mueble solo del travesaño superior: el inferior es el que evita que se despegue de la pared por abajo con el peso del contenido.',
+  'Verifica la fijación tirando suavemente del borde inferior del mueble hacia adelante — no debería moverse ni separarse de la pared.',
   'Si el muro es de yeso-cartón y no hay un montante donde lo necesitas, usa tacos especiales con garra (tipo mariposa o metálicos de expansión) — nunca tacos plásticos comunes en muebles con peso.',
 ];
 
