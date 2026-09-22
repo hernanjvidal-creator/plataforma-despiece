@@ -14,6 +14,7 @@ const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
   { value: 'CL_grande', label: 'Chile — 1830x3660 (formato grande)' },
   { value: 'AR', label: 'Argentina — 1830x2750' },
+  { value: 'PE', label: 'Perú / Colombia / Ecuador — 2150x2440' },
   { value: 'MX', label: 'México — 1220x2440' },
   { value: 'US', label: 'EEUU — 1220x2440' },
   { value: 'custom', label: 'Medida personalizada...' },
