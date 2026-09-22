@@ -538,7 +538,10 @@ export default function Configurador() {
     if (form.modulo === 'librero') {
       return {
         ...base,
-        secciones: form.secciones.map(s => ({ repisas: Number(s.repisas) })),
+        secciones: form.secciones.map(s => ({
+          repisas: Number(s.repisas),
+          ancho: s.ancho ? Number(s.ancho) : undefined,
+        })),
       };
     }
     return base;
@@ -1185,6 +1188,18 @@ export default function Configurador() {
 
                   <label>Repisas</label>
                   <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
+
+                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
+                  <input
+                    type="number" min={0}
+                    value={s.ancho ?? ''}
+                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
+                  />
+                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                    Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) —
+                    si la dejas vacía, se reparte el ancho restante en partes iguales entre las secciones sin ancho fijo. Con una
+                    sola sección no se agrega ningún separador interior.
+                  </p>
                 </div>
               ))}
               <button
