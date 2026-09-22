@@ -730,6 +730,10 @@ export default function Configurador() {
   }
 
   const moduloLabel = MODULOS.find(m => m.value === form.modulo)?.label || '';
+  // Todo mueble tiene una superficie superior (cubierta, techo o tapa) hasta
+  // donde llega el "Alto" — salvo los que se cuelgan de la pared, donde el
+  // "Alto" es el alto del cuerpo colgado, no una medida desde el piso.
+  const alturaEsDesdeElPiso = !(form.modulo === 'alto_cocina' || (form.modulo === 'vanitorio_bano' && form.soporte === 'suspendido'));
 
   return (
     <main className="container">
@@ -763,17 +767,17 @@ export default function Configurador() {
 
           <label>Alto (mm)</label>
           <input type="number" value={form.H} onChange={e => actualizar('H', e.target.value)} />
-          {(form.modulo === 'bajo_cocina' || (form.modulo === 'vanitorio_bano' && form.soporte === 'patas')) && (
+          {alturaEsDesdeElPiso && (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Esta es la altura desde el piso hasta la superficie de la cubierta.
+              Esta es la altura desde el piso hasta la superficie superior del mueble.
             </p>
           )}
 
           <label>Profundidad (mm)</label>
           <input type="number" value={form.P} onChange={e => actualizar('P', e.target.value)} />
-          {(form.modulo === 'bajo_cocina' || (form.modulo === 'vanitorio_bano' && form.soporte === 'patas')) && (
+          {alturaEsDesdeElPiso && (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Esta es la profundidad de la cubierta.
+              Esta es la profundidad de la superficie superior del mueble.
             </p>
           )}
 
