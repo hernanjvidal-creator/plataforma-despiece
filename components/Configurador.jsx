@@ -463,7 +463,7 @@ export default function Configurador() {
     const base = {
       A: Number(form.A), H: Number(form.H), P: Number(form.P),
       colorInterior: form.colorInterior, colorExterior: form.colorExterior,
-      espesorPuertas: form.puertasGruesas ? 18 : 15,
+      espesorPuertas: Number(form.espesorPuertas) === 18 ? 18 : 15,
     };
 
     const cubierta = {
