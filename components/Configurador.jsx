@@ -1162,13 +1162,11 @@ export default function Configurador() {
                 Incluir cubierta (superficie)
                 {form.modulo === 'bajo_cocina' ? ' + lavaplatos' : ' + lavamanos'}
               </label>
-              {form.modulo === 'bajo_cocina' && (
-                <p style={{ fontSize: 12, color: '#888', margin: '2px 0 8px' }}>
-                  Aunque no la agregues acá, el "Alto" de arriba ya es la altura desde el piso hasta la superficie de
-                  la cubierta, y la "Profundidad" ya es la profundidad de la cubierta — se la puedes encargar a otro
-                  proveedor (piedra, por ejemplo) con esas mismas medidas.
-                </p>
-              )}
+              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 8px' }}>
+                Aunque no la agregues acá, el "Alto" de arriba ya es la altura {alturaEsDesdeElPiso ? 'desde el piso ' : ''}
+                hasta la superficie de la cubierta, y la "Profundidad" ya es la profundidad de la cubierta — se la
+                puedes encargar a otro proveedor (piedra, por ejemplo) con esas mismas medidas.
+              </p>
 
               {form.cubiertaIncluir && (
                 <>
