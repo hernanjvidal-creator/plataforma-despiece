@@ -1218,6 +1218,12 @@ export default function Configurador() {
             {cargando ? 'Generando...' : 'Generar despiece'}
           </button>
 
+          {!muebleActualId && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginBottom: 8, lineHeight: 1.5 }}>
+              Estamos por cerrar la etapa de prueba gratuita — en breve el despiece completo va a tener un costo.
+              Crea una cuenta gratis y guarda tu mueble ahora: lo que guardes durante esta etapa queda libre de cobro para siempre.
+            </p>
+          )}
           <button
             type="button"
             onClick={guardarMueble}
