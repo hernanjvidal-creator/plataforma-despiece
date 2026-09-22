@@ -847,8 +847,15 @@ export default function Configurador() {
                 + Agregar sección
               </button>
 
-              <label style={{ marginTop: 18 }}>Cantidad de puertas (0 = closet abierto)</label>
-              <input type="number" min={0} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 18 }}>
+                <input
+                  type="checkbox"
+                  style={{ width: 'auto' }}
+                  checked={Number(form.nP) > 0}
+                  onChange={e => actualizar('nP', e.target.checked ? 1 : 0)}
+                />
+                Lleva puertas (si no, el closet queda abierto y las secciones a la vista)
+              </label>
 
               {Number(form.nP) > 0 && (
                 <>
@@ -857,6 +864,19 @@ export default function Configurador() {
                     <option value="batiente">Batiente (con bisagra)</option>
                     <option value="corredera">Corredera (sobre riel)</option>
                   </select>
+
+                  {form.tipoPuerta === 'batiente' ? (
+                    <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                      La cantidad y el ancho de las puertas se calculan solos: una por sección (o más si queda muy
+                      ancha, máximo ~500mm por hoja), siempre alineadas con un separador real para poder atornillar
+                      la bisagra.
+                    </p>
+                  ) : (
+                    <>
+                      <label>Cantidad de puertas</label>
+                      <input type="number" min={2} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+                    </>
+                  )}
                 </>
               )}
             </>
