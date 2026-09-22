@@ -11,6 +11,7 @@ create table public.muebles (
   nombre text not null default 'Mueble sin nombre',
   modulo text not null,
   parametros jsonb not null,
+  opciones_corte jsonb, -- plancha de melamina elegida (país/formato) para el plano de corte
   foto_espacio_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

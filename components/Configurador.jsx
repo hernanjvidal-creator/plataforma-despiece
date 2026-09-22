@@ -162,9 +162,13 @@ const VALORES_POR_MODULO = {
 const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
 
 // Inversa de construirParametros(): reconstruye el estado plano del
-// formulario a partir de los `parametros` guardados de un mueble.
-function formDesdeParametros(modulo, parametros) {
-  const base = { modulo, ...VALORES_POR_MODULO[modulo], ...VALORES_COMUNES };
+// formulario a partir de los `parametros` guardados de un mueble. `opcionesCorte`
+// es lo que se guardó en la columna aparte `opciones_corte` (la plancha de
+// melamina elegida) — null en diseños guardados antes de que existiera esa
+// columna, así que se cae de vuelta a Chile por defecto.
+function formDesdeParametros(modulo, parametros, opcionesCorte) {
+  const corte = opcionesCorte || VALORES_COMUNES;
+  const base = { modulo, ...VALORES_POR_MODULO[modulo], ...VALORES_COMUNES, ...corte };
   if (!parametros) return base;
 
   const comunes = {
@@ -277,7 +281,7 @@ export default function Configurador() {
 
     supabase.from('muebles').select('*').eq('id', muebleIdParam).single().then(async ({ data, error: err }) => {
       if (cancelado || err || !data) return;
-      setForm(formDesdeParametros(data.modulo, data.parametros));
+      setForm(formDesdeParametros(data.modulo, data.parametros, data.opciones_corte));
       setMuebleActualId(data.id);
       setNombreMueble(data.nombre);
 
@@ -298,7 +302,7 @@ export default function Configurador() {
         const res = await fetch('/api/despiece', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modulo: data.modulo, parametros: data.parametros, opcionesCorte: { plancha: 'CL' } }),
+          body: JSON.stringify({ modulo: data.modulo, parametros: data.parametros, opcionesCorte: data.opciones_corte || { plancha: 'CL' } }),
         });
         const resultadoData = await res.json();
         if (cancelado) return;
@@ -379,6 +383,7 @@ export default function Configurador() {
     setError(null);
     try {
       const parametros = construirParametros();
+      const opcionesCorte = construirOpcionesCorte();
       if (muebleActualId) {
         // Actualizar un mueble ya guardado: mantiene el nombre que ya
         // tenía, sin volver a preguntar (antes se pedía de nuevo con un
@@ -386,7 +391,7 @@ export default function Configurador() {
         // cortaba en silencio sin guardar ni avisar del error).
         const { error: err } = await supabase
           .from('muebles')
-          .update({ modulo: form.modulo, parametros })
+          .update({ modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
           .eq('id', muebleActualId);
         if (err) throw err;
       } else {
@@ -395,7 +400,7 @@ export default function Configurador() {
         if (!nombre) { setGuardando(false); return; }
         const { data, error: err } = await supabase
           .from('muebles')
-          .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros })
+          .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
           .select()
           .single();
         if (err) throw err;
@@ -548,15 +553,19 @@ export default function Configurador() {
     return base;
   }
 
+  function construirOpcionesCorte() {
+    return form.plancha === 'custom'
+      ? { plancha: 'custom', anchoCustom: Number(form.anchoCustom), altoCustom: Number(form.altoCustom) }
+      : { plancha: form.plancha };
+  }
+
   async function generar() {
     setCargando(true);
     setError(null);
     setDesbloqueado(false);
     try {
       const parametros = construirParametros();
-      const opcionesCorte = form.plancha === 'custom'
-        ? { plancha: 'custom', anchoCustom: Number(form.anchoCustom), altoCustom: Number(form.altoCustom) }
-        : { plancha: form.plancha };
+      const opcionesCorte = construirOpcionesCorte();
 
       const res = await fetch('/api/despiece', {
         method: 'POST',

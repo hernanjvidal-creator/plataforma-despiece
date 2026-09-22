@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
 
   const { data, error } = await supabaseAdmin
     .from('muebles')
-    .select('nombre, modulo, parametros')
+    .select('nombre, modulo, parametros, opciones_corte')
     .eq('id', id)
     .single();
 
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const { despiece, corte } = generarDespiecePorModulo(data.modulo, data.parametros);
+    const { despiece, corte } = generarDespiecePorModulo(data.modulo, data.parametros, data.opciones_corte || undefined);
     return NextResponse.json({ nombre: data.nombre, modulo: data.modulo, despiece, corte });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 400 });
