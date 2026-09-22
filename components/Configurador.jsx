@@ -742,6 +742,13 @@ export default function Configurador() {
   // "Alto" es el alto del cuerpo colgado, no una medida desde el piso.
   const alturaEsDesdeElPiso = !(form.modulo === 'alto_cocina' || (form.modulo === 'vanitorio_bano' && form.soporte === 'suspendido'));
 
+  // Mismos rangos que valida el backend en cada motor (validarParametros) —
+  // se repiten acá para que el cliente vea el límite ANTES de generar el
+  // despiece, no recién al hacer clic y toparse con un error.
+  const esModuloChico = form.modulo === 'velador' || form.modulo === 'baul';
+  const maxAncho = esModuloChico ? 2000 : 10000;
+  const maxAltoProfundidad = esModuloChico ? 1500 : 3000;
+
   return (
     <main className="container">
       <h1>Diseñar — {moduloLabel}</h1>
@@ -761,7 +768,7 @@ export default function Configurador() {
           </select>
 
           <label>Ancho (mm)</label>
-          <input type="number" value={form.A} onChange={e => actualizar('A', e.target.value)} />
+          <input type="number" min={50} max={maxAncho} value={form.A} onChange={e => actualizar('A', e.target.value)} />
           {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') ? (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
               Con una esquina agregada, este ancho ya no se usa — cada módulo de cada brazo necesita su propio "Ancho fijo" más abajo.
@@ -773,7 +780,7 @@ export default function Configurador() {
           )}
 
           <label>Alto (mm)</label>
-          <input type="number" value={form.H} onChange={e => actualizar('H', e.target.value)} />
+          <input type="number" min={50} max={maxAltoProfundidad} value={form.H} onChange={e => actualizar('H', e.target.value)} />
           {alturaEsDesdeElPiso && (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
               Esta es la altura desde el piso hasta la superficie superior del mueble.
@@ -781,7 +788,7 @@ export default function Configurador() {
           )}
 
           <label>Profundidad (mm)</label>
-          <input type="number" value={form.P} onChange={e => actualizar('P', e.target.value)} />
+          <input type="number" min={50} max={maxAltoProfundidad} value={form.P} onChange={e => actualizar('P', e.target.value)} />
           {alturaEsDesdeElPiso && (
             <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
               Esta es la profundidad de la superficie superior del mueble.
