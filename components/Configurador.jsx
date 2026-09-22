@@ -763,9 +763,19 @@ export default function Configurador() {
 
           <label>Alto (mm)</label>
           <input type="number" value={form.H} onChange={e => actualizar('H', e.target.value)} />
+          {(form.modulo === 'bajo_cocina' || form.modulo === 'escritorio' || (form.modulo === 'vanitorio_bano' && form.soporte === 'patas')) && (
+            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+              Esta es la altura desde el piso hasta la superficie de la cubierta.
+            </p>
+          )}
 
           <label>Profundidad (mm)</label>
           <input type="number" value={form.P} onChange={e => actualizar('P', e.target.value)} />
+          {(form.modulo === 'bajo_cocina' || form.modulo === 'escritorio' || (form.modulo === 'vanitorio_bano' && form.soporte === 'patas')) && (
+            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+              Esta es la profundidad de la cubierta.
+            </p>
+          )}
 
 
           {form.modulo === 'alto_cocina' && (
