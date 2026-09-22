@@ -500,6 +500,7 @@ export default function Configurador() {
         nP: Number(form.nP), tipoPuerta: form.tipoPuerta,
         secciones: form.secciones.map(s => ({
           cajones: Number(s.cajones), repisas: Number(s.repisas), colgador: !!s.colgador,
+          ancho: s.ancho ? Number(s.ancho) : undefined,
         })),
       };
     }
@@ -825,6 +826,17 @@ export default function Configurador() {
                     />
                     Colgador (barra para colgar ropa)
                   </label>
+
+                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
+                  <input
+                    type="number" min={0}
+                    value={s.ancho ?? ''}
+                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
+                  />
+                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                    Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) —
+                    si la dejas vacía, se reparte el ancho restante en partes iguales entre las secciones sin ancho fijo.
+                  </p>
                 </div>
               ))}
               <button
