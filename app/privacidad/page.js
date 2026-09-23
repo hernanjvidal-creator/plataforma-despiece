@@ -6,11 +6,11 @@ export default function Privacidad() {
   return (
     <main className="container" style={{ maxWidth: 760 }}>
       <h1>Política de Privacidad</h1>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: agosto de 2026</p>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
 
       <p>
         Esta Política de Privacidad explica qué datos recolecta Despiece (el sitio armandolo.com,
-        operado por <strong>[Razón social / nombre del titular pendiente]</strong>, en adelante
+        operado por <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>, en adelante
         "nosotros" o "la plataforma"), para qué los usamos y qué derechos tienes sobre ellos.
       </p>
 

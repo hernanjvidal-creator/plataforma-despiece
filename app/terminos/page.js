@@ -6,11 +6,11 @@ export default function Terminos() {
   return (
     <main className="container" style={{ maxWidth: 760 }}>
       <h1>Términos y Condiciones</h1>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: agosto de 2026</p>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
 
       <p>
         Al usar Despiece (armandolo.com), operado por{' '}
-        <strong>[Razón social / nombre del titular pendiente]</strong>, aceptas estos Términos y
+        <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>, aceptas estos Términos y
         Condiciones. Léelos con atención antes de comprar.
       </p>
 
