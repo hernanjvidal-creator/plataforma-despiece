@@ -86,7 +86,7 @@ function DiagramaPlanchaPdf({ ancho, alto, piezas = [] }) {
 function Pie() {
   return (
     <Text style={styles.footer} fixed>
-      Despiece — configurador de muebles de melamina · documento generado automáticamente
+      Despiece — configurador de muebles de melamina · documento generado automáticamente · Inversiones Chacay SpA, RUT 78.518.419-K
     </Text>
   );
 }

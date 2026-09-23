@@ -32,7 +32,7 @@ const NOMBRE_MODULO = {
 function Pie() {
   return (
     <Text style={styles.footer} fixed>
-      Manual de armado personalizado · armandolo.com · generado para este diseño específico
+      Manual de armado personalizado · armandolo.com · generado para este diseño específico · Inversiones Chacay SpA, RUT 78.518.419-K
     </Text>
   );
 }
