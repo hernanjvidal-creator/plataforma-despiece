@@ -17,7 +17,7 @@ import {
 function Pie() {
   return (
     <Text style={styles.footer} fixed>
-      Guía general de armado · armandolo.com · aplica a cualquier mueble de melamina · Inversiones Chacay SpA, RUT 78.518.419-K
+      Guía general de armado · armandolo.com · aplica a cualquier mueble de melamina
     </Text>
   );
 }

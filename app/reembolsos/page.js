@@ -6,7 +6,12 @@ export default function Reembolsos() {
   return (
     <main className="container" style={{ maxWidth: 760 }}>
       <h1>Política de Reembolso</h1>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: agosto de 2026</p>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
+
+      <p>
+        Esta Política de Reembolso aplica a las compras realizadas en Despiece (armandolo.com), operado
+        por <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>.
+      </p>
 
       <h2>Por qué el despiece no tiene devolución una vez entregado</h2>
       <p>
