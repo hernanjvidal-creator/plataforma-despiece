@@ -49,14 +49,14 @@ export async function GET(request) {
   const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  let muebles, feedback;
+  let generaciones, feedback;
   try {
     // "generaciones_despiece" registra cada vez que alguien aprieta "Generar
     // despiece" — a diferencia de "muebles" (que solo se llena si además
     // guarda el diseño), esto sí refleja el uso real de la plataforma, ya que
     // guardar no es necesario para ver/descargar el despiece completo.
-    muebles = await traerTodasLasFilas(() =>
-      supabaseAdmin.from('generaciones_despiece').select('modulo, user_id, created_at')
+    generaciones = await traerTodasLasFilas(() =>
+      supabaseAdmin.from('generaciones_despiece').select('modulo, user_id, pais, created_at')
     );
     feedback = await traerTodasLasFilas(() =>
       supabaseAdmin.from('feedback').select('calificacion')
@@ -66,11 +66,39 @@ export async function GET(request) {
   }
 
   const porModulo = {};
-  const usuariosUnicos = new Set();
-  muebles.forEach(m => {
-    porModulo[m.modulo] = (porModulo[m.modulo] || 0) + 1;
-    if (m.user_id) usuariosUnicos.add(m.user_id);
+  const porPais = {};
+  // Por usuario logueado: módulos que generó, país más reciente que se le
+  // conozca y fecha de su generación más reciente — para poder ver "quiénes
+  // son los usuarios que han usado la plataforma" con nombre y actividad.
+  const porUsuario = {};
+  generaciones.forEach(g => {
+    porModulo[g.modulo] = (porModulo[g.modulo] || 0) + 1;
+    if (g.pais) porPais[g.pais] = (porPais[g.pais] || 0) + 1;
+    if (g.user_id) {
+      if (!porUsuario[g.user_id]) porUsuario[g.user_id] = { modulos: {}, total: 0, pais: null, ultimaGeneracion: null };
+      const u = porUsuario[g.user_id];
+      u.modulos[g.modulo] = (u.modulos[g.modulo] || 0) + 1;
+      u.total += 1;
+      if (!u.ultimaGeneracion || g.created_at > u.ultimaGeneracion) {
+        u.ultimaGeneracion = g.created_at;
+        if (g.pais) u.pais = g.pais; // país de su generación más reciente conocida
+      }
+    }
   });
+
+  const idsUsuarios = Object.keys(porUsuario);
+  const usuariosDetalle = [];
+  for (const id of idsUsuarios) {
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(id);
+    usuariosDetalle.push({
+      email: userData?.user?.email || '(cuenta eliminada)',
+      pais: porUsuario[id].pais,
+      totalGeneraciones: porUsuario[id].total,
+      modulos: porUsuario[id].modulos,
+      ultimaGeneracion: porUsuario[id].ultimaGeneracion,
+    });
+  }
+  usuariosDetalle.sort((a, b) => (a.ultimaGeneracion < b.ultimaGeneracion ? 1 : -1));
 
   const calificaciones = feedback.map(f => f.calificacion).filter(c => c != null);
   const promedioCalificacion = calificaciones.length > 0
@@ -78,11 +106,13 @@ export async function GET(request) {
     : null;
 
   return NextResponse.json({
-    totalMuebles: muebles.length,
-    mueblesUltimos7Dias: muebles.filter(m => m.created_at >= hace7Dias).length,
-    mueblesUltimos30Dias: muebles.filter(m => m.created_at >= hace30Dias).length,
-    usuariosUnicos: usuariosUnicos.size,
+    totalMuebles: generaciones.length,
+    mueblesUltimos7Dias: generaciones.filter(g => g.created_at >= hace7Dias).length,
+    mueblesUltimos30Dias: generaciones.filter(g => g.created_at >= hace30Dias).length,
+    usuariosUnicos: idsUsuarios.length,
     porModulo,
+    porPais,
+    usuariosDetalle,
     totalFeedback: feedback.length,
     promedioCalificacion,
   });

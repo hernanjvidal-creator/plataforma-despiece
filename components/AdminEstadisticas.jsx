@@ -100,7 +100,7 @@ export default function AdminEstadisticas() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card" style={{ marginBottom: 24 }}>
             <h3 style={{ marginTop: 0 }}>Muebles por tipo</h3>
             {Object.keys(stats.porModulo).length === 0 && (
               <p style={{ color: 'var(--color-text-muted)' }}>Todavía no hay muebles guardados.</p>
@@ -113,6 +113,64 @@ export default function AdminEstadisticas() {
                   <strong>{cantidad}</strong>
                 </div>
               ))}
+          </div>
+
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h3 style={{ marginTop: 0 }}>Generaciones por país</h3>
+            {Object.keys(stats.porPais || {}).length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)' }}>
+                Todavía no hay datos de país — se empezó a registrar recién ahora, así que solo aparecerán
+                las generaciones nuevas de acá en adelante.
+              </p>
+            ) : (
+              Object.entries(stats.porPais)
+                .sort((a, b) => b[1] - a[1])
+                .map(([pais, cantidad]) => (
+                  <div key={pais} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <span>{pais}</span>
+                    <strong>{cantidad}</strong>
+                  </div>
+                ))
+            )}
+          </div>
+
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Usuarios registrados que han diseñado algo</h3>
+            {(!stats.usuariosDetalle || stats.usuariosDetalle.length === 0) && (
+              <p style={{ color: 'var(--color-text-muted)' }}>Todavía no hay usuarios logueados que hayan generado un despiece.</p>
+            )}
+            {stats.usuariosDetalle && stats.usuariosDetalle.length > 0 && (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--color-border)' }}>
+                      <th style={{ padding: '6px 8px' }}>Email</th>
+                      <th style={{ padding: '6px 8px' }}>País</th>
+                      <th style={{ padding: '6px 8px' }}>Muebles diseñados</th>
+                      <th style={{ padding: '6px 8px' }}>Total</th>
+                      <th style={{ padding: '6px 8px' }}>Última actividad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.usuariosDetalle.map((u, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                        <td style={{ padding: '6px 8px' }}>{u.email}</td>
+                        <td style={{ padding: '6px 8px' }}>{u.pais || '—'}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          {Object.entries(u.modulos)
+                            .map(([modulo, cantidad]) => `${NOMBRE_MODULO[modulo] || modulo} (${cantidad})`)
+                            .join(', ')}
+                        </td>
+                        <td style={{ padding: '6px 8px' }}>{u.totalGeneraciones}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          {u.ultimaGeneracion ? new Date(u.ultimaGeneracion).toLocaleDateString('es-CL') : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </>
       )}

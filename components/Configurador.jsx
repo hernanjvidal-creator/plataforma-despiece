@@ -580,13 +580,14 @@ export default function Configurador() {
       // si además se guarda el diseño), esto cuenta a cualquiera que llegue
       // a ver su despiece generado, se lo guarde o no — para que las
       // estadísticas de uso reflejen la plataforma tal como se usa de
-      // verdad. Sin esperar la respuesta ni frenar la UI si falla.
-      supabase.from('generaciones_despiece').insert({
-        user_id: usuario?.id || null,
-        modulo: form.modulo,
-      }).then(({ error: errGen }) => {
-        if (errGen) console.error('No se pudo registrar la generación:', errGen.message);
-      });
+      // verdad. Pasa por el servidor (no un insert directo del cliente) para
+      // poder registrar también el país del visitante. Sin esperar la
+      // respuesta ni frenar la UI si falla.
+      fetch('/api/registrar-generacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: usuario?.id || null, modulo: form.modulo }),
+      }).catch(errGen => console.error('No se pudo registrar la generación:', errGen.message));
 
       // Evento de GA4 para poder importarlo como conversión en Google Ads —
       // esta es la acción real que le da valor a un clic (no solo entrar al
