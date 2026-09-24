@@ -10,6 +10,10 @@ const COLOR_BADGE = {
 
 export default function ListaPiezas({ despiece }) {
   const { piezas, accesorios, herrajes, resumen, notas } = despiece;
+  // Las patas plásticas se agregan a `accesorios` solo para que se vean en
+  // el 3D (dónde van) — ya están contadas en el herraje
+  // `pata_plastica_regulable`, así que no deben duplicarse en esta tabla.
+  const accesoriosVisibles = (accesorios || []).filter(a => !a.soloVisual);
 
   // Excel en configuración regional chilena/latam usa la coma como separador
   // decimal, así que espera ";" como separador de columnas en un CSV — si se
@@ -96,7 +100,7 @@ export default function ListaPiezas({ despiece }) {
         Descargar piezas (Excel/CSV)
       </button>
 
-      {accesorios && accesorios.length > 0 && (
+      {accesoriosVisibles.length > 0 && (
         <>
           <h4 style={{ marginTop: 24 }}>Accesorios (referencia — no se cortan de melamina)</h4>
           <table>
@@ -104,7 +108,7 @@ export default function ListaPiezas({ despiece }) {
               <tr><th>Accesorio</th><th>Descripción</th><th>Ancho (mm)</th><th>Profundidad (mm)</th></tr>
             </thead>
             <tbody>
-              {accesorios.map((a, i) => (
+              {accesoriosVisibles.map((a, i) => (
                 <tr key={i}>
                   <td>{a.id}</td>
                   <td>{a.descripcion}</td>

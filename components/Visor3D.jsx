@@ -38,6 +38,10 @@ const COLOR_MATERIAL_MAP = {
   marmol: '#eae7e0',
   acero_inoxidable: '#c7cdd1',
   ceramica: '#f5f5f0',
+  // Naranjo bien distinto de cualquier color de melamina del catálogo (a
+  // propósito) — así la pata plástica (referencia visual, no una pieza
+  // real) siempre se nota, sin importar qué color eligió el cliente.
+  plastico: '#e8631c',
 };
 
 function colorDePieza(pieza) {

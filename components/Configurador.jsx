@@ -1042,7 +1042,7 @@ export default function Configurador() {
                   <select value={s.tipo} onChange={e => actualizarSeccion(i, 'tipo', e.target.value)}>
                     <option value="estandar">Estándar (puertas/cajones)</option>
                     <option value="lavaplatos">Lavaplatos</option>
-                    <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>
+                    {esAdmin && <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>}
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
                   </select>
 

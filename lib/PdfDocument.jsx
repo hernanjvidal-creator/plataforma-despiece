@@ -93,6 +93,10 @@ function Pie() {
 
 export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D }) {
   const { piezas = [], accesorios = [], herrajes = [], resumen = {}, notas = [] } = despiece || {};
+  // Las patas plásticas se agregan a `accesorios` solo para que se vean en
+  // el 3D (dónde van) — ya están contadas en el herraje
+  // `pata_plastica_regulable`, así que no deben duplicarse en esta tabla.
+  const accesoriosVisibles = accesorios.filter(a => !a.soloVisual);
   const fecha = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
@@ -129,12 +133,12 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
           ])}
         />
 
-        {accesorios.length > 0 && (
+        {accesoriosVisibles.length > 0 && (
           <View>
             <Text style={styles.h2}>Accesorios (referencia, no se cortan de melamina)</Text>
             <Tabla
               columnas={['Accesorio', 'Descripción', 'Ancho (mm)', 'Profundidad (mm)']}
-              filas={accesorios.map(a => [a.id, a.descripcion, String(Math.round(a.ancho)), String(Math.round(a.alto))])}
+              filas={accesoriosVisibles.map(a => [a.id, a.descripcion, String(Math.round(a.ancho)), String(Math.round(a.alto))])}
             />
           </View>
         )}
