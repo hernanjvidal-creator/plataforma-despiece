@@ -89,18 +89,20 @@ const COLORES_EXTERIOR = [
 
 const VALORES_POR_MODULO = {
   bajo_cocina: {
-    A: 600, H: 700, P: 560,
+    H: 700, P: 560,
     isla: false,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     secciones: [
-      { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3 },
+      { tipo: 'estandar', ancho: 600, config: 'solo_cajones', nP: 0, nC: 3 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
   },
   alto_cocina: {
-    A: 600, H: 700, P: 320,
-    nP: 2, nBaldas: 1,
+    H: 700, P: 320,
+    secciones: [
+      { ancho: 600, nP: 2, nBaldas: 1 },
+    ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
   },
@@ -188,7 +190,7 @@ function formDesdeParametros(modulo, parametros, opcionesCorte) {
     };
   }
   if (modulo === 'alto_cocina') {
-    return { ...base, ...comunes, nP: parametros.nP, nBaldas: parametros.nBaldas };
+    return { ...base, ...comunes, secciones: parametros.secciones };
   }
   if (modulo === 'vanitorio_bano') {
     return {
@@ -447,7 +449,9 @@ export default function Configurador() {
       ? { cajones: 0, repisas: 1, colgador: false }
       : (form.modulo === 'despensa' || form.modulo === 'librero')
       ? { repisas: 5 }
-      : { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 2 };
+      : form.modulo === 'alto_cocina'
+      ? { ancho: 600, nP: 2, nBaldas: 1 }
+      : { tipo: 'estandar', ancho: 600, config: 'solo_cajones', nP: 0, nC: 2 };
     setForm(f => ({ ...f, secciones: [...f.secciones, nueva] }));
   }
 
@@ -484,10 +488,7 @@ export default function Configurador() {
         isla: !!form.isla,
         cubierta,
         secciones: form.secciones.map(s => {
-          if (s.tipo === 'esquinero') {
-            return { tipo: 'esquinero', giro: s.giro || 'derecha' };
-          }
-          const ancho = s.ancho ? Number(s.ancho) : undefined;
+          const ancho = Number(s.ancho) || undefined;
           if (s.tipo === 'estandar') {
             const { nP, nC } = nPyNCporConfig(s.config, Number(s.nP) || 0, Number(s.nC) || 0);
             const repisas = (nP > 0 || s.config === 'abierto') ? Number(s.repisas) || 0 : 0;
@@ -498,7 +499,14 @@ export default function Configurador() {
       };
     }
     if (form.modulo === 'alto_cocina') {
-      return { ...base, nP: Number(form.nP), nBaldas: Number(form.nBaldas) };
+      return {
+        ...base,
+        secciones: form.secciones.map(s => ({
+          ancho: Number(s.ancho) || undefined,
+          nP: Number(s.nP) || 1,
+          nBaldas: Number(s.nBaldas) || 0,
+        })),
+      };
     }
     if (form.modulo === 'closet') {
       return {
@@ -778,16 +786,23 @@ export default function Configurador() {
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
 
-          <label>Ancho (mm)</label>
-          <input type="number" min={50} max={maxAncho} value={form.A} onChange={e => actualizar('A', e.target.value)} />
-          {form.modulo === 'bajo_cocina' && form.secciones.some(s => s.tipo === 'esquinero') ? (
-            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Con una esquina agregada, este ancho ya no se usa — cada módulo de cada brazo necesita su propio "Ancho fijo" más abajo.
-            </p>
+          {(form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina') ? (
+            <>
+              <label>Ancho total (mm)</label>
+              <input type="number" value={form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0)} disabled />
+              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los
+                módulos de abajo, no se edita directamente.
+              </p>
+            </>
           ) : (
-            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Este es el ancho exterior del mueble completo.
-            </p>
+            <>
+              <label>Ancho (mm)</label>
+              <input type="number" min={50} max={maxAncho} value={form.A} onChange={e => actualizar('A', e.target.value)} />
+              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                Este es el ancho exterior del mueble completo.
+              </p>
+            </>
           )}
 
           <label>Alto (mm)</label>
@@ -809,11 +824,43 @@ export default function Configurador() {
 
           {form.modulo === 'alto_cocina' && (
             <>
-              <label>Cantidad de puertas</label>
-              <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+              <label>Módulos (de izquierda a derecha)</label>
+              {form.secciones.map((s, i) => (
+                <div key={i} style={{ border: '1px solid #e4e2dc', borderRadius: 8, padding: 10, marginTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: 13 }}>Módulo {i + 1}</strong>
+                    {form.secciones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => quitarSeccion(i)}
+                        style={{ margin: 0, width: 'auto', padding: '2px 8px', fontSize: 12, background: 'var(--color-danger)' }}
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
 
-              <label>Cantidad de repisas interiores</label>
-              <input type="number" min={0} value={form.nBaldas} onChange={e => actualizar('nBaldas', e.target.value)} />
+                  <label>Ancho fijo (mm)</label>
+                  <input
+                    type="number" min={100}
+                    value={s.ancho ?? ''}
+                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
+                  />
+
+                  <label>Cantidad de puertas</label>
+                  <input type="number" min={1} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
+
+                  <label>Cantidad de repisas interiores</label>
+                  <input type="number" min={0} value={s.nBaldas} onChange={e => actualizarSeccion(i, 'nBaldas', e.target.value)} />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={agregarSeccion}
+                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+              >
+                + Agregar módulo
+              </button>
             </>
           )}
 
@@ -997,23 +1044,7 @@ export default function Configurador() {
                     <option value="lavaplatos">Lavaplatos</option>
                     <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
-                    {esAdmin && <option value="esquinero">Esquina (dobla 90° acá)</option>}
                   </select>
-
-                  {s.tipo === 'esquinero' && (
-                    <>
-                      <label>Gira hacia</label>
-                      <select value={s.giro || 'derecha'} onChange={e => actualizarSeccion(i, 'giro', e.target.value)}>
-                        <option value="derecha">Derecha</option>
-                        <option value="izquierda">Izquierda</option>
-                      </select>
-                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                        No es un frente: acá el mueble dobla 90° y sigue con los módulos que pongas después
-                        (nuevo brazo, "esquinero interior" con bisagra plegable de rincón). Tiene que haber al
-                        menos un módulo antes y después de cada esquina.
-                      </p>
-                    </>
-                  )}
 
                   {s.tipo === 'estandar' && (
                     <>
@@ -1053,21 +1084,16 @@ export default function Configurador() {
                     </p>
                   )}
 
-                  {s.tipo !== 'esquinero' && (
-                    <>
-                      <label>
-                        Ancho fijo (mm{form.secciones.some(sec => sec.tipo === 'esquinero') ? ', obligatorio con esquinas' : ', opcional — vacío = automático'})
-                      </label>
-                      <input
-                        type="number" min={0}
-                        value={s.ancho ?? ''}
-                        onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
-                      />
-                      <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                        Ancho de este módulo tal como se ve por fuera (comparte la mitad de cada separador con el módulo vecino) — sumando el de todos los módulos da el "Ancho (mm)" total de arriba.
-                      </p>
-                    </>
-                  )}
+                  <label>Ancho del módulo (mm)</label>
+                  <input
+                    type="number" min={100}
+                    value={s.ancho ?? ''}
+                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
+                  />
+                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                    Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio
+                    ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba.
+                  </p>
                 </div>
               ))}
               <button
