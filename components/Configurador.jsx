@@ -32,6 +32,12 @@ const MODULOS = [
   { value: 'baul', label: 'Baúl' },
 ];
 
+// Módulos donde el ancho total no es un input directo: cada módulo/sección
+// trae el suyo propio, obligatorio, y el total de arriba es solo la suma
+// (de solo lectura) — ver el motor de cada uno (calcularSecciones o
+// equivalente) para el mismo criterio del lado del servidor.
+const ANCHO_LO_DEFINEN_SECCIONES = ['bajo_cocina', 'alto_cocina', 'closet', 'despensa', 'librero'];
+
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
 // de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
 // botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
@@ -152,11 +158,11 @@ const VALORES_POR_MODULO = {
     espesorPuertas: 15,
   },
   despensa: {
-    A: 900, H: 2000, P: 450,
+    H: 2000, P: 450,
     nP: 2,
     secciones: [
-      { repisas: 5 },
-      { repisas: 5 },
+      { repisas: 5, ancho: 450 },
+      { repisas: 5, ancho: 450 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
@@ -174,10 +180,10 @@ const VALORES_POR_MODULO = {
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
   librero: {
-    A: 900, H: 1800, P: 300,
+    H: 1800, P: 300,
     secciones: [
-      { repisas: 5 },
-      { repisas: 5 },
+      { repisas: 5, ancho: 450 },
+      { repisas: 5, ancho: 450 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
@@ -475,7 +481,7 @@ export default function Configurador() {
     const nueva = form.modulo === 'closet'
       ? { cajones: 0, repisas: 1, colgador: false, ancho: 600 }
       : (form.modulo === 'despensa' || form.modulo === 'librero')
-      ? { repisas: 5 }
+      ? { repisas: 5, ancho: 450 }
       : form.modulo === 'alto_cocina'
       ? { ancho: 600, nP: 2, nBaldas: 1 }
       : { tipo: 'estandar', ancho: 600, config: 'solo_cajones', nP: 0, nC: 2 };
@@ -813,14 +819,14 @@ export default function Configurador() {
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
 
-          {(form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina' || form.modulo === 'closet') ? (
+          {ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) ? (
             <>
               <label>Ancho total (mm)</label>
               <input type="number" value={form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0)} disabled />
               <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                {form.modulo === 'closet'
-                  ? 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'
-                  : 'Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los módulos de abajo, no se edita directamente.'}
+                {form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina'
+                  ? 'Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los módulos de abajo, no se edita directamente.'
+                  : 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'}
               </p>
             </>
           ) : (
@@ -1003,16 +1009,16 @@ export default function Configurador() {
                   <label>Repisas</label>
                   <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
 
-                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
+                  <label>Ancho de la sección (mm)</label>
                   <input
-                    type="number" min={0}
+                    type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) —
-                    si la dejas vacía, se reparte el ancho restante en partes iguales entre las secciones sin ancho fijo. Con una
-                    sola sección no se agrega ningún separador interior.
+                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
+                    fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se
+                    agrega ningún separador interior.
                   </p>
                 </div>
               ))}
@@ -1252,16 +1258,16 @@ export default function Configurador() {
                   <label>Repisas</label>
                   <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
 
-                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
+                  <label>Ancho de la sección (mm)</label>
                   <input
-                    type="number" min={0}
+                    type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) —
-                    si la dejas vacía, se reparte el ancho restante en partes iguales entre las secciones sin ancho fijo. Con una
-                    sola sección no se agrega ningún separador interior.
+                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
+                    fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se
+                    agrega ningún separador interior.
                   </p>
                 </div>
               ))}
