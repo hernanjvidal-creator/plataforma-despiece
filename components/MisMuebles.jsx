@@ -28,6 +28,32 @@ const PRECIO_UNITARIO_USD = 5;
 // Configurador.jsx) — se oculta toda la UI de compra/carrito mientras dure.
 const MODO_GRATIS_TEMPORAL = true;
 
+// Conversión "Compra despiece (código)" en Google Ads (Objetivos > Conversiones)
+// — disparada a mano acá en vez de por detección automática de URL, para
+// poder mandar el monto real de cada pedido en vez de un valor fijo.
+const CONVERSION_ADS_COMPRA = 'AW-18412301415/Il2tCOj-lYUdEOfY1ctE';
+
+// Evita contar la misma compra dos veces si el cliente recarga la página de
+// confirmación (Google Ads también deduplica por transaction_id — esto es
+// una segunda capa, del lado del navegador). Nunca debe poder romper el
+// flujo de compra: cualquier falla acá se ignora en silencio.
+function registrarConversionAdsSiCorresponde(pedidoId, total) {
+  try {
+    if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+    const clave = `conversion_ads_${pedidoId}`;
+    if (localStorage.getItem(clave)) return;
+    window.gtag('event', 'conversion', {
+      send_to: CONVERSION_ADS_COMPRA,
+      value: total,
+      currency: 'USD',
+      transaction_id: pedidoId,
+    });
+    localStorage.setItem(clave, '1');
+  } catch {
+    // Analítica de terceros nunca debe poder romper la confirmación de compra.
+  }
+}
+
 export default function MisMuebles() {
   const { usuario, cargando: cargandoAuth } = useAuth();
   const router = useRouter();
@@ -63,7 +89,7 @@ export default function MisMuebles() {
     async function verificar() {
       const { data, error: err } = await supabase
         .from('pedidos')
-        .select('estado')
+        .select('estado, total')
         .eq('id', pedidoPagoParam)
         .single();
       if (cancelado) return;
@@ -71,6 +97,7 @@ export default function MisMuebles() {
       if (!err && data?.estado === 'pagado') {
         setVerificandoPago(false);
         setSeleccionados(new Set());
+        registrarConversionAdsSiCorresponde(pedidoPagoParam, data.total);
         await cargarMuebles();
         return;
       }
