@@ -44,7 +44,7 @@ export default function Privacidad() {
         campañas de publicidad:
       </p>
       <ul>
-        <li><strong>Google Ads:</strong> mide qué anuncios traen visitas al sitio, y registra cuándo alguien genera un despiece (solo el tipo de mueble, sin datos personales) como una conversión.</li>
+        <li><strong>Google Ads:</strong> mide qué anuncios traen visitas al sitio, y registra cuándo alguien genera un despiece o completa una compra (con el monto) como una conversión. Al completar una compra, además compartimos tu correo electrónico con Google de forma encriptada (función llamada "Conversiones mejoradas"), para que pueda medir mejor qué anuncio generó esa venta — Google no recibe tu correo en texto plano.</li>
         <li><strong>Google Analytics 4:</strong> estadísticas agregadas de navegación (qué páginas se visitan, cuánto tiempo, desde qué país).</li>
         <li><strong>Microsoft Clarity:</strong> grabaciones de cómo navegan los visitantes (movimientos del mouse, clics) y mapas de calor, para detectar problemas de uso del configurador — configurado para enmascarar automáticamente correos y cualquier otro dato que escribas en un formulario, así que no queda registrado en estas grabaciones.</li>
         <li><strong>Vercel Analytics:</strong> conteos agregados de visitas, sin cookies ni datos individuales.</li>
