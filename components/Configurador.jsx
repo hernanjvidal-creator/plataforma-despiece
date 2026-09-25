@@ -544,7 +544,8 @@ export default function Configurador() {
     if (form.modulo === 'closet') {
       return {
         ...base,
-        nP: Number(form.nP), tipoPuerta: form.tipoPuerta,
+        nP: form.tipoPuerta === 'corredera' && Number(form.nP) > 0 ? 2 : Number(form.nP),
+        tipoPuerta: form.tipoPuerta,
         secciones: form.secciones.map(s => ({
           cajones: Number(s.cajones), repisas: Number(s.repisas), colgador: !!s.colgador,
           ancho: s.ancho ? Number(s.ancho) : undefined,
@@ -978,10 +979,10 @@ export default function Configurador() {
                       la bisagra.
                     </p>
                   ) : (
-                    <>
-                      <label>Cantidad de puertas</label>
-                      <input type="number" min={2} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
-                    </>
+                    <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                      Las puertas correderas siempre son 2 hojas, superpuestas en dos rieles, que en conjunto
+                      cubren todo el ancho del closet.
+                    </p>
                   )}
                 </>
               )}
