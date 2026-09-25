@@ -141,12 +141,12 @@ const VALORES_POR_MODULO = {
     espesorPuertas: 15,
   },
   closet: {
-    A: 2400, H: 2200, P: 580,
+    H: 2200, P: 580,
     nP: 0, tipoPuerta: 'batiente',
     secciones: [
-      { cajones: 2, repisas: 2, colgador: false },
-      { cajones: 0, repisas: 1, colgador: true },
-      { cajones: 2, repisas: 2, colgador: false },
+      { cajones: 2, repisas: 2, colgador: false, ancho: 800 },
+      { cajones: 0, repisas: 1, colgador: true, ancho: 800 },
+      { cajones: 2, repisas: 2, colgador: false, ancho: 800 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
@@ -473,7 +473,7 @@ export default function Configurador() {
   // ---------- Secciones (closet: columnas; bajo_cocina: módulos de cocina) ----------
   function agregarSeccion() {
     const nueva = form.modulo === 'closet'
-      ? { cajones: 0, repisas: 1, colgador: false }
+      ? { cajones: 0, repisas: 1, colgador: false, ancho: 600 }
       : (form.modulo === 'despensa' || form.modulo === 'librero')
       ? { repisas: 5 }
       : form.modulo === 'alto_cocina'
@@ -813,13 +813,14 @@ export default function Configurador() {
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
 
-          {(form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina') ? (
+          {(form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina' || form.modulo === 'closet') ? (
             <>
               <label>Ancho total (mm)</label>
               <input type="number" value={form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0)} disabled />
               <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los
-                módulos de abajo, no se edita directamente.
+                {form.modulo === 'closet'
+                  ? 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'
+                  : 'Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los módulos de abajo, no se edita directamente.'}
               </p>
             </>
           ) : (
@@ -925,15 +926,16 @@ export default function Configurador() {
                     Colgador (barra para colgar ropa)
                   </label>
 
-                  <label>Ancho fijo (mm, opcional — vacío = automático)</label>
+                  <label>Ancho de la sección (mm)</label>
                   <input
-                    type="number" min={0}
+                    type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Ancho de esta sección tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina) —
-                    si la dejas vacía, se reparte el ancho restante en partes iguales entre las secciones sin ancho fijo.
+                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
+                    fuera (comparte la mitad de cada separador con la sección vecina). Sumando el de todas las
+                    secciones da el "Ancho total" de arriba.
                   </p>
                 </div>
               ))}
