@@ -125,7 +125,7 @@ const VALORES_POR_MODULO = {
     isla: false,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     secciones: [
-      { tipo: 'estandar', ancho: 600, config: 'solo_cajones', nP: 0, nC: 3 },
+      { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
@@ -133,7 +133,7 @@ const VALORES_POR_MODULO = {
   alto_cocina: {
     H: 700, P: 320,
     secciones: [
-      { ancho: 600, nP: 2, nBaldas: 1 },
+      { nP: 2, nBaldas: 1 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
@@ -150,9 +150,9 @@ const VALORES_POR_MODULO = {
     H: 2200, P: 580,
     nP: 0, tipoPuerta: 'batiente',
     secciones: [
-      { cajones: 2, repisas: 2, colgador: false, ancho: 800 },
-      { cajones: 0, repisas: 1, colgador: true, ancho: 800 },
-      { cajones: 2, repisas: 2, colgador: false, ancho: 800 },
+      { cajones: 2, repisas: 2, colgador: false },
+      { cajones: 0, repisas: 1, colgador: true },
+      { cajones: 2, repisas: 2, colgador: false },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
@@ -161,8 +161,8 @@ const VALORES_POR_MODULO = {
     H: 2000, P: 450,
     nP: 2,
     secciones: [
-      { repisas: 5, ancho: 450 },
-      { repisas: 5, ancho: 450 },
+      { repisas: 5 },
+      { repisas: 5 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
@@ -182,8 +182,8 @@ const VALORES_POR_MODULO = {
   librero: {
     H: 1800, P: 300,
     secciones: [
-      { repisas: 5, ancho: 450 },
-      { repisas: 5, ancho: 450 },
+      { repisas: 5 },
+      { repisas: 5 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
@@ -478,13 +478,16 @@ export default function Configurador() {
 
   // ---------- Secciones (closet: columnas; bajo_cocina: módulos de cocina) ----------
   function agregarSeccion() {
+    // Sin ancho por defecto: que el total no suba solo con un valor de
+    // ejemplo que el cliente no eligió — sube recién cuando escribe el
+    // ancho real de la sección nueva.
     const nueva = form.modulo === 'closet'
-      ? { cajones: 0, repisas: 1, colgador: false, ancho: 600 }
+      ? { cajones: 0, repisas: 1, colgador: false }
       : (form.modulo === 'despensa' || form.modulo === 'librero')
-      ? { repisas: 5, ancho: 450 }
+      ? { repisas: 5 }
       : form.modulo === 'alto_cocina'
-      ? { ancho: 600, nP: 2, nBaldas: 1 }
-      : { tipo: 'estandar', ancho: 600, config: 'solo_cajones', nP: 0, nC: 2 };
+      ? { nP: 2, nBaldas: 1 }
+      : { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 2 };
     setForm(f => ({ ...f, secciones: [...f.secciones, nueva] }));
   }
 
