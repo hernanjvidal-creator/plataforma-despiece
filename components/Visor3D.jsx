@@ -54,7 +54,7 @@ function colorDePieza(pieza) {
 // Escala de mm a unidades de escena (mm * ESCALA)
 const ESCALA = 0.005;
 
-const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, ref) {
+const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, modulo }, ref) {
   const contenedorRef = useRef(null);
   const rendererRef = useRef(null);
   const sceneRef = useRef(null);
@@ -424,7 +424,12 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
         cubo.position.set(x, y, z);
         if (REGEX_CAJON_FRENTE.test(pieza.id)) {
           const dOut = signoHaciaAfuera(pieza, ejeEspesor);
-          agregarManillaCajon(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut);
+          // Los cajones del closet nunca llevan manilla (se abren con la
+          // mano por el hueco entre uno y otro — ver lib/closet.js) — el
+          // resto de los módulos sí la muestran.
+          if (modulo !== 'closet') {
+            agregarManillaCajon(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut);
+          }
           frentesCajon.set(pieza.grupo || pieza.id, { mesh: cubo, ejeEspesor, dOut });
         }
         scene.add(cubo);
@@ -527,7 +532,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       sceneRef.current = null;
       cameraRef.current = null;
     };
-  }, [piezas, accesorios, parametros]);
+  }, [piezas, accesorios, parametros, modulo]);
 
   return <div ref={contenedorRef} style={{ width: '100%', height: 460, borderRadius: 8, overflow: 'hidden' }} />;
 });

@@ -146,6 +146,7 @@ export default function VerMueblePublico({ id }) {
           piezas={datos.despiece.piezas}
           accesorios={datos.despiece.accesorios}
           parametros={datos.despiece.parametros}
+          modulo={datos.despiece.modulo}
         />
       </div>
 

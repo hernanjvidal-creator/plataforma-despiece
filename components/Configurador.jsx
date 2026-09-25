@@ -1425,6 +1425,7 @@ export default function Configurador() {
                   piezas={resultado.despiece.piezas}
                   accesorios={resultado.despiece.accesorios}
                   parametros={resultado.despiece.parametros}
+                  modulo={resultado.despiece.modulo}
                 />
               </div>
 
