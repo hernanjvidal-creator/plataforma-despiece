@@ -83,6 +83,12 @@ input, select {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+input:disabled, select:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
 input:focus, select:focus {
   outline: none;
   border-color: var(--color-accent);
