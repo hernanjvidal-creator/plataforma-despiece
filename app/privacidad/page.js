@@ -37,12 +37,21 @@ export default function Privacidad() {
         <li><strong>Lemon Squeezy</strong> (procesador de pagos): procesa el pago de tus compras. Lemon Squeezy recibe tu correo y los datos de tu método de pago directamente — nosotros nunca vemos ni guardamos el número de tu tarjeta.</li>
       </ul>
 
-      <h2>4. Cookies y almacenamiento local</h2>
+      <h2>4. Cookies, analítica y publicidad</h2>
       <p>
-        Usamos únicamente el almacenamiento necesario para mantener tu sesión iniciada (cookies/local
-        storage de autenticación). Por ahora no usamos cookies de publicidad ni de seguimiento (analytics).
-        Si en el futuro incorporamos herramientas de analítica o de campañas publicitarias, actualizaremos
-        esta política para reflejarlo.
+        Además del almacenamiento necesario para mantener tu sesión iniciada (cookies/local storage de
+        autenticación), usamos estas herramientas para entender cómo se usa el sitio y medir nuestras
+        campañas de publicidad:
+      </p>
+      <ul>
+        <li><strong>Google Ads:</strong> mide qué anuncios traen visitas al sitio, y registra cuándo alguien genera un despiece (solo el tipo de mueble, sin datos personales) como una conversión.</li>
+        <li><strong>Google Analytics 4:</strong> estadísticas agregadas de navegación (qué páginas se visitan, cuánto tiempo, desde qué país).</li>
+        <li><strong>Microsoft Clarity:</strong> grabaciones de cómo navegan los visitantes (movimientos del mouse, clics) y mapas de calor, para detectar problemas de uso del configurador — configurado para enmascarar automáticamente correos y cualquier otro dato que escribas en un formulario, así que no queda registrado en estas grabaciones.</li>
+        <li><strong>Vercel Analytics:</strong> conteos agregados de visitas, sin cookies ni datos individuales.</li>
+      </ul>
+      <p>
+        Ninguna de estas herramientas nos da acceso al contenido de tu cuenta (tus diseños guardados,
+        tu contraseña) — miden navegación y uso general del sitio, no el detalle de lo que guardas en él.
       </p>
 
       <h2>5. Tus derechos</h2>
@@ -59,13 +68,22 @@ export default function Privacidad() {
         cifradas (HTTPS).
       </p>
 
-      <h2>7. Cambios a esta política</h2>
+      <h2>7. Qué hacemos ante una filtración de datos</h2>
+      <p>
+        Si detectamos un incidente de seguridad que haya expuesto tus datos personales, vamos a: (1)
+        investigarlo y contener el problema lo antes posible, (2) avisarte por correo electrónico si tus
+        datos se vieron afectados, explicando qué información estuvo involucrada y qué medidas tomar (por
+        ejemplo, cambiar tu contraseña), y (3) informar a la autoridad correspondiente cuando la ley lo
+        exija. No vamos a ocultar un incidente que te afecte.
+      </p>
+
+      <h2>8. Cambios a esta política</h2>
       <p>
         Podemos actualizar esta política ocasionalmente. Si hacemos cambios importantes, lo indicaremos en
         esta misma página con la fecha de la última actualización.
       </p>
 
-      <h2>8. Contacto</h2>
+      <h2>9. Contacto</h2>
       <p>
         Para cualquier consulta sobre esta política o tus datos, escríbenos a{' '}
         <a href="mailto:contacto@armandolo.com">contacto@armandolo.com</a>.
