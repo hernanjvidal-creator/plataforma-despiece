@@ -241,6 +241,11 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     // una manilla negra horizontal. Se agregan como hijos del cubo de la
     // pieza para heredar su posición/rotación sin recalcular transformadas.
     const manillaMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.35 });
+    // Ojo con el orden de estas dos: "puerta_corredera_1" también matchea
+    // /puerta/, así que REGEX_PUERTA_CORREDERA se revisa primero (ver el
+    // if/else de más abajo) — si no, una puerta corredera de closet caería
+    // en la rama de puerta batiente (con bisagra) por error.
+    const REGEX_PUERTA_CORREDERA = /^puerta_corredera_\d+$/;
     const REGEX_PUERTA = /puerta/;
     const REGEX_CAJON_FRENTE = /frente_cajon/;
     const REGEX_TAPA = /^tapa$/;
@@ -318,6 +323,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
     const ANGULO_APERTURA_PUERTA = (100 * Math.PI) / 180;
     const ANGULO_APERTURA_TAPA = (100 * Math.PI) / 180;
     const DESPLAZAMIENTO_APERTURA_CAJON = 320 * ESCALA;
+    const DESPLAZAMIENTO_APERTURA_PUERTA_CORREDERA = 380 * ESCALA;
     const piezasInteractivas = new Map(); // mesh -> { tipo, ...datos, abierto }
 
     function alternarApertura(mesh) {
@@ -328,6 +334,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
         datos.pivot.rotation.y = datos.abierto ? datos.anguloAbierto : 0;
       } else if (datos.tipo === 'tapa') {
         datos.pivot.rotation.x = datos.abierto ? datos.anguloAbierto : 0;
+      } else if (datos.tipo === 'puerta_corredera') {
+        // Se desliza al costado (no gira) — mismo mecanismo que un cajón,
+        // pero en el eje del ancho en vez del eje de profundidad.
+        mesh.position[datos.eje] = datos.abierto ? datos.cerradoValor + datos.delta : datos.cerradoValor;
       } else {
         // 'cajon': todas las piezas del grupo (frente + caja) se mueven
         // juntas, como una sola unidad — no solo el frente.
@@ -361,7 +371,20 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros }, 
       const dimAncho = ejeAncho === 'x' ? dimX : dimZ;
       const dimEspesor = ejeEspesor === 'x' ? dimX : dimZ;
 
-      if (REGEX_PUERTA.test(pieza.id)) {
+      if (REGEX_PUERTA_CORREDERA.test(pieza.id)) {
+        // Se desliza al costado, no gira sobre bisagra — sin manilla
+        // sobresaliente (el herraje real es un tirador embutido, a ras).
+        cubo.position.set(x, y, z);
+        scene.add(cubo);
+
+        const anchoTotalMm = (parametros && parametros.A) || 0;
+        const haciaIzquierda = anchoTotalMm > 0 ? x < (anchoTotalMm * ESCALA) / 2 : true;
+        const eje = ejeAncho;
+        const delta = (haciaIzquierda ? -1 : 1) * DESPLAZAMIENTO_APERTURA_PUERTA_CORREDERA;
+        piezasInteractivas.set(cubo, {
+          tipo: 'puerta_corredera', eje, delta, cerradoValor: cubo.position[eje], abierto: false,
+        });
+      } else if (REGEX_PUERTA.test(pieza.id)) {
         const dOut = signoHaciaAfuera(pieza, ejeEspesor);
         agregarManillaPuerta(cubo, dimAncho, dimY, dimEspesor, ejeAncho, dOut, pieza.id);
 
