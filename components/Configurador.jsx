@@ -153,7 +153,7 @@ const VALORES_POR_MODULO = {
   },
   despensa: {
     A: 900, H: 2000, P: 450,
-    nP: 2, tipoPuerta: 'batiente',
+    nP: 2,
     secciones: [
       { repisas: 5 },
       { repisas: 5 },
@@ -232,7 +232,7 @@ function formDesdeParametros(modulo, parametros, opcionesCorte) {
     return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
   }
   if (modulo === 'despensa') {
-    return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
+    return { ...base, ...comunes, nP: parametros.nP, secciones: parametros.secciones };
   }
   if (modulo === 'velador') {
     return { ...base, ...comunes, tipoInferior: parametros.tipoInferior };
@@ -558,7 +558,7 @@ export default function Configurador() {
     if (form.modulo === 'despensa') {
       return {
         ...base,
-        nP: Number(form.nP), tipoPuerta: form.tipoPuerta,
+        nP: Number(form.nP),
         secciones: form.secciones.map(s => ({
           repisas: Number(s.repisas),
           ancho: s.ancho ? Number(s.ancho) : undefined,
@@ -1026,16 +1026,6 @@ export default function Configurador() {
 
               <label style={{ marginTop: 18 }}>Cantidad de puertas (0 = despensa abierta)</label>
               <input type="number" min={0} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
-
-              {Number(form.nP) > 0 && (
-                <>
-                  <label>Tipo de puerta</label>
-                  <select value={form.tipoPuerta} onChange={e => actualizar('tipoPuerta', e.target.value)}>
-                    <option value="batiente">Batiente (con bisagra)</option>
-                    <option value="corredera">Corredera (sobre riel)</option>
-                  </select>
-                </>
-              )}
             </>
           )}
 
