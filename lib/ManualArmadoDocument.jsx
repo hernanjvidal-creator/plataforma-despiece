@@ -184,6 +184,13 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   const travesanosTraseros = porPatron(piezas, 'travesano_trasero');
   const divisores = porPatron(piezas, 'divisor');
   const respaldo = porPatron(piezas, 'respaldo');
+  // closet.js y despensa.js usan un respaldo ESTRUCTURAL de 15mm atornillado
+  // directo (reemplaza a los travesaños traseros) — el resto de los módulos
+  // (librero, vanitorio, velador, escritorio, baúl) todavía usan el
+  // respaldo MDF fino de siempre, que va clavado/atornillado al final solo
+  // para fijar la escuadra, no para dar rigidez. Si en el futuro otro
+  // módulo suma un respaldo estructural propio, sumarlo acá también.
+  const respaldoEstructural = (modulo === 'closet' || modulo === 'despensa') && respaldo.length > 0;
   const cajones = agruparCajones(piezas);
   const tipoPuertaCloset = parametros?.tipoPuerta;
   const esPuertaCorrederaCloset = tipoPuertaCloset === 'corredera';
@@ -211,8 +218,18 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
   // su tapa va sobre bisagras). Mueble cocina y mueble aéreo no pasan por
   // acá: arman un cuerpo por módulo, con su propio orden — ver más abajo.
   let pasoUbicarBase, pasoUnirLateral;
+  // El último paso de ORDEN_CUERPO (atornillar el respaldo) describe un
+  // respaldo MDF fino clavado cada 15cm — correcto para todos los módulos
+  // salvo el closet rediseñado, cuyo respaldo estructural se reemplaza acá
+  // por una versión que refleja cómo se atornilla de verdad (ver
+  // respaldoEstructural más arriba).
+  let pasoRespaldoFinal = ORDEN_CUERPO[6];
   if (!esModular) {
-    if (techo.length > 0 && travesanosTraseros.length > 0) {
+    if (respaldoEstructural) {
+      pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso, el techo y el respaldo — en este mueble el respaldo NO es un fondo decorativo: es un panel estructural de 15mm que reemplaza a los travesaños traseros, así que tenlo a mano desde el principio, junto con el resto de las piezas base.';
+      pasoUnirLateral = 'Une primero un lateral al piso y al techo con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
+      pasoRespaldoFinal = 'Atornilla el respaldo contra el cuerpo ya escuadrado: directo a los dos laterales, al piso, al techo y a cada separador que cruce por detrás, repartido a lo largo de todo el perímetro. Sigue siendo la pieza que fija la escuadra en el tiempo — igual que en cualquier mueble, va al final, recién con el cuerpo ya cuadrado y las demás uniones apretadas a fondo.';
+    } else if (techo.length > 0 && travesanosTraseros.length > 0) {
       pasoUbicarBase = 'Ubica las piezas base: los dos laterales, el piso, el techo y los dos travesaños traseros (van por dentro, pegados a la parte de atrás: uno arriba y otro abajo).';
       pasoUnirLateral = 'Une primero un lateral al piso, al techo y a los dos travesaños traseros con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
     } else if (techo.length > 0 && traviesas.length > 0) {
@@ -229,7 +246,7 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
       pasoUnirLateral = 'Une primero un lateral al piso con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
     }
   }
-  const pasosOrdenCuerpo = esModular ? [] : [pasoUbicarBase, pasoUnirLateral, ...ORDEN_CUERPO.slice(2)];
+  const pasosOrdenCuerpo = esModular ? [] : [pasoUbicarBase, pasoUnirLateral, ...ORDEN_CUERPO.slice(2, 6), pasoRespaldoFinal];
 
   // ---------- Qué secciones aplican, según los herrajes reales ----------
   const tieneCajones = cajones.length > 0;
@@ -324,9 +341,12 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
                 <Text style={styles.nota}>Con esto tu mueble queda listo para que te instalen la cubierta.</Text>
                 <Text style={styles.nota}>
                   Este mueble está diseñado para una cubierta SIN faldón (nariz/frente). Si quieres ese
-                  detalle estético, agrega 2 travesaños o listones de melamina acostados en la parte de
-                  arriba del mueble (suman 30mm de alto) y apoya la cubierta sobre ellos — queda
-                  correctamente, aunque el mueble será 3cm más alto que la medida original.
+                  detalle estético, agrega 4 travesaños o listones de melamina acostados en la parte de
+                  arriba del mueble, a lo ancho TOTAL del mueble ya unido (no por módulo): 2 apilados
+                  junto al borde delantero y 2 apilados junto al borde trasero (cada grupo suma 30mm de
+                  alto). Apoya la cubierta sobre los cuatro — con soporte solo adelante o solo atrás
+                  quedaría inestable — y queda correctamente, aunque el mueble será 3cm más alto que la
+                  medida original.
                 </Text>
               </>
             )}
@@ -334,7 +354,10 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
         ) : (
           <>
             <Text style={styles.h2}>Orden de armado del cuerpo</Text>
-            <Text style={styles.intro}>Las piezas de la estructura de tu mueble son:</Text>
+            <Text style={styles.intro}>
+              Las piezas de la estructura de tu mueble son las siguientes — guíate por el plano 3D de tu
+              proyecto para confirmar dónde va cada una antes de empezar a unir nada:
+            </Text>
             {laterales.length > 0 && (
               <View style={{ marginBottom: 6 }}>
                 <Text style={styles.h3}>Laterales</Text>
@@ -371,15 +394,21 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
                 <ListaPiezasPersonalizada piezas={divisores} />
               </View>
             )}
-
-            <ListaPasos items={pasosOrdenCuerpo} />
-
             {respaldo.length > 0 && (
-              <View>
-                <Text style={styles.h3}>Respaldo (va al final, ver último paso arriba)</Text>
+              <View style={{ marginBottom: 6 }}>
+                <Text style={styles.h3}>{respaldoEstructural ? 'Respaldo (estructural — sin travesaños traseros)' : 'Respaldo'}</Text>
                 <ListaPiezasPersonalizada piezas={respaldo} />
+                {respaldoEstructural && (
+                  <Text style={styles.nota}>
+                    No es un fondo decorativo: es un panel de 15mm atornillado directo a laterales, piso,
+                    techo y separadores, y es lo que le da toda la rigidez al cuerpo — tenlo a mano desde
+                    el principio, junto con el resto de las piezas base.
+                  </Text>
+                )}
               </View>
             )}
+
+            <ListaPasos items={pasosOrdenCuerpo} />
 
             {tieneCubierta && (
               <Text style={styles.nota}>

@@ -35,8 +35,10 @@ const MODULOS = [
 // Módulos donde el ancho total no es un input directo: cada módulo/sección
 // trae el suyo propio, obligatorio, y el total de arriba es solo la suma
 // (de solo lectura) — ver el motor de cada uno (calcularSecciones o
-// equivalente) para el mismo criterio del lado del servidor.
-const ANCHO_LO_DEFINEN_SECCIONES = ['bajo_cocina', 'alto_cocina', 'closet', 'despensa', 'librero'];
+// equivalente) para el mismo criterio del lado del servidor. La despensa NO
+// va acá: es un solo cuerpo sin secciones, así que su ancho es un input
+// directo (ver el bloque genérico de "Ancho (mm)" más abajo).
+const ANCHO_LO_DEFINEN_SECCIONES = ['bajo_cocina', 'alto_cocina', 'closet', 'librero'];
 
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
 // de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
@@ -158,12 +160,9 @@ const VALORES_POR_MODULO = {
     espesorPuertas: 15,
   },
   despensa: {
-    H: 2000, P: 450,
-    nP: 2,
-    secciones: [
-      { repisas: 5 },
-      { repisas: 5 },
-    ],
+    A: 450, H: 2000, P: 450,
+    nP: '',        // sin elegir por defecto — obligatorio que el cliente escoja 0, 1 o 2
+    repisas: 5,
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
   },
@@ -238,7 +237,7 @@ function formDesdeParametros(modulo, parametros, opcionesCorte) {
     return { ...base, ...comunes, nP: parametros.nP, tipoPuerta: parametros.tipoPuerta, secciones: parametros.secciones };
   }
   if (modulo === 'despensa') {
-    return { ...base, ...comunes, nP: parametros.nP, secciones: parametros.secciones };
+    return { ...base, ...comunes, nP: parametros.nP, repisas: parametros.repisas };
   }
   if (modulo === 'velador') {
     return { ...base, ...comunes, tipoInferior: parametros.tipoInferior };
@@ -483,7 +482,7 @@ export default function Configurador() {
     // ancho real de la sección nueva.
     const nueva = form.modulo === 'closet'
       ? { cajones: 0, repisas: 1, colgador: false }
-      : (form.modulo === 'despensa' || form.modulo === 'librero')
+      : form.modulo === 'librero'
       ? { repisas: 5 }
       : form.modulo === 'alto_cocina'
       ? { nP: 2, nBaldas: 1 }
@@ -566,13 +565,13 @@ export default function Configurador() {
       };
     }
     if (form.modulo === 'despensa') {
+      if (form.nP === '' || form.nP === undefined || form.nP === null) {
+        throw new Error('Elige la cantidad de puertas de la despensa (0, 1 o 2) antes de continuar.');
+      }
       return {
         ...base,
         nP: Number(form.nP),
-        secciones: form.secciones.map(s => ({
-          repisas: Number(s.repisas),
-          ancho: s.ancho ? Number(s.ancho) : undefined,
-        })),
+        repisas: Number(form.repisas),
       };
     }
     if (form.modulo === 'velador') {
@@ -994,48 +993,20 @@ export default function Configurador() {
 
           {form.modulo === 'despensa' && (
             <>
-              <label>Secciones del interior (de izquierda a derecha)</label>
-              {form.secciones.map((s, i) => (
-                <div key={i} style={{ border: '1px solid #e4e2dc', borderRadius: 8, padding: 10, marginTop: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: 13 }}>Sección {i + 1}</strong>
-                    {form.secciones.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => quitarSeccion(i)}
-                        style={{ margin: 0, width: 'auto', padding: '2px 8px', fontSize: 12, background: 'var(--color-danger)' }}
-                      >
-                        Quitar
-                      </button>
-                    )}
-                  </div>
+              <label>Repisas</label>
+              <input type="number" min={0} value={form.repisas} onChange={e => actualizar('repisas', e.target.value)} />
 
-                  <label>Repisas</label>
-                  <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
-
-                  <label>Ancho de la sección (mm)</label>
-                  <input
-                    type="number" min={100}
-                    value={s.ancho ?? ''}
-                    onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
-                  />
-                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
-                    fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se
-                    agrega ningún separador interior.
-                  </p>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={agregarSeccion}
-                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
-              >
-                + Agregar sección
-              </button>
-
-              <label style={{ marginTop: 18 }}>Cantidad de puertas (0 = despensa abierta)</label>
-              <input type="number" min={0} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+              <label style={{ marginTop: 18 }}>Cantidad de puertas</label>
+              <select value={form.nP} onChange={e => actualizar('nP', e.target.value)}>
+                <option value="" disabled>Selecciona una opción...</option>
+                <option value={0}>Sin puertas (despensa abierta)</option>
+                <option value={1}>1 puerta</option>
+                <option value={2}>2 puertas</option>
+              </select>
+              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                Como referencia: 1 puerta rinde bien en anchos de 200 a 500mm, y 2 puertas en anchos de 500 a
+                1000mm.
+              </p>
             </>
           )}
 
