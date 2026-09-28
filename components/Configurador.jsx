@@ -9,6 +9,7 @@ import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 
 const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
@@ -44,13 +45,6 @@ const ANCHO_LO_DEFINEN_SECCIONES = ['bajo_cocina', 'alto_cocina', 'closet', 'lib
 // de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
 // botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
 const EMAIL_PAGOS_REAL = EMAIL_ADMIN;
-
-// Fase de validación: el pago está desactivado y todo el despiece queda
-// disponible gratis para cualquier usuario, para probar el flujo completo y
-// juntar feedback antes de cobrar. Para reactivar el cobro más adelante,
-// basta con volver esto a `false` — el resto de la lógica de pago (Lemon
-// Squeezy, el carrito, el bloqueo de edición post-compra) sigue intacta.
-const MODO_GRATIS_TEMPORAL = true;
 
 // Conversión "Compra despiece (código)" en Google Ads (Objetivos > Conversiones)
 // — disparada a mano acá en vez de por detección automática de URL, para
@@ -371,6 +365,7 @@ export default function Configurador() {
 
       if (!err && data?.estado === 'pagado') {
         setDesbloqueado(true);
+        setSoloLectura(true);
         setVerificandoPago(false);
         registrarConversionAdsSiCorresponde(pedidoPagoParam, data.total);
         return;
@@ -682,6 +677,7 @@ export default function Configurador() {
       if (errItem) throw errItem;
 
       setDesbloqueado(true);
+      setSoloLectura(true);
     } catch (e) {
       setError('No se pudo procesar la compra: ' + e.message);
     } finally {
@@ -1360,7 +1356,7 @@ export default function Configurador() {
           </button>
           {guardadoOk && <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 8 }}>Mueble guardado ✓</p>}
 
-          {muebleActualId && (
+          {muebleActualId && (desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL) && (
             <button
               type="button"
               onClick={compartirMueble}
@@ -1369,9 +1365,14 @@ export default function Configurador() {
               {linkCopiado ? 'Link copiado ✓' : 'Copiar link para compartir'}
             </button>
           )}
-          {muebleActualId && (
+          {muebleActualId && (desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL) && (
             <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginTop: 6 }}>
               Cualquiera con este link puede ver el plano 3D y el despiece, sin necesitar cuenta — útil para pasárselo a quien te esté armando el mueble.
+            </p>
+          )}
+          {muebleActualId && !desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginTop: 6 }}>
+              El link para compartir se habilita una vez que compres el despiece.
             </p>
           )}
 
@@ -1398,15 +1399,24 @@ export default function Configurador() {
                   accesorios={resultado.despiece.accesorios}
                   parametros={resultado.despiece.parametros}
                   modulo={resultado.despiece.modulo}
+                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
+                />
+              </div>
+
+              <div className="card" style={{ marginBottom: 20 }}>
+                <h3>Listado de piezas y herrajes</h3>
+                <ListaPiezas
+                  despiece={resultado.despiece}
+                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
                 />
               </div>
 
               {!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL && (
                 <div className="card" style={{ textAlign: 'center' }}>
-                  <h3>Listado de piezas, herrajes y diagrama de corte</h3>
+                  <h3>Diagrama de corte y descarga</h3>
                   <p style={{ color: '#888', fontSize: 14 }}>
-                    Desbloquea el despiece completo para ver el detalle de piezas, herrajes,
-                    material y el diagrama de corte, y descargar el PDF de entrega.
+                    Ya puedes ver qué piezas necesita tu mueble. Desbloquea las medidas exactas,
+                    el diagrama de corte y el PDF de entrega para poder cortarlo.
                   </p>
 
                   {verificandoPago && (
@@ -1456,11 +1466,6 @@ export default function Configurador() {
                       </p>
                     </div>
                   )}
-                  <div className="card" style={{ marginBottom: 20 }}>
-                    <h3>Listado de piezas y herrajes</h3>
-                    <ListaPiezas despiece={resultado.despiece} />
-                  </div>
-
                   <div className="card" style={{ marginBottom: 20 }}>
                     <h3>Diagrama de corte</h3>
                     <DiagramaCorte corte={resultado.corte} />

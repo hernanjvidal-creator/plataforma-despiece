@@ -7,6 +7,7 @@ import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { mueblesPagados } from '@/lib/pedidosCliente';
 import { calcularPrecioUSD } from '@/lib/precios';
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble cocina',
@@ -19,10 +20,6 @@ const NOMBRE_MODULO = {
   librero: 'Librero',
   baul: 'Baúl',
 };
-
-// Fase de validación: el pago está desactivado (ver el mismo flag en
-// Configurador.jsx) — se oculta toda la UI de compra/carrito mientras dure.
-const MODO_GRATIS_TEMPORAL = true;
 
 // Conversión "Compra despiece (código)" en Google Ads (Objetivos > Conversiones)
 // — disparada a mano acá en vez de por detección automática de URL, para

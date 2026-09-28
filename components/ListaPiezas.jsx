@@ -8,7 +8,18 @@ const COLOR_BADGE = {
   roble: '#b98a53',
 };
 
-export default function ListaPiezas({ despiece }) {
+// Estilo aplicado a las medidas cuando `medidasBloqueadas` está activo: se
+// ven los números ahí (así el cliente entiende que la info existe), pero
+// ilegibles — la idea es dejar clara la complejidad/calidad del mueble sin
+// regalar el dato con el que se podría cortar sin pagar.
+const ESTILO_MEDIDA_BLOQUEADA = { filter: 'blur(5px)', userSelect: 'none' };
+
+function Medida({ valor, bloqueada }) {
+  if (!bloqueada) return valor;
+  return <span style={ESTILO_MEDIDA_BLOQUEADA}>{valor}</span>;
+}
+
+export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
   const { piezas, accesorios, herrajes, resumen, notas } = despiece;
   // Las patas plásticas se agregan a `accesorios` solo para que se vean en
   // el 3D (dónde van) — ya están contadas en el herraje
@@ -77,9 +88,9 @@ export default function ListaPiezas({ despiece }) {
           {piezas.map((p, i) => (
             <tr key={i}>
               <td>{p.id}</td>
-              <td>{Math.round(p.alto)}</td>
-              <td>{Math.round(p.ancho)}</td>
-              <td>{p.espesor}mm {p.material || ''}</td>
+              <td><Medida valor={Math.round(p.alto)} bloqueada={medidasBloqueadas} /></td>
+              <td><Medida valor={Math.round(p.ancho)} bloqueada={medidasBloqueadas} /></td>
+              <td><Medida valor={`${p.espesor}mm ${p.material || ''}`} bloqueada={medidasBloqueadas} /></td>
               <td>
                 {p.color && (
                   <span
@@ -96,9 +107,16 @@ export default function ListaPiezas({ despiece }) {
         </tbody>
       </table>
 
-      <button onClick={exportarCSV} style={{ maxWidth: 220 }}>
-        Descargar piezas (Excel/CSV)
-      </button>
+      {medidasBloqueadas ? (
+        <p style={{ color: '#888', fontSize: 13, marginTop: 8 }}>
+          Estas son las piezas que va a tener tu mueble — las medidas exactas de cada una se
+          desbloquean al comprar el despiece.
+        </p>
+      ) : (
+        <button onClick={exportarCSV} style={{ maxWidth: 220 }}>
+          Descargar piezas (Excel/CSV)
+        </button>
+      )}
 
       {accesoriosVisibles.length > 0 && (
         <>

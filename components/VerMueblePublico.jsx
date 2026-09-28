@@ -123,6 +123,11 @@ export default function VerMueblePublico({ id }) {
           <p style={{ color: 'var(--color-text-muted)' }}>
             {error || 'El link puede estar mal copiado, o el mueble fue eliminado.'}
           </p>
+          {error && error.includes('compra') && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+              Pídele el link a quien lo compartió, después de que compre el despiece.
+            </p>
+          )}
           <Link href="/"><button style={{ maxWidth: 240, margin: '12px auto 0' }}>Ir a armandolo.com</button></Link>
         </div>
       </main>

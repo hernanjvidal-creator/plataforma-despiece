@@ -54,7 +54,7 @@ function colorDePieza(pieza) {
 // Escala de mm a unidades de escena (mm * ESCALA)
 const ESCALA = 0.005;
 
-const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, modulo }, ref) {
+const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, modulo, medidasBloqueadas = false }, ref) {
   const contenedorRef = useRef(null);
   const rendererRef = useRef(null);
   const sceneRef = useRef(null);
@@ -200,7 +200,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
     function crearEtiqueta(pieza) {
       const div = document.createElement('div');
       const medidas = `${Math.round(pieza.alto)}×${Math.round(pieza.ancho)}×${Math.round(pieza.espesor || 15)}mm`;
-      div.innerHTML = `<strong>${pieza.id}</strong><br>${medidas}`;
+      const medidasHtml = medidasBloqueadas
+        ? `<span style="filter:blur(4px);user-select:none">${medidas}</span>`
+        : medidas;
+      div.innerHTML = `<strong>${pieza.id}</strong><br>${medidasHtml}`;
       Object.assign(div.style, {
         position: 'absolute', transform: 'translate(-50%, -100%)',
         background: 'rgba(168,85,47,0.94)', color: '#fff',
@@ -532,7 +535,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
       sceneRef.current = null;
       cameraRef.current = null;
     };
-  }, [piezas, accesorios, parametros, modulo]);
+  }, [piezas, accesorios, parametros, modulo, medidasBloqueadas]);
 
   return <div ref={contenedorRef} style={{ width: '100%', height: 460, borderRadius: 8, overflow: 'hidden' }} />;
 });

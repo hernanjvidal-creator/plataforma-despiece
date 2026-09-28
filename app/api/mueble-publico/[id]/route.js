@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
 import { generarDespiecePorModulo } from '@/lib/generarDespiecePorModulo';
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 
 /**
  * GET /api/mueble-publico/[id]
@@ -17,6 +18,25 @@ import { generarDespiecePorModulo } from '@/lib/generarDespiecePorModulo';
  * (como un link de Google Docs "cualquiera con el enlace") — no requiere que
  * el dueño lo marque como compartido explícitamente.
  */
+// Mismo criterio que `muebleEstaPagado` de lib/pedidosCliente.js, pero con
+// supabaseAdmin (esta ruta no tiene sesión de usuario, corre sin login).
+async function muebleEstaPagadoAdmin(muebleId) {
+  const { data: items } = await supabaseAdmin
+    .from('pedido_items')
+    .select('pedido_id')
+    .eq('mueble_id', muebleId);
+  if (!items || items.length === 0) return false;
+
+  const pedidoIds = [...new Set(items.map(i => i.pedido_id))];
+  const { data: pedidos } = await supabaseAdmin
+    .from('pedidos')
+    .select('id')
+    .in('id', pedidoIds)
+    .eq('estado', 'pagado');
+
+  return (pedidos || []).length > 0;
+}
+
 export async function GET(request, { params }) {
   const { id } = await params;
 
@@ -32,6 +52,16 @@ export async function GET(request, { params }) {
 
   if (error || !data) {
     return NextResponse.json({ error: 'No se encontró ese mueble' }, { status: 404 });
+  }
+
+  if (!MODO_GRATIS_TEMPORAL) {
+    const pagado = await muebleEstaPagadoAdmin(id);
+    if (!pagado) {
+      return NextResponse.json(
+        { error: 'El link para compartir este mueble se habilita una vez que se compra el despiece.' },
+        { status: 403 }
+      );
+    }
   }
 
   try {
