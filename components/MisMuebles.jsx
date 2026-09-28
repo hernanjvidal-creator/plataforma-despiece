@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { mueblesPagados } from '@/lib/pedidosCliente';
+import { calcularPrecioUSD } from '@/lib/precios';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble cocina',
@@ -18,11 +19,6 @@ const NOMBRE_MODULO = {
   librero: 'Librero',
   baul: 'Baúl',
 };
-
-// Solo para mostrar el total del carrito — el monto real que se cobra lo
-// define la variante en Lemon Squeezy y lo guarda el servidor al crear el
-// pedido (ver LEMONSQUEEZY_PRECIO_USD en app/api/checkout/route.js).
-const PRECIO_UNITARIO_USD = 5;
 
 // Fase de validación: el pago está desactivado (ver el mismo flag en
 // Configurador.jsx) — se oculta toda la UI de compra/carrito mientras dure.
@@ -280,7 +276,9 @@ export default function MisMuebles() {
         >
           <span style={{ fontSize: 14 }}>
             {seleccionados.size} mueble{seleccionados.size > 1 ? 's' : ''} seleccionado{seleccionados.size > 1 ? 's' : ''}
-            {' '}— total <strong>US${seleccionados.size * PRECIO_UNITARIO_USD}</strong>
+            {' '}— total <strong>US${muebles
+              .filter(m => seleccionados.has(m.id))
+              .reduce((suma, m) => suma + calcularPrecioUSD(m.modulo, m.parametros), 0)}</strong>
           </span>
           <button
             onClick={comprarSeleccionados}

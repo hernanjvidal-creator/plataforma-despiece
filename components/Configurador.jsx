@@ -1092,7 +1092,8 @@ export default function Configurador() {
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
                     Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio
-                    ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba.
+                    ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda
+                    que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.
                   </p>
                 </div>
               ))}

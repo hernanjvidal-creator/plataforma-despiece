@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
 import { crearCheckoutLemonSqueezy, lemonsqueezyConfigurado } from '@/lib/lemonsqueezy';
-
-// Solo informativo (queda guardado en pedidos/pedido_items) — lo que
-// realmente cobra Lemon Squeezy lo define la variante en su propio dashboard.
-const PRECIO_DESPIECE_USD = Number(process.env.LEMONSQUEEZY_PRECIO_USD || 0);
+import { calcularPrecioUSD } from '@/lib/precios';
 
 /**
  * POST /api/checkout
@@ -17,10 +14,11 @@ const PRECIO_DESPIECE_USD = Number(process.env.LEMONSQUEEZY_PRECIO_USD || 0);
  *    body: { accessToken, muebleIds: [id1, id2, ...] }
  *
  * En ambos casos crea UN pedido "pendiente" en Supabase (con uno o varios
- * pedido_items) y devuelve la URL de checkout de Lemon Squeezy, cobrando
- * cantidad × precio. El pedido queda "pagado" recién cuando llega la
- * confirmación por /api/webhook/lemonsqueezy — este endpoint NO marca nada
- * como pagado.
+ * pedido_items, cada uno con su propio precio — ver lib/precios.js, cocina y
+ * aéreo cobran por módulo) y devuelve la URL de checkout de Lemon Squeezy,
+ * cobrando la suma exacta vía `custom_price`. El pedido queda "pagado" recién
+ * cuando llega la confirmación por /api/webhook/lemonsqueezy — este endpoint
+ * NO marca nada como pagado.
  */
 export async function POST(request) {
   if (!supabaseAdminConfigurado || !lemonsqueezyConfigurado) {
@@ -77,6 +75,7 @@ export async function POST(request) {
         nombre: m.nombre,
         modulo: m.modulo,
         parametros_congelados: m.parametros,
+        precio: calcularPrecioUSD(m.modulo, m.parametros),
       }));
     } else {
       items = [{
@@ -84,10 +83,11 @@ export async function POST(request) {
         nombre: nombre || 'Mueble',
         modulo,
         parametros_congelados: parametros,
+        precio: calcularPrecioUSD(modulo, parametros),
       }];
     }
 
-    const total = PRECIO_DESPIECE_USD * items.length;
+    const total = items.reduce((suma, item) => suma + item.precio, 0);
     const { data: pedido, error: errPedido } = await supabaseAdmin
       .from('pedidos')
       .insert({ user_id: user.id, estado: 'pendiente', total })
@@ -103,7 +103,7 @@ export async function POST(request) {
         nombre: item.nombre,
         modulo: item.modulo,
         parametros_congelados: item.parametros_congelados,
-        precio: PRECIO_DESPIECE_USD,
+        precio: item.precio,
       }))
     );
     if (errItems) throw errItems;
@@ -117,7 +117,7 @@ export async function POST(request) {
       email: user.email,
       redirectUrl,
       customData: { pedido_id: pedido.id },
-      cantidad: items.length,
+      montoUSD: total,
     });
 
     return NextResponse.json({ checkoutUrl, pedidoId: pedido.id });
