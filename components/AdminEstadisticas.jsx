@@ -83,6 +83,12 @@ export default function AdminEstadisticas() {
             <div className="card" style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{stats.mueblesUltimos30Dias}</p>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>Últimos 30 días</p>
+              {stats.diasDeHistorial != null && stats.diasDeHistorial < 30 && (
+                <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-danger)' }}>
+                  Ojo: el registro solo lleva {stats.diasDeHistorial} día{stats.diasDeHistorial === 1 ? '' : 's'} activo,
+                  todavía no representa 30 días completos.
+                </p>
+              )}
             </div>
             <div className="card" style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{stats.usuariosUnicos}</p>

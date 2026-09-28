@@ -105,10 +105,25 @@ export async function GET(request) {
     ? calificaciones.reduce((a, b) => a + b, 0) / calificaciones.length
     : null;
 
+  // El registro de "generaciones_despiece" es más nuevo que la plataforma
+  // misma (se agregó el 2026-09-23) — mientras no lleve 30 días existiendo,
+  // "Últimos 30 días" y "Total" van a dar prácticamente lo mismo, no porque
+  // haya un error de cálculo sino porque no hay datos de antes de esa fecha.
+  // Se manda la fecha real de la generación más antigua para que el panel
+  // pueda avisarlo en vez de mostrar un número que parece engañoso.
+  const primeraGeneracion = generaciones.reduce(
+    (minima, g) => (!minima || g.created_at < minima ? g.created_at : minima),
+    null
+  );
+  const diasDeHistorial = primeraGeneracion
+    ? Math.floor((Date.now() - new Date(primeraGeneracion).getTime()) / (24 * 60 * 60 * 1000))
+    : null;
+
   return NextResponse.json({
     totalMuebles: generaciones.length,
     mueblesUltimos7Dias: generaciones.filter(g => g.created_at >= hace7Dias).length,
     mueblesUltimos30Dias: generaciones.filter(g => g.created_at >= hace30Dias).length,
+    diasDeHistorial,
     usuariosUnicos: idsUsuarios.length,
     porModulo,
     porPais,
