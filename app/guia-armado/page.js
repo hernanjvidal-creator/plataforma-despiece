@@ -7,7 +7,7 @@ const COLOR_RELLENO = '#f3e4d9';
 const COLOR_BORDE = '#a8552f';
 
 export const metadata = {
-  title: 'Guía general de armado — Despiece',
+  title: 'Guía general de armado — Armandolo',
   description: 'Guía paso a paso para armar muebles de melamina: uniones, correderas, bisagras, puertas correderas de closet, nivelación y fijación a la pared.',
 };
 

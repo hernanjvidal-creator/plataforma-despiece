@@ -32,7 +32,7 @@ export default function Header() {
       <div className="site-header-inner">
         <Link href="/" className="brand">
           <MarcaIcono />
-          Despiece
+          Armandolo
         </Link>
         <nav className="site-nav">
           <Link href="/">Inicio</Link>

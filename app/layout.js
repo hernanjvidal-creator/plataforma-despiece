@@ -38,19 +38,19 @@ const fuenteSans = Inter({
 
 export const metadata = {
   metadataBase: new URL('https://www.armandolo.com'),
-  title: 'Despiece — Plataforma de configuración de muebles',
+  title: 'Armandolo — Plataforma de configuración de muebles',
   description: 'Configura tu mueble y recibe el plano 3D, el despiece y el plano de armado.',
   openGraph: {
-    title: 'Despiece — Diseña tu propio mueble en melamina',
+    title: 'Armandolo — Diseña tu propio mueble en melamina',
     description: 'Configura las medidas y recibe al instante el plano 3D, el listado de piezas y herrajes, y el diagrama de corte listo para la maderera.',
     url: 'https://www.armandolo.com',
-    siteName: 'Despiece',
+    siteName: 'Armandolo',
     locale: 'es_CL',
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'Despiece — Diseña tu propio mueble en melamina',
+    title: 'Armandolo — Diseña tu propio mueble en melamina',
     description: 'Configura las medidas y recibe al instante el plano 3D, el listado de piezas y herrajes, y el diagrama de corte listo para la maderera.',
   },
 };

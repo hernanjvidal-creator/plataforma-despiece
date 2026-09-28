@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Términos y Condiciones — Despiece',
+  title: 'Términos y Condiciones — Armandolo',
 };
 
 export default function Terminos() {
@@ -9,14 +9,14 @@ export default function Terminos() {
       <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
 
       <p>
-        Al usar Despiece (armandolo.com), operado por{' '}
+        Al usar Armandolo (armandolo.com), operado por{' '}
         <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>, aceptas estos Términos y
         Condiciones. Léelos con atención antes de comprar.
       </p>
 
-      <h2>1. Qué es Despiece</h2>
+      <h2>1. Qué es Armandolo</h2>
       <p>
-        Despiece es una herramienta en línea que, a partir de las medidas y preferencias que tú ingresas,
+        Armandolo es una herramienta en línea que, a partir de las medidas y preferencias que tú ingresas,
         genera automáticamente un plano 3D referencial, un listado de piezas y herrajes, y un diagrama de
         corte optimizado para fabricar un mueble en melamina. No fabricamos ni instalamos muebles — el
         resultado es información para que tú (o el mueblista/maderera de tu elección) corte y arme el

@@ -64,7 +64,7 @@ export default function Feedback() {
             </>
           ) : (
             <>
-              <p style={{ margin: '0 0 10px', fontWeight: 700 }}>¿Qué te pareció Despiece?</p>
+              <p style={{ margin: '0 0 10px', fontWeight: 700 }}>¿Qué te pareció Armandolo?</p>
               <label style={{ fontSize: 13 }}>Tu comentario</label>
               <textarea
                 rows={4}

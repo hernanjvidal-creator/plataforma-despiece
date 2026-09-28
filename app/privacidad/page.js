@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Política de Privacidad — Despiece',
+  title: 'Política de Privacidad — Armandolo',
 };
 
 export default function Privacidad() {
@@ -9,7 +9,7 @@ export default function Privacidad() {
       <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
 
       <p>
-        Esta Política de Privacidad explica qué datos recolecta Despiece (el sitio armandolo.com,
+        Esta Política de Privacidad explica qué datos recolecta Armandolo (el sitio armandolo.com,
         operado por <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>, en adelante
         "nosotros" o "la plataforma"), para qué los usamos y qué derechos tienes sobre ellos.
       </p>

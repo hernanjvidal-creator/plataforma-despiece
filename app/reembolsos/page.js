@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Política de Reembolso — Despiece',
+  title: 'Política de Reembolso — Armandolo',
 };
 
 export default function Reembolsos() {
@@ -9,7 +9,7 @@ export default function Reembolsos() {
       <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>Última actualización: septiembre de 2026</p>
 
       <p>
-        Esta Política de Reembolso aplica a las compras realizadas en Despiece (armandolo.com), operado
+        Esta Política de Reembolso aplica a las compras realizadas en Armandolo (armandolo.com), operado
         por <strong>Inversiones Chacay SpA, RUT 78.518.419-K</strong>.
       </p>
 
