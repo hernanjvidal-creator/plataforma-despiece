@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
 import { crearCheckoutLemonSqueezy, lemonsqueezyConfigurado } from '@/lib/lemonsqueezy';
-import { calcularPrecioUSD } from '@/lib/precios';
+import { calcularPrecioUSD, construirDetalleCheckout } from '@/lib/precios';
 
 /**
  * POST /api/checkout
@@ -113,11 +113,14 @@ export async function POST(request) {
       ? `${origen}/mis-muebles?pedidoPago=${pedido.id}`
       : `${origen}/configurador?pedidoPago=${pedido.id}${muebleId ? `&muebleId=${muebleId}` : ''}`;
 
+    const { name: nombreProducto, description: descripcionProducto } = construirDetalleCheckout(items);
     const checkoutUrl = await crearCheckoutLemonSqueezy({
       email: user.email,
       redirectUrl,
       customData: { pedido_id: pedido.id },
       montoUSD: total,
+      nombreProducto,
+      descripcionProducto,
     });
 
     return NextResponse.json({ checkoutUrl, pedidoId: pedido.id });
