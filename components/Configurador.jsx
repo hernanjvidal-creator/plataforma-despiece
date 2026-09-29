@@ -41,6 +41,16 @@ const MODULOS = [
 // directo (ver el bloque genérico de "Ancho (mm)" más abajo).
 const ANCHO_LO_DEFINEN_SECCIONES = ['bajo_cocina', 'alto_cocina', 'closet', 'librero'];
 
+// bajo_cocina y alto_cocina arman cada módulo como una caja independiente
+// (laterales en color interior, pensados para quedar tapados contra el
+// módulo vecino) y le agregan 2 tapas de acabado en los extremos del
+// mueble (15mm cada una, ver piezasTapasLaterales en esos motores) — el
+// ancho exterior real del mueble ya armado es la suma de los módulos MÁS
+// esas 2 tapas, no solo la suma de los módulos. closet y librero comparten
+// un solo cuerpo (sin tapas aparte), así que no llevan este ajuste.
+const MODULOS_CON_TAPAS_LATERALES = ['bajo_cocina', 'alto_cocina'];
+const ANCHO_TAPAS_LATERALES_MM = 30; // 2 tapas × 15mm (espesor fijo en esos motores)
+
 // El checkout real de Lemon Squeezy está en pruebas — mientras se termina
 // de configurar la tienda, solo esta cuenta lo ve. El resto sigue con el
 // botón de compra simulada. Sacar este chequeo cuando se habilite para todos.
@@ -821,10 +831,17 @@ export default function Configurador() {
           {ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) ? (
             <>
               <label>Ancho total (mm)</label>
-              <input type="number" value={form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0)} disabled />
+              <input
+                type="number"
+                value={
+                  form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0) +
+                  (MODULOS_CON_TAPAS_LATERALES.includes(form.modulo) ? ANCHO_TAPAS_LATERALES_MM : 0)
+                }
+                disabled
+              />
               <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                {form.modulo === 'bajo_cocina' || form.modulo === 'alto_cocina'
-                  ? 'Cada módulo es una caja independiente con su propio ancho — este total es solo la suma de los módulos de abajo, no se edita directamente.'
+                {MODULOS_CON_TAPAS_LATERALES.includes(form.modulo)
+                  ? `Cada módulo es una caja independiente con su propio ancho — este total es la suma de los módulos de abajo más ${ANCHO_TAPAS_LATERALES_MM}mm de las 2 tapas laterales de acabado en los extremos, no se edita directamente.`
                   : 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'}
               </p>
             </>
