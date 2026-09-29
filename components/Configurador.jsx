@@ -835,13 +835,16 @@ export default function Configurador() {
                 type="number"
                 value={
                   form.secciones.reduce((suma, s) => suma + (Number(s.ancho) || 0), 0) +
-                  (MODULOS_CON_TAPAS_LATERALES.includes(form.modulo) ? ANCHO_TAPAS_LATERALES_MM : 0)
+                  (MODULOS_CON_TAPAS_LATERALES.includes(form.modulo) ? ANCHO_TAPAS_LATERALES_MM : 0) +
+                  // Cada esquinero suma además el fondo del mueble (su brazo
+                  // perpendicular), aparte del ancho de sus puertas.
+                  form.secciones.filter(s => s.tipo === 'esquinero').length * Math.max(0, (Number(form.P) || 0) - 40)
                 }
                 disabled
               />
               <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
                 {MODULOS_CON_TAPAS_LATERALES.includes(form.modulo)
-                  ? `Cada módulo es una caja independiente con su propio ancho — este total es la suma de los módulos de abajo más ${ANCHO_TAPAS_LATERALES_MM}mm de las 2 tapas laterales de acabado en los extremos, no se edita directamente.`
+                  ? `Cada módulo es una caja independiente con su propio ancho — este total es la suma de los módulos de abajo más ${ANCHO_TAPAS_LATERALES_MM}mm de las 2 tapas laterales de acabado en los extremos (y el fondo extra de cada esquinero), no se edita directamente.`
                   : 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'}
               </p>
             </>
@@ -1057,6 +1060,7 @@ export default function Configurador() {
                     <option value="lavaplatos">Lavaplatos</option>
                     {esAdmin && <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>}
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
+                    {esAdmin && <option value="esquinero">Esquina (dobla 90° acá)</option>}
                   </select>
 
                   {s.tipo === 'estandar' && (
@@ -1096,17 +1100,25 @@ export default function Configurador() {
                       {(s.tipo === 'lavavajillas' || s.tipo === 'horno') && ' Sin frente propio: lo cubre el electrodoméstico.'}
                     </p>
                   )}
+                  {s.tipo === 'esquinero' && (
+                    <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
+                      Dos brazos en L, cada uno con su puerta (bisagra de 165° para que abran sin chocar entre
+                      sí) — el ancho de abajo es el ancho de esas puertas, igual para los dos brazos.
+                    </p>
+                  )}
 
-                  <label>Ancho del módulo (mm)</label>
+                  <label>{s.tipo === 'esquinero' ? 'Ancho de las puertas (mm)' : 'Ancho del módulo (mm)'}</label>
                   <input
                     type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio
-                    ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda
-                    que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.
+                    {s.tipo === 'esquinero'
+                      ? 'Igual que en los otros módulos, tú eliges el ancho — el brazo perpendicular suma además el fondo del mueble a la fila, aparte de este ancho.'
+                      : 'Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio ' +
+                        'ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda ' +
+                        'que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.'}
                   </p>
                 </div>
               ))}
