@@ -534,6 +534,9 @@ export default function Configurador() {
             const repisas = (nP > 0 || s.config === 'abierto') ? Number(s.repisas) || 0 : 0;
             return { tipo: 'estandar', config: s.config, nP, nC, repisas, ancho };
           }
+          if (s.tipo === 'esquinero') {
+            return { tipo: 'esquinero', giro: s.giro || 'derecha', ancho, repisas: Number(s.repisas) || 0 };
+          }
           return { tipo: s.tipo, ancho };
         }),
       };
@@ -828,7 +831,12 @@ export default function Configurador() {
             {MODULOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
 
-          {ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) ? (
+          {ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) && form.secciones.some(s => s.tipo === 'esquinero') ? (
+            <p style={{ fontSize: 12, color: '#888', margin: '8px 0' }}>
+              Con una esquina agregada, el mueble dobla 90° — ya no tiene un solo ancho en línea recta,
+              así que este total deja de mostrarse. Cada módulo (de cada tramo) trae su propio ancho más abajo.
+            </p>
+          ) : ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) ? (
             <>
               <label>Ancho total (mm)</label>
               <input
@@ -1057,6 +1065,7 @@ export default function Configurador() {
                     <option value="lavaplatos">Lavaplatos</option>
                     {esAdmin && <option value="lavavajillas">Lavavajillas (600mm, sin frente)</option>}
                     <option value="horno">Horno empotrado (600mm, sin frente)</option>
+                    {esAdmin && <option value="esquinero">Esquina (dobla 90° acá)</option>}
                   </select>
 
                   {s.tipo === 'estandar' && (
@@ -1096,18 +1105,52 @@ export default function Configurador() {
                       {(s.tipo === 'lavavajillas' || s.tipo === 'horno') && ' Sin frente propio: lo cubre el electrodoméstico.'}
                     </p>
                   )}
+                  {s.tipo === 'esquinero' && (
+                    <>
+                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
+                        No es un frente: acá la fila dobla 90° y sigue con los módulos que pongas después (un
+                        nuevo tramo, ya girado). Tiene que haber al menos un módulo antes y uno después de
+                        cada esquina.
+                      </p>
+                      <label>Gira hacia</label>
+                      <select value={s.giro || 'derecha'} onChange={e => actualizarSeccion(i, 'giro', e.target.value)}>
+                        <option value="derecha">Derecha</option>
+                        <option value="izquierda">Izquierda</option>
+                      </select>
+                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
+                        Dos brazos en L, cada uno con su puerta (bisagra de 165° para que abran sin chocar
+                        entre sí) — el ancho de abajo es el ancho de esas puertas, igual para los dos brazos.
+                      </p>
+                    </>
+                  )}
 
-                  <label>Ancho del módulo (mm)</label>
+                  <label>{s.tipo === 'esquinero' ? 'Ancho de las puertas (mm)' : 'Ancho del módulo (mm)'}</label>
                   <input
                     type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
                   <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio
-                    ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda
-                    que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.
+                    {s.tipo === 'esquinero'
+                      ? 'Igual que en los otros módulos, tú eliges el ancho — el brazo perpendicular suma además el fondo del mueble a la fila, aparte de este ancho.'
+                      : 'Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio ' +
+                        'ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda ' +
+                        'que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.'}
                   </p>
+                  {s.tipo === 'esquinero' && (
+                    <>
+                      <label>Repisas interiores (por brazo)</label>
+                      <input
+                        type="number" min={0}
+                        value={s.repisas ?? 0}
+                        onChange={e => actualizarSeccion(i, 'repisas', e.target.value)}
+                      />
+                      <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
+                        Misma cantidad para los dos brazos. Si pides repisas, se agrega un travesaño de
+                        soporte por abajo, en el rincón.
+                      </p>
+                    </>
+                  )}
                 </div>
               ))}
               <button
