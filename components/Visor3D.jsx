@@ -277,18 +277,14 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
         : { ejeAncho: 'x', ejeEspesor: 'z' };
     }
 
-    // Los ids de un brazo de esquinero llevan además el prefijo del módulo
-    // ("m1_brazo1_respaldo", ver trasladarYPrefijar en muebleBajoCocina.js)
-    // — por eso el "brazo\d+_" se busca después de un "_" o al principio,
-    // no anclado al inicio absoluto del id.
     const mapaRespaldos = new Map();
     piezas.forEach(pz => {
-      const m = pz.id.match(/(?:^|_)(brazo\d+_)?respaldo$/);
+      const m = pz.id.match(/^(brazo\d+_)?respaldo$/);
       if (m) mapaRespaldos.set(m[1] || '', pz);
     });
 
     function signoHaciaAfuera(pieza, ejeEspesor) {
-      const prefijo = (pieza.id.match(/(brazo\d+_)/) || [null, ''])[1];
+      const prefijo = (pieza.id.match(/^(brazo\d+_)/) || [null, ''])[1];
       const respaldo = mapaRespaldos.get(prefijo);
       if (!respaldo) return 1;
       return pieza.posicion[ejeEspesor] >= respaldo.posicion[ejeEspesor] ? 1 : -1;
