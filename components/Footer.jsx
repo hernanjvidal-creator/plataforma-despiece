@@ -5,6 +5,8 @@ export default function Footer() {
       <br />
       Contacto: <a href="mailto:contacto@armandolo.com">contacto@armandolo.com</a>
       <br />
+      <a href="/precios">Precios</a>
+      {' · '}
       <a href="/privacidad">Política de privacidad</a>
       {' · '}
       <a href="/terminos">Términos y condiciones</a>

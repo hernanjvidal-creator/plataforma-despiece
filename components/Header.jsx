@@ -37,6 +37,7 @@ export default function Header() {
         <nav className="site-nav">
           <Link href="/">Inicio</Link>
           <Link href="/configurador" className="nav-cta">Diseñar</Link>
+          <Link href="/precios">Precios</Link>
           <Link href="/guia-armado">Guía de armado</Link>
           {!cargando && usuario && <Link href="/mis-muebles">Mis muebles</Link>}
           {!cargando && usuario?.email === EMAIL_ADMIN && <Link href="/admin/estadisticas">Estadísticas</Link>}
