@@ -151,8 +151,8 @@ export default function MisMuebles() {
     });
   }
 
-  async function comprarSeleccionados() {
-    if (seleccionados.size === 0) return;
+  async function comprar(ids) {
+    if (ids.length === 0) return;
     setComprando(true);
     setError(null);
     try {
@@ -163,7 +163,7 @@ export default function MisMuebles() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, muebleIds: [...seleccionados] }),
+        body: JSON.stringify({ accessToken, muebleIds: ids }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
@@ -203,7 +203,8 @@ export default function MisMuebles() {
 
       {!MODO_GRATIS_TEMPORAL && muebles && muebles.length > 0 && (
         <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 0 }}>
-          Marca los muebles que quieras comprar y paga todos juntos en un solo checkout.
+          Cada mueble pendiente tiene su botón "Comprar". Si quieres pagar varios juntos en un solo checkout,
+          marca "Sumar a un pago conjunto" en cada uno y usa la barra de abajo.
         </p>
       )}
 
@@ -214,15 +215,6 @@ export default function MisMuebles() {
             <div key={m.id} className="card" style={seleccionados.has(m.id) ? { borderColor: 'var(--color-accent)' } : undefined}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <h4 style={{ margin: '0 0 4px' }}>{m.nombre}</h4>
-                {!MODO_GRATIS_TEMPORAL && !pagado && (
-                  <input
-                    type="checkbox"
-                    style={{ width: 'auto', marginTop: 4 }}
-                    checked={seleccionados.has(m.id)}
-                    onChange={() => alternarSeleccion(m.id)}
-                    aria-label={`Seleccionar ${m.nombre} para comprar`}
-                  />
-                )}
               </div>
               <p style={{ margin: '0 0 4px', fontSize: 13, color: 'var(--color-text-muted)' }}>
                 {NOMBRE_MODULO[m.modulo] || m.modulo}
@@ -231,7 +223,7 @@ export default function MisMuebles() {
                 Editado {new Date(m.updated_at).toLocaleDateString('es-CL')}
               </p>
               {!MODO_GRATIS_TEMPORAL && (pagado ? (
-                <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>
+                <p style={{ margin: '8px 0 0', fontSize: 12, fontWeight: 700, color: 'var(--color-ok)' }}>
                   ✓ Despiece disponible
                 </p>
               ) : (
@@ -239,6 +231,27 @@ export default function MisMuebles() {
                   Pendiente de pago
                 </p>
               ))}
+              {!MODO_GRATIS_TEMPORAL && !pagado && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => comprar([m.id])}
+                    disabled={comprando}
+                    style={{ marginTop: 12 }}
+                  >
+                    {comprando ? 'Redirigiendo a pago...' : `Comprar despiece — US$${calcularPrecioUSD(m.modulo, m.parametros)}`}
+                  </button>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, color: 'var(--color-text-muted)', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      style={{ width: 'auto', margin: 0 }}
+                      checked={seleccionados.has(m.id)}
+                      onChange={() => alternarSeleccion(m.id)}
+                    />
+                    Sumar a un pago conjunto
+                  </label>
+                </>
+              )}
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <Link href={`/configurador?muebleId=${m.id}`} style={{ flex: 1 }}>
                   <button style={{ marginTop: 0 }}>Abrir</button>
@@ -278,7 +291,7 @@ export default function MisMuebles() {
               .reduce((suma, m) => suma + calcularPrecioUSD(m.modulo, m.parametros), 0)}</strong>
           </span>
           <button
-            onClick={comprarSeleccionados}
+            onClick={() => comprar([...seleccionados])}
             disabled={comprando}
             style={{ marginTop: 0, width: 'auto', padding: '10px 22px' }}
           >
