@@ -135,7 +135,7 @@ const VALORES_POR_MODULO = {
     secciones: [
       { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3, ancho: 400 },
     ],
-    colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    colorInterior: 'blanco', colorExterior: 'gris_claro',
     espesorPuertas: 15,
   },
   alto_cocina: {
@@ -143,7 +143,7 @@ const VALORES_POR_MODULO = {
     secciones: [
       { nP: 2, nBaldas: 1, ancho: 800 },
     ],
-    colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    colorInterior: 'blanco', colorExterior: 'gris_claro',
     espesorPuertas: 15,
   },
   vanitorio_bano: {
@@ -151,7 +151,7 @@ const VALORES_POR_MODULO = {
     nP: 0, nC: 2, repisas: 0, config: 'solo_cajones',
     soporte: 'patas', sifon: true,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
-    colorInterior: 'blanco', colorExterior: 'gris_grafito',
+    colorInterior: 'blanco', colorExterior: 'gris_claro',
     espesorPuertas: 15,
   },
   closet: {
