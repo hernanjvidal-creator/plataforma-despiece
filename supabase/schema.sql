@@ -51,7 +51,7 @@ create trigger muebles_updated_at
 create table public.pedidos (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  estado text not null default 'pendiente', -- 'pendiente' | 'pagado' | 'cancelado'
+  estado text not null default 'pendiente', -- 'pendiente' | 'pagado' | 'cancelado' | 'reembolsado'
   total numeric,
   lemonsqueezy_order_id text,
   created_at timestamptz not null default now(),

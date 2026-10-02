@@ -10,8 +10,9 @@ import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
  * (X-Signature = HMAC-SHA256 del body crudo con el webhook signing secret)
  * antes de confiar en el contenido.
  *
- * Solo nos importa "order_created" con status "paid" — es lo único que
- * vendemos hoy (compra única del despiece detallado, no suscripciones).
+ * Solo nos importan "order_created" con status "paid" (desbloquea el pedido)
+ * y "order_refunded" con status "refunded" (lo vuelve a bloquear) — es lo
+ * único que vendemos hoy (compra única del despiece detallado, no suscripciones).
  */
 export async function POST(request) {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
@@ -57,6 +58,20 @@ export async function POST(request) {
       })
       .eq('id', pedidoId)
       .eq('estado', 'pendiente');
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+  }
+
+  // Solo un reembolso total vuelve a bloquear el despiece; uno parcial
+  // ("partial_refund") se maneja a mano.
+  if (evento === 'order_refunded' && pedidoId && estadoOrden === 'refunded') {
+    const { error } = await supabaseAdmin
+      .from('pedidos')
+      .update({ estado: 'reembolsado' })
+      .eq('id', pedidoId)
+      .eq('estado', 'pagado');
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
