@@ -267,13 +267,19 @@ export default function MisMuebles() {
                   Eliminar
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => compartir(m.id)}
-                style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
-              >
-                {linkCopiadoId === m.id ? 'Link copiado ✓' : 'Copiar link para compartir'}
-              </button>
+              {(MODO_GRATIS_TEMPORAL || pagado) ? (
+                <button
+                  type="button"
+                  onClick={() => compartir(m.id)}
+                  style={{ marginTop: 8, background: '#fff', color: 'var(--color-accent)', border: '1px solid var(--color-accent)' }}
+                >
+                  {linkCopiadoId === m.id ? 'Link copiado ✓' : 'Copiar link para compartir'}
+                </button>
+              ) : (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                  El link para compartir se habilita una vez que compres el despiece.
+                </p>
+              )}
             </div>
           );
         })}
