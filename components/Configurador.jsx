@@ -1444,6 +1444,7 @@ export default function Configurador() {
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
                     Pago único por mueble con tarjeta, procesado por Lemon Squeezy. Se desbloquea al instante.
+                    Precio en US$, más impuestos aplicables según tu país.
                   </p>
                   {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>

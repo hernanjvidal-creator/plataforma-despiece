@@ -57,6 +57,11 @@ export default function Precios() {
         </tbody>
       </table>
 
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+        Precios en dólares estadounidenses (US$), <strong>más los impuestos que apliquen según tu país</strong> (por
+        ejemplo IVA), que se calculan y muestran en el checkout antes de pagar.
+      </p>
+
       <h2>Qué incluye el despiece detallado</h2>
       <ul>
         <li>Plano 3D del mueble ya armado, con las medidas reales de cada pieza.</li>

@@ -241,6 +241,9 @@ export default function MisMuebles() {
                   >
                     {comprando ? 'Redirigiendo a pago...' : `Comprar despiece — US$${calcularPrecioUSD(m.modulo, m.parametros)}`}
                   </button>
+                  <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    + impuestos aplicables según tu país
+                  </p>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, color: 'var(--color-text-muted)', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
