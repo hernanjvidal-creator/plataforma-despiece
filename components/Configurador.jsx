@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+import { calcularPrecioUSD } from '@/lib/precios';
 import { guardarBorrador, leerBorrador, borrarBorrador, URL_RESTAURAR } from '@/lib/borradorConfigurador';
 
 const PLANCHAS = [
@@ -132,7 +133,7 @@ const VALORES_POR_MODULO = {
     isla: false,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     secciones: [
-      { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3 },
+      { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3, ancho: 400 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
@@ -140,7 +141,7 @@ const VALORES_POR_MODULO = {
   alto_cocina: {
     H: 700, P: 320,
     secciones: [
-      { nP: 2, nBaldas: 1 },
+      { nP: 2, nBaldas: 1, ancho: 800 },
     ],
     colorInterior: 'blanco', colorExterior: 'gris_grafito',
     espesorPuertas: 15,
@@ -157,9 +158,9 @@ const VALORES_POR_MODULO = {
     H: 2200, P: 580,
     nP: 0, tipoPuerta: 'batiente',
     secciones: [
-      { cajones: 2, repisas: 2, colgador: false },
-      { cajones: 0, repisas: 1, colgador: true },
-      { cajones: 2, repisas: 2, colgador: false },
+      { cajones: 2, repisas: 2, colgador: false, ancho: 600 },
+      { cajones: 0, repisas: 1, colgador: true, ancho: 600 },
+      { cajones: 2, repisas: 2, colgador: false, ancho: 600 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
     espesorPuertas: 15,
@@ -186,8 +187,8 @@ const VALORES_POR_MODULO = {
   librero: {
     H: 1800, P: 300,
     secciones: [
-      { repisas: 5 },
-      { repisas: 5 },
+      { repisas: 5, ancho: 400 },
+      { repisas: 5, ancho: 400 },
     ],
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
@@ -196,6 +197,21 @@ const VALORES_POR_MODULO = {
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
 };
+
+// Ancho de partida de cada sección para que el primer despiece salga sin
+// error: 400mm por puerta, cajones 400, lavaplatos 800, horno y lavavajillas
+// 600. Es solo una sugerencia — el cliente puede escribir el que quiera.
+function anchoSugerido(modulo, s) {
+  if (modulo === 'alto_cocina') return Math.max(1, Number(s.nP) || 0) * 400;
+  if (modulo === 'closet') return 600;
+  if (modulo === 'librero') return 400;
+  if (modulo !== 'bajo_cocina') return null;
+  if (s.tipo === 'lavaplatos') return 800;
+  if (s.tipo === 'horno' || s.tipo === 'lavavajillas') return 600;
+  if (s.tipo === 'esquinero') return 400;
+  if (s.config === 'solo_puertas' || s.config === 'mixto') return Math.max(1, Number(s.nP) || 0) * 400;
+  return 400;
+}
 
 const VALORES_COMUNES = { plancha: 'CL', anchoCustom: 1830, altoCustom: 2500 };
 
@@ -420,7 +436,7 @@ export default function Configurador() {
   }, [accionPendiente, usuario]);
 
   async function guardarYMostrar() {
-    await guardarMueble({ sinPregunta: true });
+    await guardarMueble();
     try {
       const res = await fetch('/api/despiece', {
         method: 'POST',
@@ -430,6 +446,13 @@ export default function Configurador() {
       const data = await res.json();
       if (res.ok) setResultado(data);
     } catch {}
+  }
+
+  // Precio del mueble tal como está armado ahora, para mostrarlo en el botón
+  // de compra. Si la configuración todavía no es válida, no se muestra.
+  let precioActualUSD = null;
+  if (resultado) {
+    try { precioActualUSD = calcularPrecioUSD(form.modulo, construirParametros()); } catch { precioActualUSD = null; }
   }
 
   function actualizar(campo, valor) {
@@ -448,7 +471,7 @@ export default function Configurador() {
     setDesbloqueado(false);
   }
 
-  async function guardarMueble(opciones) {
+  async function guardarMueble() {
     if (!usuario) {
       guardarBorrador(form, 'guardar');
       router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
@@ -461,6 +484,8 @@ export default function Configurador() {
     try {
       const parametros = construirParametros();
       const opcionesCorte = construirOpcionesCorte();
+      const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+      const nombreFinal = (nombreMueble || '').trim() || nombreSugerido;
       if (muebleActualId) {
         // Actualizar un mueble ya guardado: mantiene el nombre que ya
         // tenía, sin volver a preguntar (antes se pedía de nuevo con un
@@ -468,16 +493,14 @@ export default function Configurador() {
         // cortaba en silencio sin guardar ni avisar del error).
         const { error: err } = await supabase
           .from('muebles')
-          .update({ modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
+          .update({ nombre: nombreFinal, modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
           .eq('id', muebleActualId);
         if (err) throw err;
+        setNombreMueble(nombreFinal);
       } else {
-        const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
-        const nombre = opciones?.sinPregunta ? nombreSugerido : window.prompt('Nombre para este mueble:', nombreSugerido);
-        if (!nombre) { setGuardando(false); return; }
         const { data, error: err } = await supabase
           .from('muebles')
-          .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
+          .insert({ user_id: usuario.id, nombre: nombreFinal, modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
           .select()
           .single();
         if (err) throw err;
@@ -520,9 +543,6 @@ export default function Configurador() {
 
   // ---------- Secciones (closet: columnas; bajo_cocina: módulos de cocina) ----------
   function agregarSeccion() {
-    // Sin ancho por defecto: que el total no suba solo con un valor de
-    // ejemplo que el cliente no eligió — sube recién cuando escribe el
-    // ancho real de la sección nueva.
     const nueva = form.modulo === 'closet'
       ? { cajones: 0, repisas: 1, colgador: false }
       : form.modulo === 'librero'
@@ -530,6 +550,7 @@ export default function Configurador() {
       : form.modulo === 'alto_cocina'
       ? { nP: 2, nBaldas: 1 }
       : { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 2 };
+    nueva.ancho = anchoSugerido(form.modulo, nueva);
     setForm(f => ({ ...f, secciones: [...f.secciones, nueva] }));
   }
 
@@ -543,7 +564,19 @@ export default function Configurador() {
   function actualizarSeccion(indice, campo, valor) {
     setForm(f => ({
       ...f,
-      secciones: f.secciones.map((s, i) => i === indice ? { ...s, [campo]: valor } : s),
+      secciones: f.secciones.map((s, i) => {
+        if (i !== indice) return s;
+        const nueva = { ...s, [campo]: valor };
+        // Si el ancho sigue siendo el sugerido (no lo tocó el cliente), se
+        // actualiza con el nuevo tipo/puertas; si lo escribió a mano, se respeta.
+        if (['tipo', 'config', 'nP', 'nC'].includes(campo)) {
+          const previo = anchoSugerido(f.modulo, s);
+          if (previo !== null && (String(s.ancho ?? '') === '' || Number(s.ancho) === previo)) {
+            nueva.ancho = anchoSugerido(f.modulo, nueva);
+          }
+        }
+        return nueva;
+      }),
     }));
   }
 
@@ -1431,6 +1464,14 @@ export default function Configurador() {
               de entrega, desbloquea el despiece con un pago único por mueble (ver <a href="/precios" style={{ color: 'var(--color-accent)' }}>precios</a>).
             </p>
           )}
+          <label style={{ fontSize: 13 }}>Nombre del mueble (opcional)</label>
+          <input
+            type="text"
+            maxLength={80}
+            value={nombreMueble || ''}
+            placeholder={MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble'}
+            onChange={e => setNombreMueble(e.target.value)}
+          />
           <button
             type="button"
             onClick={guardarMueble}
@@ -1509,7 +1550,7 @@ export default function Configurador() {
                   )}
 
                   <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
-                    {comprandoReal ? 'Redirigiendo a pago...' : 'Desbloquear despiece'}
+                    {comprandoReal ? 'Redirigiendo a pago...' : `Desbloquear despiece${precioActualUSD ? ` — US$${precioActualUSD}` : ''}`}
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
                     Pago único por mueble con tarjeta, procesado por Lemon Squeezy. Se desbloquea al instante.

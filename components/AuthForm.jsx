@@ -10,7 +10,7 @@ export default function AuthForm() {
   const searchParams = useSearchParams();
   const redirectA = searchParams.get('redirect') || '/mis-muebles';
 
-  const [modo, setModo] = useState('login'); // 'login' | 'registro'
+  const [modo, setModo] = useState('login'); // 'login' | 'registro' | 'recuperar'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -29,7 +29,13 @@ export default function AuthForm() {
     setMensaje(null);
 
     try {
-      if (modo === 'login') {
+      if (modo === 'recuperar') {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/restablecer',
+        });
+        if (err) throw err;
+        setMensaje('Si ese correo tiene una cuenta, te enviamos un enlace para crear una nueva contraseña. Revisa también la carpeta de spam.');
+      } else if (modo === 'login') {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
         router.push(redirectA);
@@ -74,7 +80,7 @@ export default function AuthForm() {
 
   return (
     <div className="card" style={{ maxWidth: 420, margin: '40px auto' }}>
-      <h3>{modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</h3>
+      <h3>{modo === 'login' ? 'Iniciar sesión' : modo === 'registro' ? 'Crear cuenta' : 'Recuperar contraseña'}</h3>
 
       {hayBorrador && (
         <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 0 }}>
@@ -82,27 +88,49 @@ export default function AuthForm() {
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={entrarConGoogle}
-        style={{ background: '#fff', color: 'var(--color-text)', border: '1px solid #d8d4cc', marginBottom: 14 }}
-      >
-        Continuar con Google
-      </button>
-      <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 12, margin: '0 0 10px' }}>o con tu correo</p>
+      {modo !== 'recuperar' && (
+        <>
+          <button
+            type="button"
+            onClick={entrarConGoogle}
+            style={{ background: '#fff', color: 'var(--color-text)', border: '1px solid #d8d4cc', marginBottom: 14 }}
+          >
+            Continuar con Google
+          </button>
+          <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 12, margin: '0 0 10px' }}>o con tu correo</p>
+        </>
+      )}
+      {modo === 'recuperar' && (
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 13, marginTop: 0 }}>
+          Escribe tu correo y te enviamos un enlace para crear una nueva contraseña.
+        </p>
+      )}
 
       <form onSubmit={enviar}>
         <label>Correo</label>
         <input type="email" required value={email} onChange={e => setEmail(e.target.value)} />
 
-        <label>Contraseña</label>
-        <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} />
+        {modo !== 'recuperar' && (
+          <>
+            <label>Contraseña</label>
+            <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} />
+          </>
+        )}
+        {modo === 'login' && (
+          <button
+            type="button"
+            onClick={() => { setModo('recuperar'); setError(null); setMensaje(null); }}
+            style={{ background: 'none', border: 'none', color: 'var(--color-accent)', width: 'auto', padding: 0, margin: '8px 0 0', fontSize: 13, fontWeight: 600 }}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
 
         {error && <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 10 }}>{error}</p>}
         {mensaje && <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 10 }}>{mensaje}</p>}
 
         <button type="submit" disabled={cargando}>
-          {cargando ? 'Un momento...' : modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+          {cargando ? 'Un momento...' : modo === 'login' ? 'Iniciar sesión' : modo === 'registro' ? 'Crear cuenta' : 'Enviar enlace'}
         </button>
       </form>
 
