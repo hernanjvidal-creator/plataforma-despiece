@@ -34,8 +34,8 @@ export default function Precios() {
       </p>
 
       <p style={{ color: 'var(--color-text-muted)', fontSize: 13, background: 'var(--color-accent-soft)', padding: 12, borderRadius: 8 }}>
-        Estamos por cerrar la etapa de prueba gratuita — en breve el despiece completo va a tener el costo
-        que se detalla abajo. Todo lo que guardes durante esta etapa queda libre de cobro para siempre.
+        Los muebles que ya habías guardado en tu cuenta durante la etapa de prueba gratuita quedan libres de cobro
+        para siempre. El costo que se detalla abajo aplica a los muebles nuevos.
       </p>
 
       <h2>Precio por tipo de mueble</h2>

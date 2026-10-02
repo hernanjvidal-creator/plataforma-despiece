@@ -288,7 +288,6 @@ export default function Configurador() {
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [desbloqueado, setDesbloqueado] = useState(false);
   const [soloLectura, setSoloLectura] = useState(false);
-  const [comprando, setComprando] = useState(false);
   const [comprandoReal, setComprandoReal] = useState(false);
   const [verificandoPago, setVerificandoPago] = useState(false);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
@@ -358,7 +357,7 @@ export default function Configurador() {
 
   // Al volver del checkout de Lemon Squeezy (?pedidoPago=...), el webhook
   // puede tardar un par de segundos en confirmar el pago. Se consulta el
-  // estado del pedido cada 2s (hasta 15 intentos) en vez de confiar en que
+  // estado del pedido cada 2s (hasta 30 intentos) en vez de confiar en que
   // ya esté "pagado" apenas se vuelve a esta página.
   useEffect(() => {
     if (!pedidoPagoParam) return;
@@ -381,7 +380,7 @@ export default function Configurador() {
         return;
       }
       intentos += 1;
-      if (intentos < 15) {
+      if (intentos < 30) {
         setTimeout(verificar, 2000);
       } else {
         setVerificandoPago(false);
@@ -655,50 +654,7 @@ export default function Configurador() {
     }
   }
 
-  // ---------- Fase 2: "compra" (simulada por ahora) + descarga del PDF ----------
-  // El listado de piezas y el diagrama de corte se ocultan hasta que el
-  // cliente "compra" el despiece. Por ahora la compra es simulada (queda
-  // registrada igual en pedidos/pedido_items) — el pago real con Lemon
-  // Squeezy es la fase siguiente.
-  async function simularCompra() {
-    if (!usuario) {
-      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
-      return;
-    }
-    setComprando(true);
-    setError(null);
-    try {
-      const parametros = construirParametros();
-      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
-
-      const { data: pedido, error: errPedido } = await supabase
-        .from('pedidos')
-        .insert({ user_id: usuario.id, estado: 'pagado', total: 0, paid_at: new Date().toISOString() })
-        .select()
-        .single();
-      if (errPedido) throw errPedido;
-
-      const { error: errItem } = await supabase.from('pedido_items').insert({
-        pedido_id: pedido.id,
-        user_id: usuario.id,
-        mueble_id: muebleActualId,
-        nombre,
-        modulo: form.modulo,
-        parametros_congelados: parametros,
-        precio: 0,
-      });
-      if (errItem) throw errItem;
-
-      setDesbloqueado(true);
-      setSoloLectura(true);
-    } catch (e) {
-      setError('No se pudo procesar la compra: ' + e.message);
-    } finally {
-      setComprando(false);
-    }
-  }
-
-  // ---------- Checkout real de Lemon Squeezy (en pruebas, ver EMAIL_PAGOS_REAL) ----------
+  // ---------- Checkout real de Lemon Squeezy ----------
   async function iniciarCheckoutReal() {
     if (!usuario) {
       router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
@@ -1402,8 +1358,8 @@ export default function Configurador() {
 
           {!muebleActualId && (
             <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginBottom: 8, lineHeight: 1.5 }}>
-              Estamos por cerrar la etapa de prueba gratuita — en breve el despiece completo va a tener un costo.
-              Crea una cuenta gratis y guarda tu mueble ahora: lo que guardes durante esta etapa queda libre de cobro para siempre.
+              Diseñar y ver tu mueble en 3D es gratis. Para ver las medidas exactas de cada pieza, el diagrama de corte y el PDF
+              de entrega, desbloquea el despiece con un pago único por mueble (ver <a href="/precios" style={{ color: 'var(--color-accent)' }}>precios</a>).
             </p>
           )}
           <button
@@ -1483,26 +1439,11 @@ export default function Configurador() {
                     <p style={{ color: 'var(--color-accent)', fontSize: 14 }}>Confirmando tu pago…</p>
                   )}
 
-                  {usuario?.email === EMAIL_PAGOS_REAL && (
-                    <>
-                      <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
-                        {comprandoReal ? 'Redirigiendo a pago...' : 'Pagar con Lemon Squeezy (modo prueba)'}
-                      </button>
-                      <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
-                        Checkout real de Lemon Squeezy en modo test — usa una tarjeta de prueba, no se cobra nada real.
-                      </p>
-                    </>
-                  )}
-
-                  <button
-                    onClick={simularCompra}
-                    disabled={comprando}
-                    style={{ maxWidth: 320, margin: usuario?.email === EMAIL_PAGOS_REAL ? '16px auto 0' : '0 auto' }}
-                  >
-                    {comprando ? 'Procesando...' : 'Simular compra y desbloquear'}
+                  <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
+                    {comprandoReal ? 'Redirigiendo a pago...' : 'Desbloquear despiece'}
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
-                    Pago simulado por ahora — la pasarela de pago real se está probando antes de habilitarla para todos.
+                    Pago único por mueble con tarjeta, procesado por Lemon Squeezy. Se desbloquea al instante.
                   </p>
                   {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>

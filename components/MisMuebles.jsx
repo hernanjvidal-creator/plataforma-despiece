@@ -73,7 +73,7 @@ export default function MisMuebles() {
 
   // Al volver del checkout de Lemon Squeezy (?pedidoPago=...), el webhook
   // puede tardar un par de segundos en confirmar el pago — se consulta cada
-  // 2s (hasta 15 intentos) y se refresca el estado de "pagado" al confirmar.
+  // 2s (hasta 30 intentos) y se refresca el estado de "pagado" al confirmar.
   useEffect(() => {
     if (!pedidoPagoParam) return;
     let cancelado = false;
@@ -95,7 +95,7 @@ export default function MisMuebles() {
         return;
       }
       intentos += 1;
-      if (intentos < 15) {
+      if (intentos < 30) {
         setTimeout(verificar, 2000);
       } else {
         setVerificandoPago(false);
