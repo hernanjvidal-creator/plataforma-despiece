@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase, supabaseConfigurado } from '@/lib/supabaseClient';
+import { leerBorrador } from '@/lib/borradorConfigurador';
 
 export default function AuthForm() {
   const router = useRouter();
@@ -15,6 +16,11 @@ export default function AuthForm() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
   const [mensaje, setMensaje] = useState(null);
+  const [hayBorrador, setHayBorrador] = useState(false);
+
+  useEffect(() => {
+    setHayBorrador(Boolean(leerBorrador()));
+  }, []);
 
   async function enviar(e) {
     e.preventDefault();
@@ -29,16 +35,30 @@ export default function AuthForm() {
         router.push(redirectA);
         router.refresh();
       } else {
-        const { error: err } = await supabase.auth.signUp({ email, password });
+        const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
-        setMensaje('Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.');
-        setModo('login');
+        if (data.session) {
+          router.push(redirectA);
+          router.refresh();
+        } else {
+          setMensaje('Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.');
+          setModo('login');
+        }
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setCargando(false);
     }
+  }
+
+  async function entrarConGoogle() {
+    setError(null);
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + redirectA },
+    });
+    if (err) setError(err.message);
   }
 
   if (!supabaseConfigurado) {
@@ -55,6 +75,21 @@ export default function AuthForm() {
   return (
     <div className="card" style={{ maxWidth: 420, margin: '40px auto' }}>
       <h3>{modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</h3>
+
+      {hayBorrador && (
+        <p style={{ color: 'var(--color-ok)', fontSize: 13, marginTop: 0 }}>
+          Tu diseño está guardado: al entrar lo recuperamos y seguimos donde lo dejaste.
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={entrarConGoogle}
+        style={{ background: '#fff', color: 'var(--color-text)', border: '1px solid #d8d4cc', marginBottom: 14 }}
+      >
+        Continuar con Google
+      </button>
+      <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 12, margin: '0 0 10px' }}>o con tu correo</p>
 
       <form onSubmit={enviar}>
         <label>Correo</label>

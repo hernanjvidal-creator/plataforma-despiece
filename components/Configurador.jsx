@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+import { guardarBorrador, leerBorrador, borrarBorrador, URL_RESTAURAR } from '@/lib/borradorConfigurador';
 
 const PLANCHAS = [
   { value: 'CL', label: 'Chile — 1830x2500' },
@@ -271,6 +272,7 @@ export default function Configurador() {
   const moduloParam = searchParams.get('modulo');
   const muebleIdParam = searchParams.get('muebleId');
   const pedidoPagoParam = searchParams.get('pedidoPago');
+  const restaurarParam = searchParams.get('restaurar');
   const moduloInicial = VALORES_POR_MODULO[moduloParam] ? moduloParam : 'bajo_cocina';
 
   const [form, setForm] = useState(() => ({
@@ -290,6 +292,7 @@ export default function Configurador() {
   const [soloLectura, setSoloLectura] = useState(false);
   const [comprandoReal, setComprandoReal] = useState(false);
   const [verificandoPago, setVerificandoPago] = useState(false);
+  const [accionPendiente, setAccionPendiente] = useState(null);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoManual, setDescargandoManual] = useState(false);
   const visor3DRef = useRef(null);
@@ -394,6 +397,41 @@ export default function Configurador() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedidoPagoParam]);
 
+  // Al volver de crear cuenta / iniciar sesión (?restaurar=1), recupera el
+  // diseño que el cliente dejó armado y retoma lo que quería hacer: ir al
+  // pago (que además guarda el mueble) o guardarlo directamente.
+  useEffect(() => {
+    if (!restaurarParam || muebleIdParam) return;
+    const borrador = leerBorrador();
+    if (!borrador) return;
+    setForm(borrador.form);
+    setAccionPendiente(borrador.intencion === 'comprar' ? 'comprar' : 'guardar');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!accionPendiente || !usuario) return;
+    const accion = accionPendiente;
+    setAccionPendiente(null);
+    borrarBorrador();
+    if (accion === 'comprar') iniciarCheckoutReal();
+    else guardarYMostrar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accionPendiente, usuario]);
+
+  async function guardarYMostrar() {
+    await guardarMueble({ sinPregunta: true });
+    try {
+      const res = await fetch('/api/despiece', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modulo: form.modulo, parametros: construirParametros(), opcionesCorte: construirOpcionesCorte() }),
+      });
+      const data = await res.json();
+      if (res.ok) setResultado(data);
+    } catch {}
+  }
+
   function actualizar(campo, valor) {
     setForm(f => ({ ...f, [campo]: valor }));
   }
@@ -410,9 +448,10 @@ export default function Configurador() {
     setDesbloqueado(false);
   }
 
-  async function guardarMueble() {
+  async function guardarMueble(opciones) {
     if (!usuario) {
-      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
+      guardarBorrador(form, 'guardar');
+      router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
       return;
     }
 
@@ -434,7 +473,7 @@ export default function Configurador() {
         if (err) throw err;
       } else {
         const nombreSugerido = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
-        const nombre = window.prompt('Nombre para este mueble:', nombreSugerido);
+        const nombre = opciones?.sinPregunta ? nombreSugerido : window.prompt('Nombre para este mueble:', nombreSugerido);
         if (!nombre) { setGuardando(false); return; }
         const { data, error: err } = await supabase
           .from('muebles')
@@ -657,7 +696,8 @@ export default function Configurador() {
   // ---------- Checkout real de Lemon Squeezy ----------
   async function iniciarCheckoutReal() {
     if (!usuario) {
-      router.push(`/login?redirect=${encodeURIComponent('/configurador')}`);
+      guardarBorrador(form, 'comprar');
+      router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
       return;
     }
     setComprandoReal(true);
@@ -1373,6 +1413,12 @@ export default function Configurador() {
               <label>Alto plancha (mm)</label>
               <input type="number" value={form.altoCustom} onChange={e => actualizar('altoCustom', e.target.value)} />
             </>
+          )}
+
+          {(accionPendiente || (comprandoReal && !resultado)) && (
+            <p style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 8 }}>
+              Recuperando tu diseño y retomando lo que estabas haciendo…
+            </p>
           )}
 
           <button onClick={generar} disabled={cargando}>
