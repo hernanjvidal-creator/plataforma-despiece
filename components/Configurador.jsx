@@ -667,13 +667,36 @@ export default function Configurador() {
       const accessToken = sesion.session?.access_token;
       if (!accessToken) throw new Error('Sesión no encontrada, vuelve a iniciar sesión');
 
-      const nombre = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+      const etiquetaModulo = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
       const parametros = construirParametros();
+      const opcionesCorte = construirOpcionesCorte();
+
+      // Se guarda el mueble antes de pagar (nuevo o actualizado) para que al
+      // volver del checkout el diseño siga ahí y quede en "Mis muebles".
+      let idMueble = muebleActualId;
+      let nombre = nombreMueble || etiquetaModulo;
+      if (idMueble) {
+        const { error: errGuardar } = await supabase
+          .from('muebles')
+          .update({ modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
+          .eq('id', idMueble);
+        if (errGuardar) throw errGuardar;
+      } else {
+        const { data: nuevo, error: errGuardar } = await supabase
+          .from('muebles')
+          .insert({ user_id: usuario.id, nombre, modulo: form.modulo, parametros, opciones_corte: opcionesCorte })
+          .select()
+          .single();
+        if (errGuardar) throw errGuardar;
+        idMueble = nuevo.id;
+        setMuebleActualId(nuevo.id);
+        setNombreMueble(nuevo.nombre);
+      }
 
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, muebleId: muebleActualId, nombre, modulo: form.modulo, parametros }),
+        body: JSON.stringify({ accessToken, muebleId: idMueble, nombre, modulo: form.modulo, parametros }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
