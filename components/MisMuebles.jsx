@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { mueblesPagados } from '@/lib/pedidosCliente';
 import { calcularPrecioUSD } from '@/lib/precios';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+import { registrarEvento, gtagSeguro } from '@/lib/analitica';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble cocina',
@@ -35,6 +36,7 @@ function registrarConversionAdsSiCorresponde(pedidoId, total) {
     if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
     const clave = `conversion_ads_${pedidoId}`;
     if (localStorage.getItem(clave)) return;
+    gtagSeguro('purchase', { transaction_id: pedidoId, value: total, currency: 'USD' });
     window.gtag('event', 'conversion', {
       send_to: CONVERSION_ADS_COMPRA,
       value: total,
@@ -153,6 +155,7 @@ export default function MisMuebles() {
 
   async function comprar(ids) {
     if (ids.length === 0) return;
+    registrarEvento('desbloquear_clic', { userId: usuario?.id });
     setComprando(true);
     setError(null);
     try {
@@ -168,6 +171,11 @@ export default function MisMuebles() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
 
+      registrarEvento('checkout_redirigido', { userId: usuario?.id });
+      gtagSeguro('begin_checkout', {
+        currency: 'USD',
+        value: muebles.filter(m => ids.includes(m.id)).reduce((s, m) => s + calcularPrecioUSD(m.modulo, m.parametros), 0),
+      });
       window.location.href = data.checkoutUrl;
     } catch (e) {
       setError('No se pudo iniciar el pago: ' + e.message);

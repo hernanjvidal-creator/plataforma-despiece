@@ -65,6 +65,58 @@ export async function GET(request) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 
+  // Embudo de compra desde que se activó el cobro real. Excluye las filas de
+  // la propia cuenta admin (sus pruebas no son clientes). Si la tabla de
+  // eventos todavía no existe, el embudo igual se arma con lo que sí hay.
+  const INICIO_COBRO = '2026-10-02T00:00:00Z';
+  let embudo = null;
+  try {
+    let eventos = [];
+    let eventosDisponibles = true;
+    try {
+      eventos = await traerTodasLasFilas(() =>
+        supabaseAdmin.from('eventos_embudo').select('evento, user_id, created_at')
+      );
+    } catch {
+      eventosDisponibles = false;
+    }
+    const pedidos = await traerTodasLasFilas(() =>
+      supabaseAdmin.from('pedidos').select('estado, total, user_id, created_at').gt('total', 0)
+    );
+    const mueblesGuardados = await traerTodasLasFilas(() =>
+      supabaseAdmin.from('muebles').select('user_id, created_at')
+    );
+    const { data: listaUsuarios } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const cuentas = listaUsuarios?.users || [];
+
+    const noAdmin = f => f.user_id !== user.id;
+    const ventana = (desde) => {
+      const dentro = f => f.created_at >= desde;
+      const ev = nombre => eventos.filter(e => e.evento === nombre && dentro(e) && noAdmin(e)).length;
+      const ped = pedidos.filter(p => dentro(p) && noAdmin(p));
+      const pagados = ped.filter(p => p.estado === 'pagado');
+      return {
+        generaciones: generaciones.filter(dentro).length,
+        cuentasNuevas: cuentas.filter(c => c.created_at >= desde && c.id !== user.id).length,
+        mueblesGuardados: mueblesGuardados.filter(m => dentro(m) && noAdmin(m)).length,
+        clicsDesbloquear: ev('desbloquear_clic'),
+        loginParaComprar: ev('login_para_comprar'),
+        compraRetomada: ev('compra_retomada'),
+        checkoutsCreados: ped.length,
+        pagados: pagados.length,
+        reembolsados: ped.filter(p => p.estado === 'reembolsado').length,
+        ingresosUSD: pagados.reduce((s, p) => s + Number(p.total || 0), 0),
+      };
+    };
+    embudo = {
+      eventosDisponibles,
+      desdeCobro: ventana(INICIO_COBRO),
+      ultimos7: ventana(hace7Dias > INICIO_COBRO ? hace7Dias : INICIO_COBRO),
+    };
+  } catch (e) {
+    embudo = { error: e.message };
+  }
+
   const porModulo = {};
   const porPais = {};
   // Por usuario logueado: módulos que generó, país más reciente que se le
@@ -128,6 +180,7 @@ export async function GET(request) {
     porModulo,
     porPais,
     usuariosDetalle,
+    embudo,
     totalFeedback: feedback.length,
     promedioCalificacion,
   });

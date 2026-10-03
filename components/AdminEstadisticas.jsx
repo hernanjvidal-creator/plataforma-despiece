@@ -106,6 +106,49 @@ export default function AdminEstadisticas() {
             </div>
           </div>
 
+          {stats.embudo && !stats.embudo.error && (
+            <div className="card" style={{ marginBottom: 24 }}>
+              <h3 style={{ marginTop: 0 }}>Embudo de compra</h3>
+              <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                Desde que se activó el cobro (2 oct 2026). No cuenta las pruebas de la cuenta admin.
+                {!stats.embudo.eventosDisponibles && ' Los clics y pasos de login aparecen en 0 hasta crear la tabla eventos_embudo en Supabase.'}
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--color-border)' }}>
+                    <th style={{ padding: '6px 8px' }}>Paso</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'right' }}>Últimos 7 días</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'right' }}>Desde el cobro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['Generaron un despiece', 'generaciones'],
+                    ['Cuentas nuevas creadas', 'cuentasNuevas'],
+                    ['Muebles guardados', 'mueblesGuardados'],
+                    ['Clic en "Desbloquear"', 'clicsDesbloquear'],
+                    ['  …enviados a crear cuenta / iniciar sesión', 'loginParaComprar'],
+                    ['  …compras retomadas tras el login', 'compraRetomada'],
+                    ['Pagos iniciados (checkout creado)', 'checkoutsCreados'],
+                    ['Pagos completados', 'pagados'],
+                    ['Reembolsos', 'reembolsados'],
+                  ].map(([etiqueta, clave]) => (
+                    <tr key={clave} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      <td style={{ padding: '6px 8px', whiteSpace: 'pre' }}>{etiqueta}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}><strong>{stats.embudo.ultimos7[clave]}</strong></td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}><strong>{stats.embudo.desdeCobro[clave]}</strong></td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td style={{ padding: '6px 8px' }}>Ingresos (US$, sin impuestos)</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right' }}><strong>{stats.embudo.ultimos7.ingresosUSD.toFixed(2)}</strong></td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right' }}><strong>{stats.embudo.desdeCobro.ingresosUSD.toFixed(2)}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
           <div className="card" style={{ marginBottom: 24 }}>
             <h3 style={{ marginTop: 0 }}>Muebles por tipo</h3>
             {Object.keys(stats.porModulo).length === 0 && (

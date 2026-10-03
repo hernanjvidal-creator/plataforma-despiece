@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PAGINAS_MUEBLE } from '@/lib/paginasMueble';
 
 const MODULOS = [
   { valor: 'bajo_cocina', nombre: 'Mueble cocina', detalle: 'por secciones: lavaplatos, lavavajillas y horno' },
@@ -77,6 +78,20 @@ export default function Home() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section style={{ marginTop: 40 }}>
+        <h3 style={{ marginBottom: 6 }}>Guías de despiece por tipo de mueble</h3>
+        <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--color-text-muted)' }}>
+          Qué incluye el diseño de cada mueble, medidas de partida y preguntas frecuentes.
+        </p>
+        <ul style={{ lineHeight: 1.9, paddingLeft: 20 }}>
+          {PAGINAS_MUEBLE.map(p => (
+            <li key={p.slug}>
+              <Link href={`/despiece/${p.slug}`} style={{ color: 'var(--color-accent)' }}>{p.titulo}</Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );

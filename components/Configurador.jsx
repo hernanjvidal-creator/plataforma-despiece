@@ -11,6 +11,7 @@ import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 import { calcularPrecioUSD } from '@/lib/precios';
+import { registrarEvento, gtagSeguro } from '@/lib/analitica';
 import { guardarBorrador, leerBorrador, borrarBorrador, URL_RESTAURAR } from '@/lib/borradorConfigurador';
 
 const PLANCHAS = [
@@ -78,6 +79,7 @@ function registrarConversionAdsSiCorresponde(pedidoId, total) {
       currency: 'USD',
       transaction_id: pedidoId,
     });
+    gtagSeguro('purchase', { transaction_id: pedidoId, value: total, currency: 'USD' });
     localStorage.setItem(clave, '1');
   } catch {
     // Analítica de terceros nunca debe poder romper la confirmación de compra.
@@ -430,7 +432,10 @@ export default function Configurador() {
     const accion = accionPendiente;
     setAccionPendiente(null);
     borrarBorrador();
-    if (accion === 'comprar') iniciarCheckoutReal();
+    if (accion === 'comprar') {
+      registrarEvento('compra_retomada', { modulo: form.modulo, userId: usuario.id });
+      iniciarCheckoutReal({ retomada: true });
+    }
     else guardarYMostrar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accionPendiente, usuario]);
@@ -474,6 +479,7 @@ export default function Configurador() {
   async function guardarMueble() {
     if (!usuario) {
       guardarBorrador(form, 'guardar');
+      registrarEvento('login_para_guardar', { modulo: form.modulo });
       router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
       return;
     }
@@ -506,6 +512,7 @@ export default function Configurador() {
         if (err) throw err;
         setMuebleActualId(data.id);
         setNombreMueble(data.nombre);
+        registrarEvento('mueble_guardado', { modulo: form.modulo, userId: usuario.id });
       }
       setGuardadoOk(true);
     } catch (e) {
@@ -727,12 +734,15 @@ export default function Configurador() {
   }
 
   // ---------- Checkout real de Lemon Squeezy ----------
-  async function iniciarCheckoutReal() {
+  async function iniciarCheckoutReal(opciones) {
     if (!usuario) {
+      registrarEvento('desbloquear_clic', { modulo: form.modulo });
+      registrarEvento('login_para_comprar', { modulo: form.modulo });
       guardarBorrador(form, 'comprar');
       router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
       return;
     }
+    if (!opciones?.retomada) registrarEvento('desbloquear_clic', { modulo: form.modulo, userId: usuario.id });
     setComprandoReal(true);
     setError(null);
     try {
@@ -774,6 +784,8 @@ export default function Configurador() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
 
+      registrarEvento('checkout_redirigido', { modulo: form.modulo, userId: usuario.id });
+      gtagSeguro('begin_checkout', { currency: 'USD', value: calcularPrecioUSD(form.modulo, parametros) });
       window.location.href = data.checkoutUrl;
     } catch (e) {
       setError('No se pudo iniciar el pago: ' + e.message);

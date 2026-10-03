@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase, supabaseConfigurado } from '@/lib/supabaseClient';
 import { leerBorrador } from '@/lib/borradorConfigurador';
+import { registrarEvento, gtagSeguro } from '@/lib/analitica';
 
 export default function AuthForm() {
   const router = useRouter();
@@ -44,6 +45,8 @@ export default function AuthForm() {
         const { data, error: err } = await supabase.auth.signUp({ email, password });
         if (err) throw err;
         if (data.session) {
+          registrarEvento('registro_completado', { userId: data.session.user?.id });
+          gtagSeguro('sign_up', { method: 'email' });
           router.push(redirectA);
           router.refresh();
         } else {
