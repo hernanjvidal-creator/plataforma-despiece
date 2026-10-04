@@ -460,6 +460,11 @@ export default function Configurador() {
     try { precioActualUSD = calcularPrecioUSD(form.modulo, construirParametros()); } catch { precioActualUSD = null; }
   }
 
+  function irAIniciarSesion() {
+    guardarBorrador(form, 'guardar');
+    router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
+  }
+
   function actualizar(campo, valor) {
     setForm(f => ({ ...f, [campo]: valor }));
   }
@@ -736,10 +741,34 @@ export default function Configurador() {
   // ---------- Checkout real de Lemon Squeezy ----------
   async function iniciarCheckoutReal(opciones) {
     if (!usuario) {
+      // Compra sin cuenta: se va directo al pago; la cuenta se crea sola con
+      // el correo que escriba allá (ver lib/pedidoInvitado.js).
       registrarEvento('desbloquear_clic', { modulo: form.modulo });
-      registrarEvento('login_para_comprar', { modulo: form.modulo });
-      guardarBorrador(form, 'comprar');
-      router.push(`/login?redirect=${encodeURIComponent(URL_RESTAURAR)}`);
+      setComprandoReal(true);
+      setError(null);
+      try {
+        const etiqueta = MODULOS.find(m => m.value === form.modulo)?.label || 'Mueble';
+        const parametros = construirParametros();
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invitado: true,
+            nombre: (nombreMueble || '').trim() || etiqueta,
+            modulo: form.modulo,
+            parametros,
+            opcionesCorte: construirOpcionesCorte(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error iniciando el pago');
+        registrarEvento('checkout_redirigido', { modulo: form.modulo });
+        gtagSeguro('begin_checkout', { currency: 'USD', value: calcularPrecioUSD(form.modulo, parametros) });
+        window.location.href = data.checkoutUrl;
+      } catch (e) {
+        setError('No se pudo iniciar el pago: ' + e.message);
+        setComprandoReal(false);
+      }
       return;
     }
     if (!opciones?.retomada) registrarEvento('desbloquear_clic', { modulo: form.modulo, userId: usuario.id });
@@ -1568,6 +1597,18 @@ export default function Configurador() {
                     Pago único por mueble con tarjeta, procesado por Lemon Squeezy. Se desbloquea al instante.
                     Precio en US$, más impuestos aplicables según tu país.
                   </p>
+                  {!usuario && (
+                    <p style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
+                      Sin crear cuenta: solo te pedimos tu correo al pagar y con él te creamos el acceso a tu despiece.{' '}
+                      <button
+                        type="button"
+                        onClick={irAIniciarSesion}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-accent)', width: 'auto', padding: 0, margin: 0, fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}
+                      >
+                        Ya tengo cuenta
+                      </button>
+                    </p>
+                  )}
                   {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>
               )}

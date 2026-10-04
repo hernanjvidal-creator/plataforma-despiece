@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import crypto from 'node:crypto';
 import { supabase } from '@/lib/supabaseClient';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
 import { crearCheckoutLemonSqueezy, lemonsqueezyConfigurado } from '@/lib/lemonsqueezy';
 import { calcularPrecioUSD, construirDetalleCheckout } from '@/lib/precios';
+import { generarDespiecePorModulo } from '@/lib/generarDespiecePorModulo';
 
 /**
  * POST /api/checkout
@@ -32,7 +34,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 });
   }
 
-  const { accessToken, muebleId, nombre, modulo, parametros, muebleIds } = body;
+  const { accessToken, muebleId, nombre, modulo, parametros, muebleIds, invitado, opcionesCorte } = body;
+  if (!accessToken && invitado === true) {
+    return crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte });
+  }
   if (!accessToken) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
@@ -121,6 +126,67 @@ export async function POST(request) {
       montoUSD: total,
       nombreProducto,
       descripcionProducto,
+    });
+
+    return NextResponse.json({ checkoutUrl, pedidoId: pedido.id });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+/**
+ * Compra sin cuenta: el pedido nace sin dueño y con un token secreto que solo
+ * conoce el navegador que lo creó. Cuando el pago se confirma (webhook), se
+ * crea o se busca la cuenta con el correo que el cliente escribió en el pago
+ * y se le asigna el pedido (ver lib/pedidoInvitado.js). El precio siempre se
+ * calcula acá, nunca se confía en uno que mande el cliente.
+ */
+async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte }) {
+  if (!modulo || !parametros || typeof parametros !== 'object') {
+    return NextResponse.json({ error: 'Faltan datos del mueble' }, { status: 400 });
+  }
+  if (JSON.stringify(parametros).length > 20000) {
+    return NextResponse.json({ error: 'Diseño demasiado grande' }, { status: 400 });
+  }
+
+  try {
+    generarDespiecePorModulo(modulo, parametros, opcionesCorte || undefined);
+  } catch {
+    return NextResponse.json({ error: 'El diseño no es válido, revísalo antes de pagar.' }, { status: 400 });
+  }
+
+  try {
+    const nombreMueble = String(nombre || 'Mueble').slice(0, 80);
+    const precio = calcularPrecioUSD(modulo, parametros);
+    const token = crypto.randomBytes(24).toString('hex');
+
+    const { data: pedido, error: errPedido } = await supabaseAdmin
+      .from('pedidos')
+      .insert({ user_id: null, estado: 'pendiente', total: precio, guest_token: token })
+      .select()
+      .single();
+    if (errPedido) throw errPedido;
+
+    const { error: errItem } = await supabaseAdmin.from('pedido_items').insert({
+      pedido_id: pedido.id,
+      user_id: null,
+      mueble_id: null,
+      nombre: nombreMueble,
+      modulo,
+      parametros_congelados: parametros,
+      opciones_corte: opcionesCorte || null,
+      precio,
+    });
+    if (errItem) throw errItem;
+
+    const origen = new URL(request.url).origin;
+    const { name, description } = construirDetalleCheckout([{ nombre: nombreMueble, modulo, parametros_congelados: parametros, precio }]);
+    const checkoutUrl = await crearCheckoutLemonSqueezy({
+      redirectUrl: `${origen}/pago-exitoso?pedido=${pedido.id}&t=${token}`,
+      customData: { pedido_id: pedido.id },
+      montoUSD: precio,
+      nombreProducto: name,
+      descripcionProducto: description,
     });
 
     return NextResponse.json({ checkoutUrl, pedidoId: pedido.id });

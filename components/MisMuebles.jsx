@@ -9,6 +9,7 @@ import { mueblesPagados } from '@/lib/pedidosCliente';
 import { calcularPrecioUSD } from '@/lib/precios';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 import { registrarEvento, gtagSeguro } from '@/lib/analitica';
+import CrearContrasenaOpcional from './CrearContrasenaOpcional';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble cocina',
@@ -197,6 +198,8 @@ export default function MisMuebles() {
           <button style={{ marginTop: 0, width: 'auto', padding: '10px 18px' }}>+ Nuevo mueble</button>
         </Link>
       </div>
+
+      <CrearContrasenaOpcional usuario={usuario} />
 
       {verificandoPago && (
         <p style={{ color: 'var(--color-accent)', fontSize: 14 }}>Confirmando tu pago…</p>

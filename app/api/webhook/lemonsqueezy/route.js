@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
+import { cumplirPedidoInvitado } from '@/lib/pedidoInvitado';
 
 /**
  * POST /api/webhook/lemonsqueezy
@@ -61,6 +62,19 @@ export async function POST(request) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Compra sin cuenta: ahora que está pagada, se crea (o se busca) la cuenta
+    // con el correo del comprador y se le asigna el pedido. Si falla, se
+    // responde error para que Lemon Squeezy reintente (es idempotente).
+    try {
+      const { data: pedido } = await supabaseAdmin
+        .from('pedidos').select('user_id').eq('id', pedidoId).single();
+      if (pedido && !pedido.user_id) {
+        await cumplirPedidoInvitado(pedidoId, payload?.data?.attributes?.user_email);
+      }
+    } catch (e) {
+      return NextResponse.json({ error: e.message }, { status: 500 });
     }
   }
 
