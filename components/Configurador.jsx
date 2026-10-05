@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Visor3D from './Visor3D';
+import Ayuda from './Ayuda';
 import ListaPiezas from './ListaPiezas';
 import DiagramaCorte from './DiagramaCorte';
 import { useAuth } from './AuthProvider';
@@ -925,13 +926,15 @@ export default function Configurador() {
           </select>
 
           {ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) && form.secciones.some(s => s.tipo === 'esquinero') ? (
-            <p style={{ fontSize: 12, color: '#888', margin: '8px 0' }}>
-              Con una esquina agregada, el mueble dobla 90° — ya no tiene un solo ancho en línea recta,
-              así que este total deja de mostrarse. Cada módulo (de cada tramo) trae su propio ancho más abajo.
-            </p>
+            <label>
+              Ancho total
+              <Ayuda>
+                Con una esquina agregada, el mueble dobla 90° — ya no tiene un solo ancho en línea recta, así que este total deja de mostrarse. Cada módulo (de cada tramo) trae su propio ancho más abajo.
+              </Ayuda>
+            </label>
           ) : ANCHO_LO_DEFINEN_SECCIONES.includes(form.modulo) ? (
             <>
-              <label>Ancho total (mm)</label>
+              <label>Ancho total (mm) <Ayuda>{MODULOS_CON_TAPAS_LATERALES.includes(form.modulo) ? `Cada módulo es una caja independiente con su propio ancho — este total es la suma de los módulos de abajo más ${ANCHO_TAPAS_LATERALES_MM}mm de las 2 tapas laterales de acabado en los extremos, no se edita directamente.` : 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'}</Ayuda></label>
               <input
                 type="number"
                 value={
@@ -940,37 +943,19 @@ export default function Configurador() {
                 }
                 disabled
               />
-              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                {MODULOS_CON_TAPAS_LATERALES.includes(form.modulo)
-                  ? `Cada módulo es una caja independiente con su propio ancho — este total es la suma de los módulos de abajo más ${ANCHO_TAPAS_LATERALES_MM}mm de las 2 tapas laterales de acabado en los extremos, no se edita directamente.`
-                  : 'Cada sección trae su propio ancho — este total es solo la suma de las secciones de abajo, no se edita directamente.'}
-              </p>
             </>
           ) : (
             <>
-              <label>Ancho (mm)</label>
+              <label>Ancho (mm) <Ayuda>Este es el ancho exterior del mueble completo.</Ayuda></label>
               <input type="number" min={50} max={maxAncho} value={form.A} onChange={e => actualizar('A', e.target.value)} />
-              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                Este es el ancho exterior del mueble completo.
-              </p>
             </>
           )}
 
-          <label>Alto (mm)</label>
+          <label>Alto (mm){alturaEsDesdeElPiso && <Ayuda>Esta es la altura desde el piso hasta la superficie superior del mueble.</Ayuda>}</label>
           <input type="number" min={50} max={maxAltoProfundidad} value={form.H} onChange={e => actualizar('H', e.target.value)} />
-          {alturaEsDesdeElPiso && (
-            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Esta es la altura desde el piso hasta la superficie superior del mueble.
-            </p>
-          )}
 
-          <label>Profundidad (mm)</label>
+          <label>Profundidad (mm){alturaEsDesdeElPiso && <Ayuda>Esta es la profundidad de la superficie superior del mueble.</Ayuda>}</label>
           <input type="number" min={50} max={maxAltoProfundidad} value={form.P} onChange={e => actualizar('P', e.target.value)} />
-          {alturaEsDesdeElPiso && (
-            <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-              Esta es la profundidad de la superficie superior del mueble.
-            </p>
-          )}
 
 
           {form.modulo === 'alto_cocina' && (
@@ -1049,17 +1034,12 @@ export default function Configurador() {
                     Colgador (barra para colgar ropa)
                   </label>
 
-                  <label>Ancho de la sección (mm)</label>
+                  <label>Ancho de la sección (mm) <Ayuda>Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina). Sumando el de todas las secciones da el "Ancho total" de arriba.</Ayuda></label>
                   <input
                     type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
-                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
-                    fuera (comparte la mitad de cada separador con la sección vecina). Sumando el de todas las
-                    secciones da el "Ancho total" de arriba.
-                  </p>
                 </div>
               ))}
               <button
@@ -1082,24 +1062,18 @@ export default function Configurador() {
 
               {Number(form.nP) > 0 && (
                 <>
-                  <label>Tipo de puerta</label>
+                  <label>
+                    Tipo de puerta
+                    <Ayuda>
+                      {form.tipoPuerta === 'batiente'
+                        ? 'La cantidad y el ancho de las puertas se calculan solos: una por sección (o más si queda muy ancha, máximo ~500mm por hoja), siempre alineadas con un separador real para poder atornillar la bisagra.'
+                        : 'Las puertas correderas siempre son 2 hojas, superpuestas en dos rieles, que en conjunto cubren todo el ancho del closet.'}
+                    </Ayuda>
+                  </label>
                   <select value={form.tipoPuerta} onChange={e => actualizar('tipoPuerta', e.target.value)}>
                     <option value="batiente">Batiente (con bisagra)</option>
                     <option value="corredera">Corredera (sobre riel)</option>
                   </select>
-
-                  {form.tipoPuerta === 'batiente' ? (
-                    <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                      La cantidad y el ancho de las puertas se calculan solos: una por sección (o más si queda muy
-                      ancha, máximo ~500mm por hoja), siempre alineadas con un separador real para poder atornillar
-                      la bisagra.
-                    </p>
-                  ) : (
-                    <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                      Las puertas correderas siempre son 2 hojas, superpuestas en dos rieles, que en conjunto
-                      cubren todo el ancho del closet.
-                    </p>
-                  )}
                 </>
               )}
             </>
@@ -1110,17 +1084,13 @@ export default function Configurador() {
               <label>Repisas</label>
               <input type="number" min={0} value={form.repisas} onChange={e => actualizar('repisas', e.target.value)} />
 
-              <label style={{ marginTop: 18 }}>Cantidad de puertas</label>
+              <label style={{ marginTop: 18 }}>Cantidad de puertas <Ayuda>Como referencia: 1 puerta rinde bien en anchos de 200 a 500mm, y 2 puertas en anchos de 500 a 1000mm.</Ayuda></label>
               <select value={form.nP} onChange={e => actualizar('nP', e.target.value)}>
                 <option value="" disabled>Selecciona una opción...</option>
                 <option value={0}>Sin puertas (despensa abierta)</option>
                 <option value={1}>1 puerta</option>
                 <option value={2}>2 puertas</option>
               </select>
-              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                Como referencia: 1 puerta rinde bien en anchos de 200 a 500mm, y 2 puertas en anchos de 500 a
-                1000mm.
-              </p>
             </>
           )}
 
@@ -1191,57 +1161,51 @@ export default function Configurador() {
                       )}
                     </>
                   )}
-
-                  {(s.tipo === 'lavaplatos' || s.tipo === 'lavavajillas' || s.tipo === 'horno') && (
-                    <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                      Ancho estándar 600mm{s.tipo === 'lavaplatos' ? ' (según cubeta simple/doble)' : ''}.
-                      {(s.tipo === 'lavavajillas' || s.tipo === 'horno') && ' Sin frente propio: lo cubre el electrodoméstico.'}
-                    </p>
-                  )}
                   {s.tipo === 'esquinero' && (
                     <>
-                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                        No es un frente: acá la fila dobla 90° y sigue con los módulos que pongas después (un
-                        nuevo tramo, ya girado). Tiene que haber al menos un módulo antes y uno después de
-                        cada esquina.
-                      </p>
-                      <label>Gira hacia</label>
+                      <label>
+                        Gira hacia
+                        <Ayuda>
+                          No es un frente: acá la fila dobla 90° y sigue con los módulos que pongas después (un nuevo tramo, ya girado). Tiene que haber al menos un módulo antes y uno después de cada esquina.
+                          <br /><br />
+                          Dos brazos en L, cada uno con su puerta (bisagra de 165° para que abran sin chocar entre sí) — el ancho de abajo es el ancho de esas puertas, igual para los dos brazos.
+                        </Ayuda>
+                      </label>
                       <select value={s.giro || 'derecha'} onChange={e => actualizarSeccion(i, 'giro', e.target.value)}>
                         <option value="derecha">Derecha</option>
                         <option value="izquierda">Izquierda</option>
                       </select>
-                      <p style={{ fontSize: 12, color: '#888', margin: '6px 0 0' }}>
-                        Dos brazos en L, cada uno con su puerta (bisagra de 165° para que abran sin chocar
-                        entre sí) — el ancho de abajo es el ancho de esas puertas, igual para los dos brazos.
-                      </p>
                     </>
                   )}
 
-                  <label>{s.tipo === 'esquinero' ? 'Ancho de las puertas (mm)' : 'Ancho del módulo (mm)'}</label>
+                  <label>
+                    {s.tipo === 'esquinero' ? 'Ancho de las puertas (mm)' : 'Ancho del módulo (mm)'}
+                    <Ayuda>
+                      {s.tipo === 'esquinero'
+                        ? 'Igual que en los otros módulos, tú eliges el ancho — el brazo perpendicular suma además el fondo del mueble a la fila, aparte de este ancho.'
+                        : 'Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.'}
+                      {(s.tipo === 'lavaplatos' || s.tipo === 'lavavajillas' || s.tipo === 'horno') && (
+                        <>
+                          <br /><br />
+                          Ancho estándar 600mm{s.tipo === 'lavaplatos' ? ' (según cubeta simple/doble)' : ''}.
+                          {(s.tipo === 'lavavajillas' || s.tipo === 'horno') && ' Sin frente propio: lo cubre el electrodoméstico.'}
+                        </>
+                      )}
+                    </Ayuda>
+                  </label>
                   <input
                     type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
-                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    {s.tipo === 'esquinero'
-                      ? 'Igual que en los otros módulos, tú eliges el ancho — el brazo perpendicular suma además el fondo del mueble a la fila, aparte de este ancho.'
-                      : 'Cada módulo es una caja independiente — no hay reparto automático, cada uno trae su propio ' +
-                        'ancho exterior. Sumando el de todos los módulos da el "Ancho total" de arriba. Se recomienda ' +
-                        'que el ancho de las puertas sea el mismo en todos los módulos, para que el mueble quede parejo.'}
-                  </p>
                   {s.tipo === 'esquinero' && (
                     <>
-                      <label>Repisas interiores (por brazo)</label>
+                      <label>Repisas interiores (por brazo) <Ayuda>Misma cantidad para los dos brazos. Si pides repisas, se agrega un travesaño de soporte por abajo, en el rincón.</Ayuda></label>
                       <input
                         type="number" min={0}
                         value={s.repisas ?? 0}
                         onChange={e => actualizarSeccion(i, 'repisas', e.target.value)}
                       />
-                      <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                        Misma cantidad para los dos brazos. Si pides repisas, se agrega un travesaño de
-                        soporte por abajo, en el rincón.
-                      </p>
                     </>
                   )}
                 </div>
@@ -1311,11 +1275,13 @@ export default function Configurador() {
 
           {form.modulo === 'escritorio' && (
             <>
-              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 8px' }}>
-                Un panel sólido de un lado y una cajonera del otro, con hueco libre para las piernas en el medio — la cubierta vuela por encima de todo.
-              </p>
 
-              <label>Lado de la cajonera</label>
+              <label>
+                Lado de la cajonera
+                <Ayuda>
+                  Un panel sólido de un lado y una cajonera del otro, con hueco libre para las piernas en el medio — la cubierta vuela por encima de todo.
+                </Ayuda>
+              </label>
               <select value={form.ladoCajonera} onChange={e => actualizar('ladoCajonera', e.target.value)}>
                 <option value="derecha">Derecha</option>
                 <option value="izquierda">Izquierda</option>
@@ -1383,17 +1349,12 @@ export default function Configurador() {
                   <label>Repisas</label>
                   <input type="number" min={0} value={s.repisas} onChange={e => actualizarSeccion(i, 'repisas', e.target.value)} />
 
-                  <label>Ancho de la sección (mm)</label>
+                  <label>Ancho de la sección (mm) <Ayuda>Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se agrega ningún separador interior.</Ayuda></label>
                   <input
                     type="number" min={100}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
-                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>
-                    Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por
-                    fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se
-                    agrega ningún separador interior.
-                  </p>
                 </div>
               ))}
               <button
@@ -1417,12 +1378,7 @@ export default function Configurador() {
                 />
                 Incluir cubierta (superficie)
                 {form.modulo === 'bajo_cocina' ? ' + lavaplatos' : ' + lavamanos'}
-              </label>
-              <p style={{ fontSize: 12, color: '#888', margin: '2px 0 8px' }}>
-                Aunque no la agregues acá, el "Alto" de arriba ya es la altura {alturaEsDesdeElPiso ? 'desde el piso ' : ''}
-                hasta la superficie de la cubierta, y la "Profundidad" ya es la profundidad de la cubierta — se la
-                puedes encargar a otro proveedor (piedra, por ejemplo) con esas mismas medidas.
-              </p>
+               <Ayuda>Aunque no la agregues acá, el "Alto" de arriba ya es la altura {alturaEsDesdeElPiso ? 'desde el piso ' : ''} hasta la superficie de la cubierta, y la "Profundidad" ya es la profundidad de la cubierta — se la puedes encargar a otro proveedor (piedra, por ejemplo) con esas mismas medidas.</Ayuda></label>
 
               {form.cubiertaIncluir && (
                 <>
