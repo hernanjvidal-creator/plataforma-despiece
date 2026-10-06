@@ -120,6 +120,7 @@ export async function POST(request) {
 
     const { name: nombreProducto, description: descripcionProducto } = construirDetalleCheckout(items);
     const checkoutUrl = await crearCheckoutLemonSqueezy({
+      pais: request.headers.get('x-vercel-ip-country'),
       email: user.email,
       redirectUrl,
       customData: { pedido_id: pedido.id },
@@ -182,6 +183,7 @@ async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opci
     const origen = new URL(request.url).origin;
     const { name, description } = construirDetalleCheckout([{ nombre: nombreMueble, modulo, parametros_congelados: parametros, precio }]);
     const checkoutUrl = await crearCheckoutLemonSqueezy({
+      pais: request.headers.get('x-vercel-ip-country'),
       redirectUrl: `${origen}/pago-exitoso?pedido=${pedido.id}&t=${token}`,
       customData: { pedido_id: pedido.id },
       montoUSD: precio,

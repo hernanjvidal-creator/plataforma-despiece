@@ -78,7 +78,7 @@ export default function Precios() {
       <h2>Medios de pago y reembolsos</h2>
       <p>
         El pago se procesa a través de una pasarela externa (tarjeta de crédito o débito). Para condiciones
-        de devolución, revisa nuestra{' '}
+        de devolución, revisa nuestra garantía de 5 días en la{' '}
         <a href="/reembolsos" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Política de Reembolso</a>.
       </p>
 

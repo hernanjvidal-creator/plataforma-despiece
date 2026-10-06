@@ -1559,32 +1559,43 @@ export default function Configurador() {
                 />
               </div>
 
-              <div className="card" style={{ marginBottom: 20 }}>
-                <h3>Listado de piezas y herrajes</h3>
-                <ListaPiezas
-                  despiece={resultado.despiece}
-                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
-                />
-              </div>
-
               {!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL && (
-                <div className="card" style={{ textAlign: 'center' }}>
+                <div className="card" style={{ textAlign: 'center', marginBottom: 20 }}>
                   <h3>Diagrama de corte y descarga</h3>
                   <p style={{ color: '#888', fontSize: 14 }}>
                     Ya puedes ver qué piezas necesita tu mueble. Desbloquea las medidas exactas,
                     el diagrama de corte y el PDF de entrega para poder cortarlo.
                   </p>
 
+                  <div style={{ background: 'var(--color-accent-soft)', borderRadius: 8, padding: 14, margin: '12px 0 16px', textAlign: 'left', fontSize: 14, lineHeight: 1.6 }}>
+                    <strong>
+                      Tu mueble: {resultado.despiece.piezas.reduce((s, p) => s + (p.cantidad || 1), 0)} piezas
+                      {resultado.corte?.resumen?.totalPlanchas ? ` · ${resultado.corte.resumen.totalPlanchas} plancha${resultado.corte.resumen.totalPlanchas > 1 ? 's' : ''} de melamina` : ''}
+                    </strong>
+                    <ul style={{ margin: '6px 0 8px', paddingLeft: 20 }}>
+                      <li>Medidas exactas de cada pieza, con cantos y colores</li>
+                      <li>Lista de herrajes para comprar en la ferretería</li>
+                      <li>Diagrama de corte listo para llevar a la maderera</li>
+                      <li>PDF de entrega y manual de armado</li>
+                    </ul>
+                    <a href="/ejemplo-despiece-closet.pdf" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
+                      Ver un PDF de ejemplo →
+                    </a>
+                  </div>
+
                   {verificandoPago && (
                     <p style={{ color: 'var(--color-accent)', fontSize: 14 }}>Confirmando tu pago…</p>
                   )}
 
                   <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
-                    {comprandoReal ? 'Redirigiendo a pago...' : `Desbloquear despiece${precioActualUSD ? ` — US$${precioActualUSD}` : ''}`}
+                    {comprandoReal ? 'Redirigiendo a pago...' : `Desbloquear despiece${precioActualUSD ? ` — US${precioActualUSD}` : ''}`}
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
-                    Pago único por mueble con tarjeta, procesado por Lemon Squeezy. Se desbloquea al instante.
+                    Pago único por mueble con tarjeta de crédito o débito, o PayPal. Se desbloquea al instante.
                     Precio en US$, más impuestos aplicables según tu país.
+                  </p>
+                  <p style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
+                    Garantía de 5 días: si no es lo que esperabas, te devolvemos tu dinero (<a href="/reembolsos" style={{ color: 'var(--color-accent)' }}>ver política</a>).
                   </p>
                   {!usuario && (
                     <p style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
@@ -1601,6 +1612,15 @@ export default function Configurador() {
                   {error && <p style={{ color: 'var(--color-danger)', marginTop: 10 }}>{error}</p>}
                 </div>
               )}
+
+              <div className="card" style={{ marginBottom: 20 }}>
+                <h3>Listado de piezas y herrajes</h3>
+                <ListaPiezas
+                  despiece={resultado.despiece}
+                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
+                />
+              </div>
+
 
               {(desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL) && (
                 <>
