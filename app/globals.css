@@ -63,6 +63,24 @@ a { color: inherit; }
   .grid-2 { grid-template-columns: 1fr; }
 }
 
+/* En el celular el mueble en 3D va primero y se queda fijo arriba mientras se
+   baja por el formulario, así se ve cómo cambia al modificar las medidas. */
+@media (max-width: 900px) {
+  :root { --alto-visor: min(460px, 34vh); }
+  .grid-2 { display: flex; flex-direction: column; }
+  .grid-2 > .panel-resultados { display: contents; }
+  .grid-2 .tarjeta-3d {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    margin-bottom: 0 !important;
+    padding: 10px 12px;
+  }
+  .grid-2 .tarjeta-3d h3 { display: none; }
+  .grid-2 .panel-resultados > :not(.tarjeta-3d) { order: 1; }
+}
+
 label {
   display: block;
   font-size: 13px;

@@ -80,7 +80,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
     const contenedor = contenedorRef.current;
 
     const ancho = contenedor.clientWidth;
-    const alto = 460;
+    const alto = contenedor.clientHeight || 460;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#eeece6');
@@ -523,9 +523,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
 
     function alRedimensionar() {
       const w = contenedor.clientWidth;
-      camera.aspect = w / alto;
+      const h = contenedor.clientHeight || alto;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, alto);
+      renderer.setSize(w, h);
     }
     window.addEventListener('resize', alRedimensionar);
 
@@ -541,7 +542,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
     };
   }, [piezas, accesorios, parametros, modulo, medidasBloqueadas]);
 
-  return <div ref={contenedorRef} style={{ width: '100%', height: 460, borderRadius: 8, overflow: 'hidden' }} />;
+  return <div ref={contenedorRef} style={{ width: '100%', height: 'var(--alto-visor, 460px)', borderRadius: 8, overflow: 'hidden' }} />;
 });
 
 export default Visor3D;

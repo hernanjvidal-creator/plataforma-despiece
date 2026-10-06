@@ -96,6 +96,7 @@ export async function GET(request) {
       const ped = pedidos.filter(p => dentro(p) && noAdmin(p));
       const pagados = ped.filter(p => p.estado === 'pagado');
       return {
+        vistasPrevias: ev('vista_previa_3d'),
         generaciones: generaciones.filter(dentro).length,
         cuentasNuevas: cuentas.filter(c => c.created_at >= desde && c.id !== user.id).length,
         mueblesGuardados: mueblesGuardados.filter(m => dentro(m) && noAdmin(m)).length,

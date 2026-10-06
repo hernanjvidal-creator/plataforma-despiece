@@ -454,6 +454,39 @@ export default function Configurador() {
     } catch {}
   }
 
+  // Vista previa automática: el visitante ve su mueble en 3D desde el primer
+  // segundo (con las medidas de partida) y se va actualizando mientras
+  // cambia los valores, sin tener que apretar "Generar despiece". No cuenta
+  // como una generación (eso sigue siendo solo el botón); si la configuración
+  // no es válida todavía, simplemente se queda con la última vista buena.
+  const previewSeq = useRef(0);
+  const previewRegistrada = useRef(false);
+  useEffect(() => {
+    if (muebleIdParam || restaurarParam || pedidoPagoParam || soloLectura) return;
+    const espera = previewRegistrada.current ? 700 : 150;
+    const timer = setTimeout(async () => {
+      const mi = ++previewSeq.current;
+      try {
+        const parametros = construirParametros();
+        const res = await fetch('/api/despiece', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modulo: form.modulo, parametros, opcionesCorte: construirOpcionesCorte() }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mi !== previewSeq.current) return;
+        setResultado(data);
+        if (!previewRegistrada.current) {
+          previewRegistrada.current = true;
+          registrarEvento('vista_previa_3d', { modulo: form.modulo, userId: usuario?.id });
+        }
+      } catch {}
+    }, espera);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
+
   // Precio del mueble tal como está armado ahora, para mostrarlo en el botón
   // de compra. Si la configuración todavía no es válida, no se muestra.
   let precioActualUSD = null;
@@ -1504,17 +1537,17 @@ export default function Configurador() {
         </div>
 
         {/* ---------- Panel de resultados ---------- */}
-        <div>
+        <div className="panel-resultados">
           {!resultado && (
             <div className="card" style={{ textAlign: 'center', color: '#888' }}>
-              Completa los parámetros y genera el despiece para ver el plano 3D,
-              el listado de piezas y el diagrama de corte.
+              Completa los parámetros para ver el plano 3D, el listado de piezas
+              y el diagrama de corte.
             </div>
           )}
 
           {resultado && (
             <>
-              <div className="card" style={{ marginBottom: 20 }}>
+              <div className="card tarjeta-3d" style={{ marginBottom: 20 }}>
                 <h3>Plano 3D</h3>
                 <Visor3D
                   ref={visor3DRef}

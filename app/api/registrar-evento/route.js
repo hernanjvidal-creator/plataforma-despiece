@@ -9,6 +9,7 @@ const EVENTOS_VALIDOS = new Set([
   'checkout_redirigido',
   'mueble_guardado',
   'registro_completado',
+  'vista_previa_3d',
 ]);
 
 /**

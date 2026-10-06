@@ -123,7 +123,8 @@ export default function AdminEstadisticas() {
                 </thead>
                 <tbody>
                   {[
-                    ['Generaron un despiece', 'generaciones'],
+                    ['Vieron su mueble en 3D (vista previa automática)', 'vistasPrevias'],
+                    ['Pulsaron "Generar despiece"', 'generaciones'],
                     ['Cuentas nuevas creadas', 'cuentasNuevas'],
                     ['Muebles guardados', 'mueblesGuardados'],
                     ['Clic en "Desbloquear"', 'clicsDesbloquear'],
