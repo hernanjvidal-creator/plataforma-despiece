@@ -34,9 +34,9 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 });
   }
 
-  const { accessToken, muebleId, nombre, modulo, parametros, muebleIds, invitado, opcionesCorte } = body;
+  const { accessToken, muebleId, nombre, modulo, parametros, muebleIds, invitado, opcionesCorte, correo } = body;
   if (!accessToken && invitado === true) {
-    return crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte });
+    return crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte, correo });
   }
   if (!accessToken) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
@@ -141,10 +141,24 @@ export async function POST(request) {
  * crea o se busca la cuenta con el correo que el cliente escribió en el pago
  * y se le asigna el pedido (ver lib/pedidoInvitado.js). El precio siempre se
  * calcula acá, nunca se confía en uno que mande el cliente.
+ *
+ * El correo que el cliente escribe ANTES de ir al pago (opcional para no romper
+ * pestañas abiertas con la versión anterior) se guarda en email_comprador, que
+ * el webhook sobrescribe con el correo real del pago; si el pedido queda
+ * "pendiente", ese correo es el contacto para ayudar a quien no terminó de pagar.
  */
-async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte }) {
+const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opcionesCorte, correo }) {
   if (!modulo || !parametros || typeof parametros !== 'object') {
     return NextResponse.json({ error: 'Faltan datos del mueble' }, { status: 400 });
+  }
+  let correoCliente = null;
+  if (correo != null && correo !== '') {
+    correoCliente = String(correo).trim().toLowerCase();
+    if (correoCliente.length > 200 || !REGEX_CORREO.test(correoCliente)) {
+      return NextResponse.json({ error: 'Escribe un correo válido para enviarte el despiece.' }, { status: 400 });
+    }
   }
   if (JSON.stringify(parametros).length > 20000) {
     return NextResponse.json({ error: 'Diseño demasiado grande' }, { status: 400 });
@@ -163,7 +177,7 @@ async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opci
 
     const { data: pedido, error: errPedido } = await supabaseAdmin
       .from('pedidos')
-      .insert({ user_id: null, estado: 'pendiente', total: precio, guest_token: token })
+      .insert({ user_id: null, estado: 'pendiente', total: precio, guest_token: token, email_comprador: correoCliente })
       .select()
       .single();
     if (errPedido) throw errPedido;
@@ -184,6 +198,7 @@ async function crearCheckoutInvitado(request, { nombre, modulo, parametros, opci
     const { name, description } = construirDetalleCheckout([{ nombre: nombreMueble, modulo, parametros_congelados: parametros, precio }]);
     const checkoutUrl = await crearCheckoutLemonSqueezy({
       pais: request.headers.get('x-vercel-ip-country'),
+      email: correoCliente || undefined,
       redirectUrl: `${origen}/pago-exitoso?pedido=${pedido.id}&t=${token}`,
       customData: { pedido_id: pedido.id },
       montoUSD: precio,

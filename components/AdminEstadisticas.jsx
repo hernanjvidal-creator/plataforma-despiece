@@ -128,6 +128,7 @@ export default function AdminEstadisticas() {
                     ['Cuentas nuevas creadas', 'cuentasNuevas'],
                     ['Muebles guardados', 'mueblesGuardados'],
                     ['Clic en "Desbloquear"', 'clicsDesbloquear'],
+                    ['  …dejaron su correo antes de pagar', 'correosCapturados'],
                     ['  …enviados a crear cuenta / iniciar sesión', 'loginParaComprar'],
                     ['  …compras retomadas tras el login', 'compraRetomada'],
                     ['Pagos iniciados (checkout creado)', 'checkoutsCreados'],
@@ -149,6 +150,61 @@ export default function AdminEstadisticas() {
               </table>
             </div>
           )}
+
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h3 style={{ marginTop: 0 }}>Dejaron su correo y no terminaron de pagar</h3>
+            <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+              Para escribirles personalmente y saber qué los frenó. No incluye a quien después pagó ni a la cuenta admin.
+              El botón abre tu programa de correo con un mensaje que puedes editar antes de enviar.
+            </p>
+            {(!stats.pagosAbandonados || stats.pagosAbandonados.length === 0) ? (
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>
+                Todavía no hay casos. Aparecen acá cuando alguien escribe su correo, llega al pago y no lo termina.
+              </p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--color-border)' }}>
+                      <th style={{ padding: '6px 8px' }}>Fecha</th>
+                      <th style={{ padding: '6px 8px' }}>Correo</th>
+                      <th style={{ padding: '6px 8px' }}>Mueble</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'right' }}>US$</th>
+                      <th style={{ padding: '6px 8px' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.pagosAbandonados.map(c => {
+                      const mueble = NOMBRE_MODULO[c.modulo] || 'mueble';
+                      const asunto = `Tu despiece de ${mueble.toLowerCase()} en Armandolo`;
+                      const cuerpo =
+                        `Hola, soy Hernán, de Armandolo.\n\n` +
+                        `Vi que diseñaste un ${mueble.toLowerCase()} y llegaste hasta el pago, pero no lo terminaste. ` +
+                        `¿Te surgió alguna duda o algo no funcionó? Me ayudaría mucho saberlo.\n\n` +
+                        `Si quieres, te dejo el despiece de ese mueble sin costo a cambio de que me cuentes en dos líneas qué te frenó.\n\n` +
+                        `Saludos,\nHernán`;
+                      return (
+                        <tr key={c.correo} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                          <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>{new Date(c.fecha).toLocaleDateString('es-CL')}</td>
+                          <td style={{ padding: '6px 8px' }}>{c.correo}{c.intentos > 1 ? ` (${c.intentos} intentos)` : ''}</td>
+                          <td style={{ padding: '6px 8px' }}>{mueble}{c.nombre ? ` — ${c.nombre}` : ''}</td>
+                          <td style={{ padding: '6px 8px', textAlign: 'right' }}>{c.total}</td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <a
+                              href={`mailto:${c.correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`}
+                              style={{ color: 'var(--color-accent)', fontWeight: 600 }}
+                            >
+                              Escribir
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           <div className="card" style={{ marginBottom: 24 }}>
             <h3 style={{ marginTop: 0 }}>Muebles por tipo</h3>

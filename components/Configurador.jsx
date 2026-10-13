@@ -87,6 +87,9 @@ function registrarConversionAdsSiCorresponde(pedidoId, total) {
   }
 }
 
+const CLAVE_CORREO_INVITADO = 'armandolo_correo_invitado';
+const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const COLORES_INTERIOR = [
   { value: 'blanco', label: 'Blanco' },
   { value: 'gris_claro', label: 'Gris claro' },
@@ -314,7 +317,19 @@ export default function Configurador() {
   const [accionPendiente, setAccionPendiente] = useState(null);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [descargandoManual, setDescargandoManual] = useState(false);
+  const [correoInvitado, setCorreoInvitado] = useState('');
+  const [errorCorreo, setErrorCorreo] = useState(null);
+  const inputCorreoRef = useRef(null);
   const visor3DRef = useRef(null);
+
+  // El correo que escribió una vez (para pagar sin cuenta) queda recordado en
+  // este navegador, así no lo vuelve a escribir si diseña otro mueble.
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem(CLAVE_CORREO_INVITADO);
+      if (guardado) setCorreoInvitado(guardado);
+    } catch {}
+  }, []);
 
   // Si se entra desde "Mis muebles" (/configurador?muebleId=...), carga ese
   // diseño guardado y genera el despiece de una vez — no hace falta apretar
@@ -775,9 +790,21 @@ export default function Configurador() {
   // ---------- Checkout real de Lemon Squeezy ----------
   async function iniciarCheckoutReal(opciones) {
     if (!usuario) {
-      // Compra sin cuenta: se va directo al pago; la cuenta se crea sola con
-      // el correo que escriba allá (ver lib/pedidoInvitado.js).
+      // Compra sin cuenta: primero el correo (a donde llega el acceso al
+      // despiece y, si no termina de pagar, un mensaje para ayudarle); luego
+      // se va al pago y la cuenta se crea sola con el correo del pago (ver
+      // lib/pedidoInvitado.js). El clic cuenta aunque no escriba el correo:
+      // mide la intención de comprar.
       registrarEvento('desbloquear_clic', { modulo: form.modulo });
+      const correo = correoInvitado.trim().toLowerCase();
+      if (!REGEX_CORREO.test(correo)) {
+        setErrorCorreo('Escribe tu correo para enviarte el despiece y el acceso.');
+        inputCorreoRef.current?.focus();
+        return;
+      }
+      setErrorCorreo(null);
+      try { localStorage.setItem(CLAVE_CORREO_INVITADO, correo); } catch {}
+      registrarEvento('correo_capturado', { modulo: form.modulo });
       setComprandoReal(true);
       setError(null);
       try {
@@ -788,6 +815,7 @@ export default function Configurador() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             invitado: true,
+            correo,
             nombre: (nombreMueble || '').trim() || etiqueta,
             modulo: form.modulo,
             parametros,
@@ -1587,8 +1615,30 @@ export default function Configurador() {
                     <p style={{ color: 'var(--color-accent)', fontSize: 14 }}>Confirmando tu pago…</p>
                   )}
 
-                  <button onClick={iniciarCheckoutReal} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
-                    {comprandoReal ? 'Redirigiendo a pago...' : `Desbloquear despiece${precioActualUSD ? ` — US${precioActualUSD}` : ''}`}
+                  {!usuario && (
+                    <div style={{ maxWidth: 320, margin: '0 auto 12px', textAlign: 'left' }}>
+                      <label htmlFor="correo-invitado" style={{ fontSize: 13, fontWeight: 600 }}>
+                        Tu correo
+                        <Ayuda>Ahí te enviamos el acceso a tu despiece, sin crear contraseña. Si no alcanzas a terminar el pago, te escribimos una vez para ayudarte.</Ayuda>
+                      </label>
+                      <input
+                        id="correo-invitado"
+                        ref={inputCorreoRef}
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="tu@correo.com"
+                        value={correoInvitado}
+                        onChange={e => { setCorreoInvitado(e.target.value); if (errorCorreo) setErrorCorreo(null); }}
+                        onKeyDown={e => { if (e.key === 'Enter') iniciarCheckoutReal(); }}
+                        style={{ marginTop: 4, marginBottom: 0 }}
+                      />
+                      {errorCorreo && <p style={{ color: 'var(--color-danger)', fontSize: 13, margin: '6px 0 0' }}>{errorCorreo}</p>}
+                    </div>
+                  )}
+
+                  <button onClick={() => iniciarCheckoutReal()} disabled={comprandoReal} style={{ maxWidth: 320, margin: '0 auto' }}>
+                    {comprandoReal ? 'Redirigiendo a pago...' : `Desbloquear despiece${precioActualUSD ? ` — US$${precioActualUSD}` : ''}`}
                   </button>
                   <p style={{ color: '#aaa', fontSize: 12, marginTop: 8 }}>
                     Pago único por mueble con tarjeta de crédito o débito, o PayPal. Se desbloquea al instante.
@@ -1599,7 +1649,7 @@ export default function Configurador() {
                   </p>
                   {!usuario && (
                     <p style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>
-                      Sin crear cuenta: solo te pedimos tu correo al pagar y con él te creamos el acceso a tu despiece.{' '}
+                      Sin crear cuenta ni contraseña: con tu correo te creamos el acceso a tu despiece.{' '}
                       <button
                         type="button"
                         onClick={irAIniciarSesion}

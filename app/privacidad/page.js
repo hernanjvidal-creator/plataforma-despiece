@@ -17,6 +17,7 @@ export default function Privacidad() {
       <h2>1. Qué datos recolectamos</h2>
       <ul>
         <li><strong>Cuenta:</strong> tu correo electrónico, para crear tu cuenta e iniciar sesión (a través de Supabase Auth).</li>
+        <li><strong>Correo antes del pago:</strong> si compras sin crear cuenta, te pedimos tu correo antes de ir al pago, para enviarte el acceso a tu despiece y, si no alcanzas a terminar la compra, escribirte una vez para ayudarte. No lo usamos para enviarte publicidad.</li>
         <li><strong>Diseños guardados:</strong> las medidas y configuración de los muebles que guardas en "Mis muebles" (ancho, alto, profundidad, secciones, colores, etc.).</li>
         <li><strong>Datos de compra:</strong> el registro de tus pedidos (qué mueble, cuándo, si está pagado) para poder entregarte el despiece que compraste. No almacenamos los datos de tu tarjeta — el pago se procesa directamente por Lemon Squeezy (ver sección 3).</li>
         <li><strong>Foto del espacio (opcional):</strong> si subes una foto de referencia de dónde irá el mueble, se guarda de forma privada, asociada solo a tu cuenta.</li>

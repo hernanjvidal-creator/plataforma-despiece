@@ -101,6 +101,7 @@ export async function GET(request) {
         cuentasNuevas: cuentas.filter(c => c.created_at >= desde && c.id !== user.id).length,
         mueblesGuardados: mueblesGuardados.filter(m => dentro(m) && noAdmin(m)).length,
         clicsDesbloquear: ev('desbloquear_clic'),
+        correosCapturados: ev('correo_capturado'),
         loginParaComprar: ev('login_para_comprar'),
         compraRetomada: ev('compra_retomada'),
         checkoutsCreados: ped.length,
@@ -116,6 +117,62 @@ export async function GET(request) {
     };
   } catch (e) {
     embudo = { error: e.message };
+  }
+
+  // Personas que dejaron su correo, llegaron al pago y no lo terminaron: son
+  // el contacto para escribirles y saber qué las frenó. Se excluye a quien
+  // después sí pagó (por ese correo) y a la propia cuenta admin. Si falla, el
+  // resto del panel igual se muestra.
+  let pagosAbandonados = [];
+  try {
+    const pedidosGuest = await traerTodasLasFilas(() =>
+      supabaseAdmin
+        .from('pedidos')
+        .select('id, estado, total, user_id, email_comprador, created_at')
+        .gt('total', 0)
+        .gte('created_at', '2026-10-02T00:00:00Z')
+    );
+    const { data: listaUsuarios2 } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const correoPorId = Object.fromEntries((listaUsuarios2?.users || []).map(u => [u.id, (u.email || '').toLowerCase()]));
+
+    const correosQuePagaron = new Set();
+    pedidosGuest.filter(p => p.estado === 'pagado').forEach(p => {
+      if (p.email_comprador) correosQuePagaron.add(p.email_comprador.toLowerCase());
+      if (p.user_id && correoPorId[p.user_id]) correosQuePagaron.add(correoPorId[p.user_id]);
+    });
+
+    const pendientes = pedidosGuest.filter(p =>
+      p.estado === 'pendiente' && !p.user_id && p.email_comprador &&
+      p.email_comprador.toLowerCase() !== EMAIL_ADMIN &&
+      !correosQuePagaron.has(p.email_comprador.toLowerCase())
+    );
+
+    const idsPedidos = pendientes.map(p => p.id);
+    let items = [];
+    if (idsPedidos.length > 0) {
+      const { data } = await supabaseAdmin
+        .from('pedido_items').select('pedido_id, nombre, modulo').in('pedido_id', idsPedidos);
+      items = data || [];
+    }
+
+    // Una fila por correo (el intento más reciente), con la cantidad de intentos.
+    const porCorreo = {};
+    pendientes.forEach(p => {
+      const correo = p.email_comprador.toLowerCase();
+      const item = items.find(i => i.pedido_id === p.id);
+      const actual = porCorreo[correo];
+      if (!actual) {
+        porCorreo[correo] = { correo, fecha: p.created_at, total: Number(p.total), modulo: item?.modulo || null, nombre: item?.nombre || null, intentos: 1 };
+      } else {
+        actual.intentos += 1;
+        if (p.created_at > actual.fecha) {
+          Object.assign(actual, { fecha: p.created_at, total: Number(p.total), modulo: item?.modulo || null, nombre: item?.nombre || null });
+        }
+      }
+    });
+    pagosAbandonados = Object.values(porCorreo).sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+  } catch {
+    pagosAbandonados = [];
   }
 
   const porModulo = {};
@@ -182,6 +239,7 @@ export async function GET(request) {
     porPais,
     usuariosDetalle,
     embudo,
+    pagosAbandonados,
     totalFeedback: feedback.length,
     promedioCalificacion,
   });

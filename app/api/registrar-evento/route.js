@@ -10,6 +10,7 @@ const EVENTOS_VALIDOS = new Set([
   'mueble_guardado',
   'registro_completado',
   'vista_previa_3d',
+  'correo_capturado',
 ]);
 
 /**
