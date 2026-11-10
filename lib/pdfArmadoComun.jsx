@@ -232,7 +232,8 @@ export const PASOS_CORREDERAS = [
   'Atornilla el cuerpo de la corredera (la parte fija) al lateral del mueble usando primero los orificios ranurados, sin apretar del todo, para poder ajustar la posición.',
   'Verifica con el nivel que cada corredera quede horizontal, y que ambas queden a la misma altura y en paralelo.',
   'Aprieta los tornillos definitivos una vez verificada la nivelación.',
-  'Arma la caja del cajón: une los laterales con la trasera con tornillo directo (confirmat o tornillo 1-5/8, pre-taladrando igual que en el cuerpo), apoya el fondo sobre el marco y fíjalo con tornillo aglomerado 3,5x15, y fija el frente a la caja con tornillo directo.',
+  'Arma la caja del cajón: une los dos costados con el frente y la trasera de la caja (van entre los costados, a ras de cada punta) con tornillo directo (confirmat o tornillo 1-5/8, pre-taladrando igual que en el cuerpo). Encaja el fondo entre las cuatro piezas, a ras del borde de abajo, y atorníllalo por los cuatro lados.',
+  'Fija el frente de color contra el frente de la caja, atornillando desde adentro del cajón con tornillos de 25mm — más largos traspasan el frente.',
   'Atornilla la parte móvil de la corredera al lateral de la caja del cajón, alineada con la marca y a ras con el borde frontal.',
   'Inserta el cajón en el mueble y prueba que deslice suave, sin trabarse ni rozar; ajusta el frente aflojando y reacomodando los tornillos hasta que quede parejo con las puertas y otros cajones.',
 ];
