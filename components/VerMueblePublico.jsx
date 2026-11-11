@@ -57,13 +57,7 @@ export default function VerMueblePublico({ id }) {
       const res = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: datos.nombre,
-          modulo: datos.modulo,
-          despiece: datos.despiece,
-          corte: datos.corte,
-          imagen3D,
-        }),
+        body: JSON.stringify({ muebleId: id, nombre: datos.nombre, imagen3D }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -91,7 +85,7 @@ export default function VerMueblePublico({ id }) {
       const res = await fetch('/api/manual-armado', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: datos.nombre, modulo: datos.modulo, despiece: datos.despiece }),
+        body: JSON.stringify({ muebleId: id, nombre: datos.nombre }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

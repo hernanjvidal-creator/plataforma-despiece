@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabaseAdminConfigurado } from '@/lib/supabaseAdmin';
-import { generarDespiecePorModulo } from '@/lib/generarDespiecePorModulo';
-import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+import { resolverDespiece } from '@/lib/accesoDespiece';
 
 /**
  * GET /api/mueble-publico/[id]
@@ -16,27 +15,10 @@ import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
  * armar el plano 3D (nombre, modulo, despiece), nunca el user_id ni otros
  * datos de la cuenta. Cualquiera que tenga el link puede ver el mueble
  * (como un link de Google Docs "cualquiera con el enlace") — no requiere que
- * el dueño lo marque como compartido explícitamente.
+ * el dueño lo marque como compartido explícitamente. Solo funciona para
+ * muebles ya comprados, y muestra el diseño tal como quedó al comprarlo (ver
+ * lib/accesoDespiece.js).
  */
-// Mismo criterio que `muebleEstaPagado` de lib/pedidosCliente.js, pero con
-// supabaseAdmin (esta ruta no tiene sesión de usuario, corre sin login).
-async function muebleEstaPagadoAdmin(muebleId) {
-  const { data: items } = await supabaseAdmin
-    .from('pedido_items')
-    .select('pedido_id')
-    .eq('mueble_id', muebleId);
-  if (!items || items.length === 0) return false;
-
-  const pedidoIds = [...new Set(items.map(i => i.pedido_id))];
-  const { data: pedidos } = await supabaseAdmin
-    .from('pedidos')
-    .select('id')
-    .in('id', pedidoIds)
-    .eq('estado', 'pagado');
-
-  return (pedidos || []).length > 0;
-}
-
 export async function GET(request, { params }) {
   const { id } = await params;
 
@@ -54,19 +36,20 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'No se encontró ese mueble' }, { status: 404 });
   }
 
-  if (!MODO_GRATIS_TEMPORAL) {
-    const pagado = await muebleEstaPagadoAdmin(id);
-    if (!pagado) {
+  try {
+    const acceso = await resolverDespiece({
+      muebleId: id,
+      modulo: data.modulo,
+      parametros: data.parametros,
+      opcionesCorte: data.opciones_corte || undefined,
+    });
+    if (!acceso.completo) {
       return NextResponse.json(
         { error: 'El link para compartir este mueble se habilita una vez que se compra el despiece.' },
         { status: 403 }
       );
     }
-  }
-
-  try {
-    const { despiece, corte } = generarDespiecePorModulo(data.modulo, data.parametros, data.opciones_corte || undefined);
-    return NextResponse.json({ nombre: data.nombre, modulo: data.modulo, despiece, corte });
+    return NextResponse.json({ nombre: data.nombre, modulo: acceso.modulo, despiece: acceso.despiece, corte: acceso.corte });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }

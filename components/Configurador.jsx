@@ -135,7 +135,7 @@ const COLORES_EXTERIOR = [
 
 const VALORES_POR_MODULO = {
   bajo_cocina: {
-    H: 700, P: 560,
+    H: 900, P: 560,
     isla: false,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
     secciones: [
@@ -153,7 +153,7 @@ const VALORES_POR_MODULO = {
     espesorPuertas: 15,
   },
   vanitorio_bano: {
-    A: 600, H: 550, P: 450,
+    A: 600, H: 850, P: 450,
     nP: 0, nC: 2, repisas: 0, config: 'solo_cajones',
     soporte: 'patas', sifon: true,
     cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
@@ -372,12 +372,12 @@ export default function Configurador() {
       setCargando(true);
       setError(null);
       try {
-        const res = await fetch('/api/despiece', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modulo: data.modulo, parametros: data.parametros, opcionesCorte: data.opciones_corte || { plancha: 'CL' } }),
+        const { res, data: resultadoData } = await pedirDespiece({
+          modulo: data.modulo,
+          parametros: data.parametros,
+          opcionesCorte: data.opciones_corte || { plancha: 'CL' },
+          muebleId: data.id,
         });
-        const resultadoData = await res.json();
         if (cancelado) return;
         if (!res.ok) throw new Error(resultadoData.error || 'Error generando el despiece');
         setResultado(resultadoData);
@@ -456,15 +456,64 @@ export default function Configurador() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accionPendiente, usuario]);
 
+  // La sesión solo le importa al servidor cuando es la de administración
+  // (que ve todo sin pagar); para el resto, lo que decide es si el mueble
+  // está comprado.
+  async function tokenSiEsAdmin() {
+    if (!esAdmin) return undefined;
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || undefined;
+  }
+
+  // Pide el despiece al servidor. Vuelve con las medidas exactas
+  // (`completo: true`) solo si `muebleId` es un mueble ya comprado o la cuenta
+  // es la de administración; si no, con una vista previa que sirve para el 3D
+  // pero no para cortar — ver lib/accesoDespiece.js.
+  async function pedirDespiece({ modulo, parametros, opcionesCorte, muebleId }) {
+    const res = await fetch('/api/despiece', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modulo, parametros, opcionesCorte,
+        muebleId: muebleId || undefined,
+        accessToken: await tokenSiEsAdmin(),
+      }),
+    });
+    return { res, data: await res.json() };
+  }
+
+  // La interfaz puede saber que el mueble está desbloqueado antes de tener
+  // sus medidas exactas (el pago se confirma con el mueble ya en pantalla, o
+  // la sesión de administración termina de cargar después): en ese caso se
+  // vuelve a pedir el despiece, ahora sí completo. Unos pocos intentos, por si
+  // el servidor tarda en ver el pago.
+  const reintentosCompleto = useRef(0);
+  useEffect(() => {
+    if (resultado?.completo) reintentosCompleto.current = 0;
+    const accesoUI = desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL;
+    if (!accesoUI || !resultado || resultado.completo || reintentosCompleto.current >= 5) return;
+    const timer = setTimeout(async () => {
+      reintentosCompleto.current += 1;
+      try {
+        const { res, data } = await pedirDespiece({
+          modulo: form.modulo,
+          parametros: construirParametros(),
+          opcionesCorte: construirOpcionesCorte(),
+          muebleId: muebleActualId,
+        });
+        if (res.ok) setResultado(data);
+      } catch {}
+    }, reintentosCompleto.current === 0 ? 0 : 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desbloqueado, esAdmin, resultado, muebleActualId]);
+
   async function guardarYMostrar() {
     await guardarMueble();
     try {
-      const res = await fetch('/api/despiece', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modulo: form.modulo, parametros: construirParametros(), opcionesCorte: construirOpcionesCorte() }),
+      const { res, data } = await pedirDespiece({
+        modulo: form.modulo, parametros: construirParametros(), opcionesCorte: construirOpcionesCorte(),
       });
-      const data = await res.json();
       if (res.ok) setResultado(data);
     } catch {}
   }
@@ -482,14 +531,10 @@ export default function Configurador() {
     const timer = setTimeout(async () => {
       const mi = ++previewSeq.current;
       try {
-        const parametros = construirParametros();
-        const res = await fetch('/api/despiece', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ modulo: form.modulo, parametros, opcionesCorte: construirOpcionesCorte() }),
+        const { res, data } = await pedirDespiece({
+          modulo: form.modulo, parametros: construirParametros(), opcionesCorte: construirOpcionesCorte(),
         });
         if (!res.ok) return;
-        const data = await res.json();
         if (mi !== previewSeq.current) return;
         setResultado(data);
         if (!previewRegistrada.current) {
@@ -751,12 +796,7 @@ export default function Configurador() {
       const parametros = construirParametros();
       const opcionesCorte = construirOpcionesCorte();
 
-      const res = await fetch('/api/despiece', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modulo: form.modulo, parametros, opcionesCorte }),
-      });
-      const data = await res.json();
+      const { res, data } = await pedirDespiece({ modulo: form.modulo, parametros, opcionesCorte, muebleId: muebleActualId });
       if (!res.ok) throw new Error(data.error || 'Error generando el despiece');
       setResultado(data);
 
@@ -884,6 +924,19 @@ export default function Configurador() {
     }
   }
 
+  // Lo que el servidor necesita para decidir si entrega el PDF y con qué
+  // medidas: el mueble guardado (si está comprado, manda ese) o, para la
+  // cuenta de administración, el diseño tal como está en pantalla.
+  async function datosParaDescarga() {
+    return {
+      muebleId: muebleActualId || undefined,
+      accessToken: await tokenSiEsAdmin(),
+      modulo: form.modulo,
+      parametros: construirParametros(),
+      opcionesCorte: construirOpcionesCorte(),
+    };
+  }
+
   async function descargarPdf() {
     if (!resultado) return;
     setDescargandoPdf(true);
@@ -895,13 +948,7 @@ export default function Configurador() {
       const res = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          modulo: form.modulo,
-          despiece: resultado.despiece,
-          corte: resultado.corte,
-          imagen3D,
-        }),
+        body: JSON.stringify({ nombre, ...(await datosParaDescarga()), imagen3D }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -931,11 +978,7 @@ export default function Configurador() {
       const res = await fetch('/api/manual-armado', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre,
-          modulo: form.modulo,
-          despiece: resultado.despiece,
-        }),
+        body: JSON.stringify({ nombre, ...(await datosParaDescarga()) }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -954,6 +997,12 @@ export default function Configurador() {
       setDescargandoManual(false);
     }
   }
+
+  // Lo que la interfaz sabe (compra confirmada, cuenta admin) y lo que el
+  // servidor efectivamente entregó: las medidas, el diagrama de corte y las
+  // descargas se muestran solo cuando las dos cosas coinciden.
+  const accesoDesbloqueado = desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL;
+  const verDespieceCompleto = accesoDesbloqueado && !!resultado?.completo;
 
   const moduloLabel = MODULOS.find(m => m.value === form.modulo)?.label || '';
   // Todo mueble tiene una superficie superior (cubierta, techo o tapa) hasta
@@ -1583,11 +1632,11 @@ export default function Configurador() {
                   accesorios={resultado.despiece.accesorios}
                   parametros={resultado.despiece.parametros}
                   modulo={resultado.despiece.modulo}
-                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
+                  medidasBloqueadas={!verDespieceCompleto}
                 />
               </div>
 
-              {!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL && (
+              {!accesoDesbloqueado && (
                 <div className="card" style={{ textAlign: 'center', marginBottom: 20 }}>
                   <h3>Diagrama de corte y descarga</h3>
                   <p style={{ color: '#888', fontSize: 14 }}>
@@ -1667,12 +1716,18 @@ export default function Configurador() {
                 <h3>Listado de piezas y herrajes</h3>
                 <ListaPiezas
                   despiece={resultado.despiece}
-                  medidasBloqueadas={!desbloqueado && !esAdmin && !MODO_GRATIS_TEMPORAL}
+                  medidasBloqueadas={!verDespieceCompleto}
                 />
               </div>
 
 
-              {(desbloqueado || esAdmin || MODO_GRATIS_TEMPORAL) && (
+              {accesoDesbloqueado && !verDespieceCompleto && (
+                <div className="card" style={{ textAlign: 'center', marginBottom: 20, color: 'var(--color-text-muted)', fontSize: 14 }}>
+                  Cargando tu despiece completo…
+                </div>
+              )}
+
+              {verDespieceCompleto && (
                 <>
                   {esAdmin && !desbloqueado && (
                     <div className="card" style={{ textAlign: 'center', marginBottom: 20 }}>

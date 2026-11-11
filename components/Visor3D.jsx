@@ -200,8 +200,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
     function crearEtiqueta(pieza) {
       const div = document.createElement('div');
       const medidas = `${Math.round(pieza.alto)}×${Math.round(pieza.ancho)}×${Math.round(pieza.espesor || 15)}mm`;
+      // Bloqueadas: se dibuja un relleno borroso, no la medida (que sin
+      // compra además viene alterada — ver lib/accesoDespiece.js).
       const medidasHtml = medidasBloqueadas
-        ? `<span style="filter:blur(4px);user-select:none">${medidas}</span>`
+        ? '<span style="filter:blur(4px);user-select:none" aria-hidden="true">000×000×00mm</span>'
         : medidas;
       div.innerHTML = `<strong>${pieza.id}</strong><br>${medidasHtml}`;
       Object.assign(div.style, {

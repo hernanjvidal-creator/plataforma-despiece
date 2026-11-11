@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { crearDocumentoPdf } from '@/lib/PdfDocument';
+import { resolverDespiece } from '@/lib/accesoDespiece';
 
 /**
  * POST /api/pdf
- * body: { nombre, modulo, despiece, corte, imagen3D (dataURL base64, opcional) }
+ * body: { muebleId?, accessToken?, modulo?, parametros?, opcionesCorte?, nombre?, imagen3D? }
  *
  * Genera el PDF de entrega (plano 3D + listado de piezas + herrajes +
- * diagrama de corte) a partir de un despiece ya calculado por el cliente.
- * No consulta la base de datos: solo formatea lo que se le manda.
+ * diagrama de corte). El despiece se calcula acá, en el servidor, y solo si
+ * corresponde entregar el exacto (mueble comprado o cuenta de administración
+ * — ver lib/accesoDespiece.js): antes se formateaba el despiece que mandara
+ * el navegador, sin revisar nada.
  */
 export async function POST(request) {
   let body;
@@ -18,22 +21,35 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body inválido, se esperaba JSON' }, { status: 400 });
   }
 
-  if (!body.despiece) {
-    return NextResponse.json({ error: 'Falta "despiece" en la solicitud' }, { status: 400 });
+  let acceso;
+  try {
+    acceso = await resolverDespiece({
+      muebleId: body.muebleId,
+      accessToken: body.accessToken,
+      modulo: body.modulo,
+      parametros: body.parametros,
+      opcionesCorte: body.opcionesCorte,
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+  if (!acceso.completo) {
+    return NextResponse.json({ error: 'El PDF se habilita una vez que compras el despiece de este mueble.' }, { status: 403 });
   }
 
   try {
+    const nombre = body.nombre || acceso.nombre || 'Mueble';
     const buffer = await renderToBuffer(
       crearDocumentoPdf({
-        nombre: body.nombre || 'Mueble',
-        modulo: body.modulo,
-        despiece: body.despiece,
-        corte: body.corte,
+        nombre,
+        modulo: acceso.modulo,
+        despiece: acceso.despiece,
+        corte: acceso.corte,
         imagen3D: body.imagen3D,
       })
     );
 
-    const nombreArchivo = (body.nombre || 'despiece').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+    const nombreArchivo = String(nombre).replace(/[^a-z0-9]+/gi, '_').toLowerCase();
 
     return new NextResponse(buffer, {
       status: 200,

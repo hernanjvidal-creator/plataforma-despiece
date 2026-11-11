@@ -9,14 +9,16 @@ const COLOR_BADGE = {
 };
 
 // Estilo aplicado a las medidas cuando `medidasBloqueadas` está activo: se
-// ven los números ahí (así el cliente entiende que la info existe), pero
-// ilegibles — la idea es dejar clara la complejidad/calidad del mueble sin
-// regalar el dato con el que se podría cortar sin pagar.
+// ve que ahí hay un número (así el cliente entiende que la info existe), pero
+// ilegible. Lo que se dibuja borroso es un relleno fijo, no la medida: sin
+// compra el servidor ni siquiera manda las medidas exactas (ver
+// lib/accesoDespiece.js), y así tampoco queda nada que copiar de la página.
 const ESTILO_MEDIDA_BLOQUEADA = { filter: 'blur(5px)', userSelect: 'none' };
+const RELLENO_MEDIDA_BLOQUEADA = '0000';
 
 function Medida({ valor, bloqueada }) {
   if (!bloqueada) return valor;
-  return <span style={ESTILO_MEDIDA_BLOQUEADA}>{valor}</span>;
+  return <span style={ESTILO_MEDIDA_BLOQUEADA} aria-hidden="true">{RELLENO_MEDIDA_BLOQUEADA}</span>;
 }
 
 export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {

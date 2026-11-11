@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { crearManualArmadoPdf } from '@/lib/ManualArmadoDocument';
+import { resolverDespiece } from '@/lib/accesoDespiece';
 
 /**
  * POST /api/manual-armado
- * body: { nombre, modulo, despiece }
+ * body: { muebleId?, accessToken?, modulo?, parametros?, opcionesCorte?, nombre? }
  *
- * Genera el manual de armado PERSONALIZADO para un despiece ya calculado
- * por el cliente — a diferencia de /api/guia-armado (genérico, igual para
- * cualquier mueble), este solo incluye las secciones que aplican a las
- * piezas y herrajes reales de este diseño. No consulta la base de datos:
- * solo formatea lo que se le manda.
+ * Genera el manual de armado PERSONALIZADO de un mueble — a diferencia de
+ * /api/guia-armado (genérico, igual para cualquier mueble), este solo incluye
+ * las secciones que aplican a las piezas y herrajes reales de ese diseño.
+ * Trae las medidas de cada pieza, así que se entrega con el mismo criterio
+ * que el PDF de despiece: el servidor calcula el despiece y solo si
+ * corresponde el exacto (ver lib/accesoDespiece.js).
  */
 export async function POST(request) {
   let body;
@@ -20,20 +22,33 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Body inválido, se esperaba JSON' }, { status: 400 });
   }
 
-  if (!body.despiece) {
-    return NextResponse.json({ error: 'Falta "despiece" en la solicitud' }, { status: 400 });
+  let acceso;
+  try {
+    acceso = await resolverDespiece({
+      muebleId: body.muebleId,
+      accessToken: body.accessToken,
+      modulo: body.modulo,
+      parametros: body.parametros,
+      opcionesCorte: body.opcionesCorte,
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+  if (!acceso.completo) {
+    return NextResponse.json({ error: 'El manual de armado se habilita una vez que compras el despiece de este mueble.' }, { status: 403 });
   }
 
   try {
+    const nombre = body.nombre || acceso.nombre || 'Mueble';
     const buffer = await renderToBuffer(
       crearManualArmadoPdf({
-        nombre: body.nombre || 'Mueble',
-        modulo: body.modulo,
-        despiece: body.despiece,
+        nombre,
+        modulo: acceso.modulo,
+        despiece: acceso.despiece,
       })
     );
 
-    const nombreArchivo = (body.nombre || 'mueble').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+    const nombreArchivo = String(nombre).replace(/[^a-z0-9]+/gi, '_').toLowerCase();
 
     return new NextResponse(buffer, {
       status: 200,

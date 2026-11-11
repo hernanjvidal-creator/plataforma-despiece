@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { generarDespiecePorModulo } from '@/lib/generarDespiecePorModulo';
+import { resolverDespiece } from '@/lib/accesoDespiece';
 
 /**
  * POST /api/despiece
- * body: { modulo: 'bajo_cocina' | 'alto_cocina' | 'vanitorio_bano', parametros: {...}, opcionesCorte: {...} }
+ * body: { modulo, parametros, opcionesCorte, muebleId?, accessToken? }
  *
- * Devuelve el despiece completo (piezas + herrajes + posiciones 3D)
- * y el resultado del nesting (diagrama de corte por plancha).
+ * Devuelve el despiece (piezas + herrajes + posiciones 3D) y el resultado del
+ * nesting, más `completo`:
+ *   - true: medidas exactas y diagrama de corte. Solo si `muebleId` es un
+ *     mueble ya comprado (o la sesión es la de administración).
+ *   - false: vista previa para dibujar el 3D — medidas alteradas y sin
+ *     diagrama de corte. Ver lib/accesoDespiece.js.
  */
 export async function POST(request) {
   let body;
@@ -17,12 +21,14 @@ export async function POST(request) {
   }
 
   try {
-    const { despiece, corte } = generarDespiecePorModulo(
-      body.modulo || 'bajo_cocina',
-      body.parametros,
-      body.opcionesCorte
-    );
-    return NextResponse.json({ despiece, corte });
+    const { completo, despiece, corte } = await resolverDespiece({
+      muebleId: body.muebleId,
+      accessToken: body.accessToken,
+      modulo: body.modulo,
+      parametros: body.parametros,
+      opcionesCorte: body.opcionesCorte,
+    });
+    return NextResponse.json({ despiece, corte, completo });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
