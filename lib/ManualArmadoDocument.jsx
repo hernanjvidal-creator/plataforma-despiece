@@ -7,6 +7,7 @@ import {
   PASOS_BISAGRAS, PASOS_CORREDIZAS_CLOSET, PASOS_PATAS, PASOS_FIJACION_PARED,
   PASOS_FIJACION_TRAVESANO_PARED, PASOS_MANILLAS, CONSEJOS_FINALES,
 } from './pdfArmadoComun';
+import { nombrePieza as nombreLegiblePieza, nombreHerraje, cantidadHerraje } from './nombres';
 
 // Manual de armado PERSONALIZADO — a diferencia de la guía general
 // (GuiaArmadoDocument.jsx, igual para cualquier mueble), este se genera a
@@ -50,7 +51,7 @@ function Pie() {
 }
 
 function nombrePieza(p) {
-  return `${p.id} (${Math.round(p.alto)}×${Math.round(p.ancho)}mm)`;
+  return `${nombreLegiblePieza(p.id)} (${Math.round(p.alto)}×${Math.round(p.ancho)}mm)`;
 }
 
 // Excluye piezas del zócalo aunque calcen con el patrón (ej. "zocalo_lateral_izq"
@@ -82,7 +83,7 @@ function agruparCajones(piezas) {
 function agruparPorModulo(piezas) {
   const mapa = new Map();
   piezas.forEach(p => {
-    const m = p.id.match(/^m(\d+)_/);
+    const m = p.id.match(/^(?:t\d+_)?m(\d+)_/);
     if (!m) return;
     const n = Number(m[1]);
     if (!mapa.has(n)) mapa.set(n, []);
@@ -296,7 +297,7 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
         <Text style={styles.intro}>Cuenta que tengas todo esto antes de empezar a armar.</Text>
         <Tabla
           columnas={['Tipo', 'Cantidad']}
-          filas={herrajes.map(h => [h.tipo, `${h.cantidad}${h.unidad ? ` ${h.unidad}(es)` : ''}`])}
+          filas={herrajes.map(h => [nombreHerraje(h.tipo), cantidadHerraje(h)])}
         />
 
         <Text style={styles.h2}>Preparación</Text>

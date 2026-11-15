@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  nombradorDePiezas, nombreHerraje, cantidadHerraje, nombreColor, nombreGrupoMaterial, nombreTapacanto, nombreCantos, numero,
+} from '@/lib/nombres';
+
 const COLOR_BADGE = {
   blanco: '#b8b6ad',
   gris_claro: '#9c9c98',
@@ -22,11 +26,16 @@ function Medida({ valor, bloqueada }) {
 }
 
 export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
-  const { piezas, accesorios, herrajes, resumen, notas } = despiece;
+  const { piezas, accesorios, herrajes, resumen, tapacantos, notas } = despiece;
   // Las patas plásticas se agregan a `accesorios` solo para que se vean en
   // el 3D (dónde van) — ya están contadas en el herraje
   // `pata_plastica_regulable`, así que no deben duplicarse en esta tabla.
   const accesoriosVisibles = (accesorios || []).filter(a => !a.soloVisual);
+  // Los ids de los motores (`t1_m2_puerta_1`) se traducen acá a un nombre
+  // legible; el N° es el mismo con que cada pieza aparece en el diagrama de
+  // corte, para ubicarla de un vistazo.
+  const nombrar = nombradorDePiezas(piezas);
+  const filasTapacanto = Object.entries(tapacantos || {});
 
   // Excel en configuración regional chilena/latam usa la coma como separador
   // decimal, así que espera ";" como separador de columnas en un CSV — si se
@@ -53,23 +62,24 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
   }
 
   function exportarCSV() {
-    const encabezado = ['Pieza', 'Alto (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
-    const filas = piezas.map(p => [
-      p.id,
+    const encabezado = ['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
+    const filas = piezas.map((p, i) => [
+      i + 1,
+      nombrar(p.id),
       Math.round(p.alto),
       Math.round(p.ancho),
       p.espesor,
       p.material || 'melamina',
-      p.color || '-',
+      p.color ? nombreColor(p.color) : '-',
       p.cara || '-',
-      (p.cantos || []).join(' / ') || '-',
+      nombreCantos(p.cantos),
     ]);
     descargarCSV('despiece_piezas.csv', filasACSV(encabezado, filas));
   }
 
   function exportarHerrajesCSV() {
-    const encabezado = ['Tipo', 'Cantidad', 'Unidad'];
-    const filas = herrajes.map(h => [h.tipo, h.cantidad, h.unidad || '-']);
+    const encabezado = ['Herraje', 'Cantidad', 'Unidad'];
+    const filas = herrajes.map(h => [nombreHerraje(h.tipo), h.cantidad, h.unidad || '-']);
     descargarCSV('despiece_herrajes.csv', filasACSV(encabezado, filas));
   }
 
@@ -78,6 +88,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
       <table>
         <thead>
           <tr>
+            <th>N°</th>
             <th>Pieza</th>
             <th>Alto (mm)</th>
             <th>Ancho (mm)</th>
@@ -89,21 +100,22 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
         <tbody>
           {piezas.map((p, i) => (
             <tr key={i}>
-              <td>{p.id}</td>
+              <td>{i + 1}</td>
+              <td>{nombrar(p.id)}</td>
               <td><Medida valor={Math.round(p.alto)} bloqueada={medidasBloqueadas} /></td>
               <td><Medida valor={Math.round(p.ancho)} bloqueada={medidasBloqueadas} /></td>
-              <td><Medida valor={`${p.espesor}mm ${p.material || ''}`} bloqueada={medidasBloqueadas} /></td>
+              <td><Medida valor={`${p.espesor} mm${p.material ? ` ${p.material}` : ''}`} bloqueada={medidasBloqueadas} /></td>
               <td>
                 {p.color && (
                   <span
                     className="badge"
                     style={{ background: COLOR_BADGE[p.color] || '#ccc' }}
                   >
-                    {p.color}
+                    {nombreColor(p.color)}
                   </span>
                 )}
               </td>
-              <td>{(p.cantos || []).join(', ') || '—'}</td>
+              <td>{nombreCantos(p.cantos)}</td>
             </tr>
           ))}
         </tbody>
@@ -130,7 +142,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
             <tbody>
               {accesoriosVisibles.map((a, i) => (
                 <tr key={i}>
-                  <td>{a.id}</td>
+                  <td>{nombrar(a.id)}</td>
                   <td>{a.descripcion}</td>
                   <td>{Math.round(a.ancho)}</td>
                   <td>{Math.round(a.alto)}</td>
@@ -144,11 +156,11 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
       <h4 style={{ marginTop: 24 }}>Herrajes</h4>
       <table>
         <thead>
-          <tr><th>Tipo</th><th>Cantidad</th></tr>
+          <tr><th>Herraje</th><th>Cantidad</th></tr>
         </thead>
         <tbody>
           {herrajes.map((h, i) => (
-            <tr key={i}><td>{h.tipo}</td><td>{h.cantidad}{h.unidad ? ` ${h.unidad}(es)` : ''}</td></tr>
+            <tr key={i}><td>{nombreHerraje(h.tipo)}</td><td>{cantidadHerraje(h)}</td></tr>
           ))}
         </tbody>
       </table>
@@ -159,14 +171,34 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
       <h4 style={{ marginTop: 24 }}>Material requerido</h4>
       <table>
         <thead>
-          <tr><th>Grupo (espesor/material/color)</th><th>m²</th></tr>
+          <tr><th>Tablero</th><th>m²</th></tr>
         </thead>
         <tbody>
           {Object.entries(resumen).map(([key, m2]) => (
-            <tr key={key}><td>{key}</td><td>{m2} m²</td></tr>
+            <tr key={key}><td>{nombreGrupoMaterial(key)}</td><td>{numero(m2)} m²</td></tr>
           ))}
         </tbody>
       </table>
+
+      {filasTapacanto.length > 0 && (
+        <>
+          <h4 style={{ marginTop: 24 }}>Tapacanto</h4>
+          <table>
+            <thead>
+              <tr><th>Tapacanto</th><th>Metros</th></tr>
+            </thead>
+            <tbody>
+              {filasTapacanto.map(([key, metros]) => (
+                <tr key={key}><td>{nombreTapacanto(key)}</td><td>{numero(metros)} m</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ color: '#888', fontSize: 13, marginTop: 8 }}>
+            Es la suma de los bordes que llevan canto (columna "Cantos" de cada pieza). Compra o cotiza
+            un 10% más, por los despuntes.
+          </p>
+        </>
+      )}
 
       {notas && notas.length > 0 && (
         <>

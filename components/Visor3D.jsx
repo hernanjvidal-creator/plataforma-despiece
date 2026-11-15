@@ -3,6 +3,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { nombradorDePiezas } from '@/lib/nombres';
 
 // Mapea el color lógico de la pieza a un color real para el render.
 // Los nombres deben calzar con las opciones del formulario en Configurador.jsx.
@@ -196,6 +197,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
 
     const etiquetasActivas = new Map(); // mesh -> { div, mesh }
     const COLOR_ETIQUETADA = new THREE.Color(0xa8552f);
+    const nombrar = nombradorDePiezas(piezas);
 
     function crearEtiqueta(pieza) {
       const div = document.createElement('div');
@@ -205,7 +207,7 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
       const medidasHtml = medidasBloqueadas
         ? '<span style="filter:blur(4px);user-select:none" aria-hidden="true">000×000×00mm</span>'
         : medidas;
-      div.innerHTML = `<strong>${pieza.id}</strong><br>${medidasHtml}`;
+      div.innerHTML = `<strong>${nombrar(pieza.id)}</strong><br>${medidasHtml}`;
       Object.assign(div.style, {
         position: 'absolute', transform: 'translate(-50%, -100%)',
         background: 'rgba(168,85,47,0.94)', color: '#fff',

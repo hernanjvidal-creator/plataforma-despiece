@@ -1,4 +1,7 @@
 import { Document, Page, Text, View, Image, StyleSheet, Svg, Rect, G } from '@react-pdf/renderer';
+import {
+  nombradorDePiezas, nombreHerraje, cantidadHerraje, nombreColor, nombreGrupoMaterial, nombreTapacanto, nombreCantos, numero,
+} from './nombres';
 
 const NOMBRE_MODULO = {
   bajo_cocina: 'Mueble cocina',
@@ -29,15 +32,17 @@ const styles = StyleSheet.create({
   planchaTitulo: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', marginBottom: 3 },
 });
 
-function Tabla({ columnas, filas }) {
+// `anchos` (opcional): peso relativo de cada columna — por defecto todas iguales.
+function Tabla({ columnas, filas, anchos }) {
+  const flex = j => ({ flex: anchos?.[j] ?? 1 });
   return (
     <View>
       <View style={styles.headerRow} wrap={false}>
-        {columnas.map((c, i) => <Text key={i} style={styles.headerCell}>{c}</Text>)}
+        {columnas.map((c, i) => <Text key={i} style={[styles.headerCell, flex(i)]}>{c}</Text>)}
       </View>
       {filas.map((fila, i) => (
         <View key={i} style={styles.row} wrap={false}>
-          {fila.map((valor, j) => <Text key={j} style={styles.cell}>{valor}</Text>)}
+          {fila.map((valor, j) => <Text key={j} style={[styles.cell, flex(j)]}>{valor}</Text>)}
         </View>
       ))}
     </View>
@@ -51,7 +56,7 @@ function Tabla({ columnas, filas }) {
 const MAX_ANCHO_DIAGRAMA = 470;
 const MAX_ALTO_DIAGRAMA = 600;
 
-function DiagramaPlanchaPdf({ ancho, alto, piezas = [] }) {
+function DiagramaPlanchaPdf({ ancho, alto, piezas = [], numeroPorId = {} }) {
   if (!ancho || !alto) return null;
   const escala = Math.min(MAX_ANCHO_DIAGRAMA / ancho, MAX_ALTO_DIAGRAMA / alto);
   const anchoPx = ancho * escala;
@@ -63,19 +68,35 @@ function DiagramaPlanchaPdf({ ancho, alto, piezas = [] }) {
       {piezas.map((p, i) => {
         const w = p.ancho * escala;
         const h = p.alto * escala;
-        const fontSize = Math.max(3.5, Math.min(6.5, Math.min(w, h) / 5));
+        // Cada pieza lleva su N° del listado y, si cabe, la medida de corte.
+        const tamanoNumero = Math.max(5, Math.min(13, Math.min(w, h) / 2.2));
+        const tamanoMedida = Math.max(4, tamanoNumero * 0.55);
+        const cabeMedida = h > tamanoNumero + tamanoMedida + 4 && w > tamanoMedida * 5.5;
+        const cx = p.x * escala + w / 2;
+        const cy = p.y * escala + h / 2;
         return (
           <G key={i}>
             <Rect x={p.x * escala} y={p.y * escala} width={w} height={h} fill="#f3e4d9" stroke="#a8552f" strokeWidth={1} />
             <Text
-              x={p.x * escala + w / 2}
-              y={p.y * escala + h / 2 + fontSize / 3}
-              fontSize={fontSize}
+              x={cx}
+              y={cabeMedida ? cy : cy + tamanoNumero / 3}
+              style={{ fontSize: tamanoNumero, fontFamily: 'Helvetica-Bold' }}
               fill="#5c3018"
               textAnchor="middle"
             >
-              {p.id}
+              {String(numeroPorId[p.id] ?? '')}
             </Text>
+            {cabeMedida && (
+              <Text
+                x={cx}
+                y={cy + tamanoMedida + 2}
+                style={{ fontSize: tamanoMedida }}
+                fill="#5c3018"
+                textAnchor="middle"
+              >
+                {Math.round(p.ancho) + ' x ' + Math.round(p.alto)}
+              </Text>
+            )}
           </G>
         );
       })}
@@ -92,7 +113,12 @@ function Pie() {
 }
 
 export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D }) {
-  const { piezas = [], accesorios = [], herrajes = [], resumen = {}, notas = [] } = despiece || {};
+  const { piezas = [], accesorios = [], herrajes = [], resumen = {}, tapacantos = {}, notas = [] } = despiece || {};
+  // Los ids de los motores se traducen a nombres legibles; el N° de cada pieza
+  // es el mismo con que aparece rotulada en el diagrama de corte.
+  const nombrar = nombradorDePiezas(piezas);
+  const numeroPorId = Object.fromEntries(piezas.map((p, i) => [p.id, i + 1]));
+  const filasTapacanto = Object.entries(tapacantos);
   // Las patas plásticas se agregan a `accesorios` solo para que se vean en
   // el 3D (dónde van) — ya están contadas en el herraje
   // `pata_plastica_regulable`, así que no deben duplicarse en esta tabla.
@@ -122,14 +148,16 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
       <Page size="A4" style={styles.page}>
         <Text style={styles.h2}>Listado de piezas</Text>
         <Tabla
-          columnas={['Pieza', 'Alto (mm)', 'Ancho (mm)', 'Esp.', 'Color', 'Cantos']}
-          filas={piezas.map(p => [
-            p.id,
+          columnas={['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Esp.', 'Color', 'Cantos']}
+          anchos={[0.35, 2.6, 0.8, 0.8, 0.8, 1.1, 1.5]}
+          filas={piezas.map((p, i) => [
+            String(i + 1),
+            nombrar(p.id),
             String(Math.round(p.alto)),
             String(Math.round(p.ancho)),
-            `${p.espesor}mm ${p.material || ''}`.trim(),
-            p.color || '—',
-            (p.cantos || []).join(', ') || '—',
+            `${p.espesor} mm ${p.material || ''}`.trim(),
+            nombreColor(p.color),
+            nombreCantos(p.cantos),
           ])}
         />
 
@@ -138,7 +166,7 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
             <Text style={styles.h2}>Accesorios (referencia, no se cortan de melamina)</Text>
             <Tabla
               columnas={['Accesorio', 'Descripción', 'Ancho (mm)', 'Profundidad (mm)']}
-              filas={accesoriosVisibles.map(a => [a.id, a.descripcion, String(Math.round(a.ancho)), String(Math.round(a.alto))])}
+              filas={accesoriosVisibles.map(a => [nombrar(a.id), a.descripcion, String(Math.round(a.ancho)), String(Math.round(a.alto))])}
             />
           </View>
         )}
@@ -149,15 +177,31 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
       <Page size="A4" style={styles.page}>
         <Text style={styles.h2}>Herrajes</Text>
         <Tabla
-          columnas={['Tipo', 'Cantidad']}
-          filas={herrajes.map(h => [h.tipo, `${h.cantidad}${h.unidad ? ` ${h.unidad}(es)` : ''}`])}
+          columnas={['Herraje', 'Cantidad']}
+          anchos={[3, 1]}
+          filas={herrajes.map(h => [nombreHerraje(h.tipo), cantidadHerraje(h)])}
         />
 
         <Text style={styles.h2}>Material requerido</Text>
         <Tabla
-          columnas={['Grupo (espesor/material/color)', 'm²']}
-          filas={Object.entries(resumen).map(([key, m2]) => [key, `${m2} m²`])}
+          columnas={['Tablero', 'm²']}
+          anchos={[3, 1]}
+          filas={Object.entries(resumen).map(([key, m2]) => [nombreGrupoMaterial(key), `${numero(m2)} m²`])}
         />
+
+        {filasTapacanto.length > 0 && (
+          <View>
+            <Text style={styles.h2}>Tapacanto</Text>
+            <Tabla
+              columnas={['Tapacanto', 'Metros']}
+              anchos={[3, 1]}
+              filas={filasTapacanto.map(([key, metros]) => [nombreTapacanto(key), `${numero(metros)} m`])}
+            />
+            <Text style={[styles.nota, { marginTop: 4 }]}>
+              Suma de los bordes que llevan canto (columna "Cantos" de cada pieza). Compra o cotiza un 10% más, por los despuntes.
+            </Text>
+          </View>
+        )}
         <Pie />
       </Page>
 
@@ -168,16 +212,19 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
           <Text style={styles.muted}>
             Plancha base: {corte.plancha?.nombre} ({corte.plancha?.ancho}x{corte.plancha?.alto}mm) — {corte.resumen?.totalPlanchas} plancha(s) en total
           </Text>
+          <Text style={styles.muted}>
+            El número de cada pieza es su N° en el listado de piezas; debajo va la medida de corte en mm.
+          </Text>
 
           {Object.entries(corte.resultadosPorMaterial || {}).map(([grupo, resultado]) => (
             <View key={grupo}>
-              <Text style={[styles.h2, { marginTop: 10 }]}>{grupo}</Text>
+              <Text style={[styles.h2, { marginTop: 10 }]}>{nombreGrupoMaterial(grupo)}</Text>
               {resultado.planchas.map(p => (
                 <View key={p.numero} style={styles.planchaBox} wrap={false}>
                   <Text style={styles.planchaTitulo}>
-                    Plancha #{p.numero} — aprovechamiento {p.aprovechamientoPct}%
+                    Plancha #{p.numero} — aprovechamiento {numero(p.aprovechamientoPct)}%
                   </Text>
-                  <DiagramaPlanchaPdf ancho={corte.plancha?.ancho} alto={corte.plancha?.alto} piezas={p.piezas} />
+                  <DiagramaPlanchaPdf ancho={corte.plancha?.ancho} alto={corte.plancha?.alto} piezas={p.piezas} numeroPorId={numeroPorId} />
                 </View>
               ))}
             </View>
