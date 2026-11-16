@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+import { LIMITES, MAX_PUERTAS_POR_MODULO } from '@/lib/limites';
 import { calcularPrecioUSD } from '@/lib/precios';
 import { registrarEvento, gtagSeguro } from '@/lib/analitica';
 import { guardarBorrador, leerBorrador, borrarBorrador, URL_RESTAURAR } from '@/lib/borradorConfigurador';
@@ -319,6 +320,10 @@ export default function Configurador() {
   const [descargandoManual, setDescargandoManual] = useState(false);
   const [correoInvitado, setCorreoInvitado] = useState('');
   const [errorCorreo, setErrorCorreo] = useState(null);
+  // Por qué el diseño que está en el formulario no se puede armar (lo dice el
+  // servidor al pedir la vista previa). Mientras tanto el 3D sigue mostrando
+  // la última versión válida.
+  const [avisoDiseno, setAvisoDiseno] = useState(null);
   const inputCorreoRef = useRef(null);
   const visor3DRef = useRef(null);
 
@@ -534,8 +539,12 @@ export default function Configurador() {
         const { res, data } = await pedirDespiece({
           modulo: form.modulo, parametros: construirParametros(), opcionesCorte: construirOpcionesCorte(),
         });
-        if (!res.ok) return;
         if (mi !== previewSeq.current) return;
+        if (!res.ok) {
+          setAvisoDiseno(data?.error || null);
+          return;
+        }
+        setAvisoDiseno(null);
         setResultado(data);
         if (!previewRegistrada.current) {
           previewRegistrada.current = true;
@@ -573,6 +582,7 @@ export default function Configurador() {
     setMuebleActualId(null);
     setGuardadoOk(false);
     setDesbloqueado(false);
+    setAvisoDiseno(null);
   }
 
   async function guardarMueble() {
@@ -1010,12 +1020,11 @@ export default function Configurador() {
   // "Alto" es el alto del cuerpo colgado, no una medida desde el piso.
   const alturaEsDesdeElPiso = !(form.modulo === 'alto_cocina' || (form.modulo === 'vanitorio_bano' && form.soporte === 'suspendido'));
 
-  // Mismos rangos que valida el backend en cada motor (validarParametros) —
-  // se repiten acá para que el cliente vea el límite ANTES de generar el
-  // despiece, no recién al hacer clic y toparse con un error.
-  const esModuloChico = form.modulo === 'velador' || form.modulo === 'baul';
-  const maxAncho = esModuloChico ? 2000 : 10000;
-  const maxAltoProfundidad = esModuloChico ? 1500 : 3000;
+  // Mismos rangos con que el servidor revisa el diseño (lib/limites.js): acá
+  // van como mínimo y máximo de cada casilla, para que el cliente vea el
+  // límite ANTES de generar el despiece.
+  const limitesModulo = LIMITES[form.modulo] || {};
+  const [minAnchoTramo, maxAnchoTramo] = limitesModulo.anchoModulo || limitesModulo.anchoSeccion || [100, undefined];
 
   return (
     <main className="container">
@@ -1057,15 +1066,15 @@ export default function Configurador() {
           ) : (
             <>
               <label>Ancho (mm) <Ayuda>Este es el ancho exterior del mueble completo.</Ayuda></label>
-              <input type="number" min={50} max={maxAncho} value={form.A} onChange={e => actualizar('A', e.target.value)} />
+              <input type="number" min={limitesModulo.A?.[0]} max={limitesModulo.A?.[1]} value={form.A} onChange={e => actualizar('A', e.target.value)} />
             </>
           )}
 
           <label>Alto (mm){alturaEsDesdeElPiso && <Ayuda>Esta es la altura desde el piso hasta la superficie superior del mueble.</Ayuda>}</label>
-          <input type="number" min={50} max={maxAltoProfundidad} value={form.H} onChange={e => actualizar('H', e.target.value)} />
+          <input type="number" min={limitesModulo.H?.[0]} max={limitesModulo.H?.[1]} value={form.H} onChange={e => actualizar('H', e.target.value)} />
 
           <label>Profundidad (mm){alturaEsDesdeElPiso && <Ayuda>Esta es la profundidad de la superficie superior del mueble.</Ayuda>}</label>
-          <input type="number" min={50} max={maxAltoProfundidad} value={form.P} onChange={e => actualizar('P', e.target.value)} />
+          <input type="number" min={limitesModulo.P?.[0]} max={limitesModulo.P?.[1]} value={form.P} onChange={e => actualizar('P', e.target.value)} />
 
 
           {form.modulo === 'alto_cocina' && (
@@ -1088,13 +1097,13 @@ export default function Configurador() {
 
                   <label>Ancho fijo (mm)</label>
                   <input
-                    type="number" min={100}
+                    type="number" min={minAnchoTramo} max={maxAnchoTramo}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
 
                   <label>Cantidad de puertas</label>
-                  <input type="number" min={1} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
+                  <input type="number" min={1} max={MAX_PUERTAS_POR_MODULO} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
 
                   <label>Cantidad de repisas interiores</label>
                   <input type="number" min={0} value={s.nBaldas} onChange={e => actualizarSeccion(i, 'nBaldas', e.target.value)} />
@@ -1146,7 +1155,7 @@ export default function Configurador() {
 
                   <label>Ancho de la sección (mm) <Ayuda>Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina). Sumando el de todas las secciones da el "Ancho total" de arriba.</Ayuda></label>
                   <input
-                    type="number" min={100}
+                    type="number" min={minAnchoTramo} max={maxAnchoTramo}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
@@ -1260,7 +1269,7 @@ export default function Configurador() {
                       {(s.config === 'solo_puertas' || s.config === 'mixto') && (
                         <>
                           <label>Cantidad de puertas</label>
-                          <input type="number" min={1} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
+                          <input type="number" min={1} max={MAX_PUERTAS_POR_MODULO} value={s.nP} onChange={e => actualizarSeccion(i, 'nP', e.target.value)} />
                         </>
                       )}
                       {(s.config === 'solo_puertas' || s.config === 'mixto' || s.config === 'abierto') && (
@@ -1304,7 +1313,7 @@ export default function Configurador() {
                     </Ayuda>
                   </label>
                   <input
-                    type="number" min={100}
+                    type="number" min={minAnchoTramo} max={maxAnchoTramo}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
@@ -1350,7 +1359,7 @@ export default function Configurador() {
               {(form.config === 'solo_puertas' || form.config === 'mixto') && (
                 <>
                   <label>Cantidad de puertas</label>
-                  <input type="number" min={1} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
+                  <input type="number" min={1} max={MAX_PUERTAS_POR_MODULO} value={form.nP} onChange={e => actualizar('nP', e.target.value)} />
                 </>
               )}
 
@@ -1398,7 +1407,7 @@ export default function Configurador() {
               </select>
 
               <label>Ancho de la cajonera (mm)</label>
-              <input type="number" min={250} value={form.anchoCajonera} onChange={e => actualizar('anchoCajonera', e.target.value)} />
+              <input type="number" min={limitesModulo.anchoCajonera?.[0]} max={limitesModulo.anchoCajonera?.[1]} value={form.anchoCajonera} onChange={e => actualizar('anchoCajonera', e.target.value)} />
 
               <label>Configuración de la cajonera</label>
               <select value={form.configCajonera} onChange={e => actualizar('configCajonera', e.target.value)}>
@@ -1461,7 +1470,7 @@ export default function Configurador() {
 
                   <label>Ancho de la sección (mm) <Ayuda>Cada sección trae su propio ancho — no hay reparto automático. Es el ancho tal como se ve por fuera (comparte la mitad de cada separador con la sección vecina). Con una sola sección no se agrega ningún separador interior.</Ayuda></label>
                   <input
-                    type="number" min={100}
+                    type="number" min={minAnchoTramo} max={maxAnchoTramo}
                     value={s.ancho ?? ''}
                     onChange={e => actualizarSeccion(i, 'ancho', e.target.value === '' ? undefined : e.target.value)}
                   />
@@ -1634,6 +1643,11 @@ export default function Configurador() {
                   modulo={resultado.despiece.modulo}
                   medidasBloqueadas={!verDespieceCompleto}
                 />
+                {avisoDiseno && (
+                  <p style={{ background: '#fff4e5', border: '1px solid #f0c987', borderRadius: 6, padding: 10, fontSize: 13, margin: '12px 0 0' }}>
+                    <strong>Con estas medidas el mueble no se puede armar.</strong> {avisoDiseno} El dibujo muestra la última versión válida.
+                  </p>
+                )}
               </div>
 
               {!accesoDesbloqueado && (
