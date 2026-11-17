@@ -1,6 +1,6 @@
 'use client';
 
-import { nombreGrupoMaterial, numero } from '@/lib/nombres';
+import { nombreGrupoMaterial, numero, avisoVetaPlancha } from '@/lib/nombres';
 
 export default function DiagramaCorte({ corte }) {
   const { plancha, resultadosPorMaterial, resumen } = corte;
@@ -22,6 +22,9 @@ export default function DiagramaCorte({ corte }) {
       {Object.entries(resultadosPorMaterial).map(([grupo, resultado]) => (
         <div key={grupo} style={{ marginBottom: 28 }}>
           <h4>{nombreGrupoMaterial(grupo)} — {resultado.planchasNecesarias} plancha(s)</h4>
+          {resultado.conVeta && (
+            <p style={{ fontSize: 13, color: '#666' }}>{avisoVetaPlancha(corte.ejeVeta)}</p>
+          )}
 
           {resultado.planchas.map(p => (
             <div key={p.numero} style={{ marginBottom: 12 }}>

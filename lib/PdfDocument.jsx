@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, Image, StyleSheet, Svg, Rect, G } from '@react-pdf/renderer';
 import {
   nombradorDePiezas, nombreHerraje, cantidadHerraje, nombreColor, nombreGrupoMaterial, nombreTapacanto, nombreCantos, numero,
+  nombreVeta, avisoVetaPlancha,
 } from './nombres';
 
 const NOMBRE_MODULO = {
@@ -119,6 +120,8 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
   const nombrar = nombradorDePiezas(piezas);
   const numeroPorId = Object.fromEntries(piezas.map((p, i) => [p.id, i + 1]));
   const filasTapacanto = Object.entries(tapacantos);
+  // La columna de veta solo aparece si el mueble lleva algún color que imita madera.
+  const conVeta = piezas.some(p => p.veta);
   // Las patas plásticas se agregan a `accesorios` solo para que se vean en
   // el 3D (dónde van) — ya están contadas en el herraje
   // `pata_plastica_regulable`, así que no deben duplicarse en esta tabla.
@@ -148,8 +151,8 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
       <Page size="A4" style={styles.page}>
         <Text style={styles.h2}>Listado de piezas</Text>
         <Tabla
-          columnas={['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Esp.', 'Color', 'Cantos']}
-          anchos={[0.35, 2.6, 0.8, 0.8, 0.8, 1.1, 1.5]}
+          columnas={['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Esp.', 'Color', 'Cantos', ...(conVeta ? ['Veta'] : [])]}
+          anchos={[0.35, 2.6, 0.8, 0.8, 0.8, 1.1, 1.5, ...(conVeta ? [0.9] : [])]}
           filas={piezas.map((p, i) => [
             String(i + 1),
             nombrar(p.id),
@@ -158,6 +161,7 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
             `${p.espesor} mm ${p.material || ''}`.trim(),
             nombreColor(p.color),
             nombreCantos(p.cantos),
+            ...(conVeta ? [nombreVeta(p.veta)] : []),
           ])}
         />
 
@@ -219,6 +223,7 @@ export function crearDocumentoPdf({ nombre, modulo, despiece, corte, imagen3D })
           {Object.entries(corte.resultadosPorMaterial || {}).map(([grupo, resultado]) => (
             <View key={grupo}>
               <Text style={[styles.h2, { marginTop: 10 }]}>{nombreGrupoMaterial(grupo)}</Text>
+              {resultado.conVeta && <Text style={styles.muted}>{avisoVetaPlancha(corte.ejeVeta)}</Text>}
               {resultado.planchas.map(p => (
                 <View key={p.numero} style={styles.planchaBox} wrap={false}>
                   <Text style={styles.planchaTitulo}>

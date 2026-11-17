@@ -2,6 +2,7 @@
 
 import {
   nombradorDePiezas, nombreHerraje, cantidadHerraje, nombreColor, nombreGrupoMaterial, nombreTapacanto, nombreCantos, numero,
+  nombreVeta,
 } from '@/lib/nombres';
 
 const COLOR_BADGE = {
@@ -36,6 +37,8 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
   // corte, para ubicarla de un vistazo.
   const nombrar = nombradorDePiezas(piezas);
   const filasTapacanto = Object.entries(tapacantos || {});
+  // La columna de veta solo aparece si el mueble lleva algún color que imita madera.
+  const conVeta = piezas.some(p => p.veta);
 
   // Excel en configuración regional chilena/latam usa la coma como separador
   // decimal, así que espera ";" como separador de columnas en un CSV — si se
@@ -62,7 +65,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
   }
 
   function exportarCSV() {
-    const encabezado = ['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos'];
+    const encabezado = ['N°', 'Pieza', 'Alto (mm)', 'Ancho (mm)', 'Espesor (mm)', 'Material', 'Color', 'Cara', 'Cantos', ...(conVeta ? ['Veta'] : [])];
     const filas = piezas.map((p, i) => [
       i + 1,
       nombrar(p.id),
@@ -73,6 +76,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
       p.color ? nombreColor(p.color) : '-',
       p.cara || '-',
       nombreCantos(p.cantos),
+      ...(conVeta ? [nombreVeta(p.veta)] : []),
     ]);
     descargarCSV('despiece_piezas.csv', filasACSV(encabezado, filas));
   }
@@ -95,6 +99,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
             <th>Esp.</th>
             <th>Color</th>
             <th>Cantos</th>
+            {conVeta && <th>Veta</th>}
           </tr>
         </thead>
         <tbody>
@@ -116,6 +121,7 @@ export default function ListaPiezas({ despiece, medidasBloqueadas = false }) {
                 )}
               </td>
               <td>{nombreCantos(p.cantos)}</td>
+              {conVeta && <td>{nombreVeta(p.veta)}</td>}
             </tr>
           ))}
         </tbody>
