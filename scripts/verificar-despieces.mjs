@@ -195,8 +195,10 @@ casos.push(['closet', 'sin puertas, 2 colgadores puros adyacentes (sin divisor)'
     { cajones: 3, repisas: 1, colgador: false, ancho: 800 },
   ],
 }, generarCloset]);
+// 2550: lo más alto que cabe en la plancha chilena de 2500 (laterales de
+// hasta 2476 mm más el zócalo) — un closet más alto se rechaza a propósito.
 casos.push(['closet', 'mueble alto, puertas gruesas', {
-  H: 2700, P: 620, nP: 1, tipoPuerta: 'batiente', espesorPuertas: 18,
+  H: 2550, P: 620, nP: 1, tipoPuerta: 'batiente', espesorPuertas: 18,
   secciones: [{ cajones: 4, repisas: 3, colgador: false, ancho: 900 }],
 }, generarCloset]);
 

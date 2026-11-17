@@ -252,7 +252,8 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
     // /puerta/, así que REGEX_PUERTA_CORREDERA se revisa primero (ver el
     // if/else de más abajo) — si no, una puerta corredera de closet caería
     // en la rama de puerta batiente (con bisagra) por error.
-    const REGEX_PUERTA_CORREDERA = /^puerta_corredera_\d+$/;
+    // Con prefijo cuando el closet va en varios cuerpos ("cuerpo2_puerta_corredera_1").
+    const REGEX_PUERTA_CORREDERA = /(^|_)puerta_corredera_\d+$/;
     const REGEX_PUERTA = /puerta/;
     const REGEX_CAJON_FRENTE = /frente_cajon/;
     const REGEX_TAPA = /^tapa$/;
@@ -388,8 +389,10 @@ const Visor3D = forwardRef(function Visor3D({ piezas, accesorios, parametros, mo
         cubo.position.set(x, y, z);
         scene.add(cubo);
 
-        const anchoTotalMm = (parametros && parametros.A) || 0;
-        const haciaIzquierda = anchoTotalMm > 0 ? x < (anchoTotalMm * ESCALA) / 2 : true;
+        // Cada par de hojas (uno por cuerpo del closet) abre hacia afuera: la
+        // primera, la de la izquierda, se corre a la izquierda; la segunda, a
+        // la derecha.
+        const haciaIzquierda = manillaVaALaDerecha(pieza.id);
         const eje = ejeAncho;
         const delta = (haciaIzquierda ? -1 : 1) * DESPLAZAMIENTO_APERTURA_PUERTA_CORREDERA;
         piezasInteractivas.set(cubo, {

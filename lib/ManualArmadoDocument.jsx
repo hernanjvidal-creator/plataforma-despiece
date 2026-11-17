@@ -247,7 +247,16 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
       pasoUnirLateral = 'Une primero un lateral al piso con tornillo directo (confirmat o tornillo 1-5/8, según cómo venga tu despiece), sin apretar del todo.';
     }
   }
-  const pasosOrdenCuerpo = esModular ? [] : [pasoUbicarBase, pasoUnirLateral, ...ORDEN_CUERPO.slice(2, 6), pasoRespaldoFinal];
+  // Un closet ancho viene en varios cuerpos independientes (ver
+  // dividirEnCuerpos en lib/closet.js): los mismos pasos, una vez por cuerpo,
+  // y al final se unen entre sí.
+  const numCuerpos = parametros?.numCuerpos || 1;
+  const pasosOrdenCuerpo = esModular ? [] : [
+    pasoUbicarBase, pasoUnirLateral, ...ORDEN_CUERPO.slice(2, 6), pasoRespaldoFinal,
+    ...(numCuerpos > 1 ? [
+      `Repite estos pasos con cada uno de los ${numCuerpos} cuerpos. Después ubícalos en orden, nivélalos entre sí y únelos lateral con lateral con tornillo de 30mm — 6 por unión, repartidos a lo alto, atornillando desde adentro de un cuerpo hacia el otro.`,
+    ] : []),
+  ];
 
   // ---------- Qué secciones aplican, según los herrajes reales ----------
   const tieneCajones = cajones.length > 0;
@@ -354,7 +363,13 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
           </>
         ) : (
           <>
-            <Text style={styles.h2}>Orden de armado del cuerpo</Text>
+            <Text style={styles.h2}>{numCuerpos > 1 ? 'Orden de armado de los cuerpos' : 'Orden de armado del cuerpo'}</Text>
+            {numCuerpos > 1 && (
+              <Text style={styles.intro}>
+                Tu mueble se arma en {numCuerpos} cuerpos independientes, cada uno con sus propios laterales,
+                piso, techo y respaldo: arma cada cuerpo por separado y únelos al final.
+              </Text>
+            )}
             <Text style={styles.intro}>
               Las piezas de la estructura de tu mueble son las siguientes — guíate por el plano 3D de tu
               proyecto para confirmar dónde va cada una antes de empezar a unir nada:
