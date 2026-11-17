@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PAGINAS_MUEBLE, paginaPorSlug } from '@/lib/paginasMueble';
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 
 export function generateStaticParams() {
   return PAGINAS_MUEBLE.map(p => ({ slug: p.slug }));
@@ -28,7 +29,9 @@ export function generateMetadata({ params }) {
 const PASOS = [
   ['Configura tu mueble', 'Ingresa las medidas, la distribución y los colores. Ves el resultado en 3D al instante, gratis y sin crear cuenta.'],
   ['Revisa el plano 3D', 'Rota el mueble, comprueba que sea lo que imaginabas y ajusta lo que quieras cuantas veces necesites.'],
-  ['Desbloquea el despiece', 'Con un pago único por mueble obtienes las medidas exactas de cada pieza, los herrajes, el diagrama de corte por plancha y el PDF de entrega.'],
+  MODO_GRATIS_TEMPORAL
+    ? ['Descarga el despiece', 'Obtienes gratis las medidas exactas de cada pieza, los herrajes, el diagrama de corte por plancha y el PDF de entrega.']
+    : ['Desbloquea el despiece', 'Con un pago único por mueble obtienes las medidas exactas de cada pieza, los herrajes, el diagrama de corte por plancha y el PDF de entrega.'],
 ];
 
 export default function PaginaMueble({ params }) {
@@ -55,7 +58,9 @@ export default function PaginaMueble({ params }) {
         <button style={{ maxWidth: 320, marginTop: 8 }}>Diseñar mi {pagina.nombre} →</button>
       </Link>
       <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 8 }}>
-        Diseñar y ver el plano 3D es gratis y sin crear cuenta.
+        {MODO_GRATIS_TEMPORAL
+          ? 'Todo es gratis y sin crear cuenta: el diseño, el plano 3D y el despiece completo.'
+          : 'Diseñar y ver el plano 3D es gratis y sin crear cuenta.'}
       </p>
 
       <h2>Qué incluye el diseño</h2>
@@ -73,17 +78,19 @@ export default function PaginaMueble({ params }) {
       <h2>Medidas de partida</h2>
       <p style={{ lineHeight: 1.6 }}>{pagina.medidas}</p>
 
-      <h2>Qué recibes al desbloquear el despiece</h2>
+      <h2>{MODO_GRATIS_TEMPORAL ? 'Qué recibes con el despiece' : 'Qué recibes al desbloquear el despiece'}</h2>
       <ul style={{ lineHeight: 1.7 }}>
         <li>Listado de piezas con medidas, cantidades, colores y cantos.</li>
         <li>Listado de herrajes y materiales para comprar en la ferretería.</li>
         <li>Diagrama de corte optimizado para la plancha de melamina de tu país.</li>
         <li>PDF de entrega y manual de armado, listos para llevar a la maderera o centro de corte.</li>
       </ul>
-      <p style={{ fontSize: 14 }}>
-        Precios en dólares, pago único por mueble y más los impuestos que apliquen según tu país.{' '}
-        <Link href="/precios" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Ver precios</Link>.
-      </p>
+      {!MODO_GRATIS_TEMPORAL && (
+        <p style={{ fontSize: 14 }}>
+          Precios en dólares, pago único por mueble y más los impuestos que apliquen según tu país.{' '}
+          <Link href="/precios" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>Ver precios</Link>.
+        </p>
+      )}
 
       <h2>Preguntas frecuentes</h2>
       {pagina.faq.map(({ q, a }) => (

@@ -1576,8 +1576,17 @@ export default function Configurador() {
 
           {!muebleActualId && (
             <p style={{ color: 'var(--color-text-muted)', fontSize: 12, marginBottom: 8, lineHeight: 1.5 }}>
-              Diseñar y ver tu mueble en 3D es gratis. Para ver las medidas exactas de cada pieza, el diagrama de corte y el PDF
-              de entrega, desbloquea el despiece con un pago único por mueble (ver <a href="/precios" style={{ color: 'var(--color-accent)' }}>precios</a>).
+              {MODO_GRATIS_TEMPORAL ? (
+                <>
+                  Todo es gratis: diseña tu mueble, míralo en 3D y descarga las medidas exactas de cada pieza, el diagrama de
+                  corte y el PDF de entrega.
+                </>
+              ) : (
+                <>
+                  Diseñar y ver tu mueble en 3D es gratis. Para ver las medidas exactas de cada pieza, el diagrama de corte y el PDF
+                  de entrega, desbloquea el despiece con un pago único por mueble (ver <a href="/precios" style={{ color: 'var(--color-accent)' }}>precios</a>).
+                </>
+              )}
             </p>
           )}
           <label style={{ fontSize: 13 }}>Nombre del mueble (opcional)</label>

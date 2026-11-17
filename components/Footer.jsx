@@ -1,3 +1,5 @@
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+
 export default function Footer() {
   return (
     <footer className="site-footer">
@@ -5,13 +7,22 @@ export default function Footer() {
       <br />
       Contacto: <a href="mailto:contacto@armandolo.com">contacto@armandolo.com</a>
       <br />
-      <a href="/precios">Precios</a>
-      {' · '}
+      {/* Sin cobro, los precios y la política de reembolso no aplican: las páginas siguen existiendo, pero sin enlace. */}
+      {!MODO_GRATIS_TEMPORAL && (
+        <>
+          <a href="/precios">Precios</a>
+          {' · '}
+        </>
+      )}
       <a href="/privacidad">Política de privacidad</a>
       {' · '}
       <a href="/terminos">Términos y condiciones</a>
-      {' · '}
-      <a href="/reembolsos">Política de reembolso</a>
+      {!MODO_GRATIS_TEMPORAL && (
+        <>
+          {' · '}
+          <a href="/reembolsos">Política de reembolso</a>
+        </>
+      )}
     </footer>
   );
 }

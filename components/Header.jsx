@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { EMAIL_ADMIN } from '@/lib/admin';
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 
 function MarcaIcono() {
   return (
@@ -37,7 +38,7 @@ export default function Header() {
         <nav className="site-nav">
           <Link href="/">Inicio</Link>
           <Link href="/configurador" className="nav-cta">Diseñar</Link>
-          <Link href="/precios">Precios</Link>
+          {!MODO_GRATIS_TEMPORAL && <Link href="/precios">Precios</Link>}
           <Link href="/guia-armado">Guía de armado</Link>
           {!cargando && usuario && <Link href="/mis-muebles">Mis muebles</Link>}
           {!cargando && usuario?.email === EMAIL_ADMIN && <Link href="/admin/estadisticas">Estadísticas</Link>}

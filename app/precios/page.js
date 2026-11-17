@@ -1,3 +1,5 @@
+import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
+
 export const metadata = {
   title: 'Precios — Armandolo',
 };
@@ -20,7 +22,40 @@ const PRECIOS = [
   },
 ];
 
+// Sin cobro (ver lib/modoGratisTemporal.js) la página queda para quien llegue
+// por un enlace antiguo o desde Google: dice que es gratis y qué incluye.
+function PreciosGratis() {
+  return (
+    <main className="container" style={{ maxWidth: 760 }}>
+      <h1>Precios</h1>
+      <p>
+        Armandolo es <strong>gratis</strong>. Diseñar tu mueble, verlo en 3D y descargar el despiece completo no tiene
+        costo, cuantas veces quieras y sin crear cuenta.
+      </p>
+
+      <h2>Qué incluye el despiece</h2>
+      <ul>
+        <li>Plano 3D del mueble ya armado, con las medidas reales de cada pieza.</li>
+        <li>Listado de piezas y herrajes, con medidas, colores y cantos — listo para llevar a la maderera.</li>
+        <li>Diagrama de corte optimizado por plancha de melamina.</li>
+        <li>PDF de entrega y manual de armado del mueble.</li>
+      </ul>
+
+      <p>
+        Si compraste un despiece antes, sigue disponible en "Mis muebles", con la cuenta del correo que usaste al pagar.
+      </p>
+
+      <h2>Contacto</h2>
+      <p>
+        ¿Tienes un taller, una maderera o necesitas varios muebles? Escríbenos a{' '}
+        <a href="mailto:contacto@armandolo.com">contacto@armandolo.com</a>.
+      </p>
+    </main>
+  );
+}
+
 export default function Precios() {
+  if (MODO_GRATIS_TEMPORAL) return <PreciosGratis />;
   return (
     <main className="container" style={{ maxWidth: 760 }}>
       <h1>Precios</h1>
