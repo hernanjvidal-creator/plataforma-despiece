@@ -475,6 +475,14 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
             intro={esModular ? 'Si ya dejaste atornillada la parte fija de cada corredera al armar el módulo, salta directo al armado de la caja.' : undefined}
             pasos={PASOS_CORREDERAS}
           />
+          {piezas.some(p => /_recorte_frente$/.test(p.id)) && (
+            <Text style={styles.nota}>
+              Cajón en U (el que pasa a la altura del sifón): arma primero el recorte — atornilla sus dos lados
+              al frente del recorte —, después atornilla las dos traseras entre cada costado y su lado del
+              recorte, y cierra con el frente de la caja. El fondo va en tres partes, entre las piezas: el
+              delantero de lado a lado y uno a cada lado del recorte. El hueco del centro queda abierto hacia atrás.
+            </Text>
+          )}
           <Pie />
         </Page>
       )}

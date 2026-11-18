@@ -1428,7 +1428,7 @@ export default function Configurador() {
                   checked={!!form.sifon}
                   onChange={e => actualizar('sifon', e.target.checked)}
                 />
-                Lleva lavamanos con sifón (deja nota de perforación)
+                Lleva lavamanos con sifón (le deja espacio: los cajones a su altura van en U)
               </label>
             </>
           )}
