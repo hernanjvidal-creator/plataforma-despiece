@@ -34,6 +34,7 @@ const COLOR_MAP = {
 // Colores por material para piezas/accesorios sin `color` lógico (cubiertas
 // en piedra, lavaplatos/lavamanos).
 const COLOR_MATERIAL_MAP = {
+  postformada: '#ddd6c8',
   cuarzo: '#e8e6e1',
   granito: '#4a4a48',
   marmol: '#eae7e0',

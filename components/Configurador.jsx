@@ -12,6 +12,7 @@ import { muebleEstaPagado } from '@/lib/pedidosCliente';
 import { EMAIL_ADMIN } from '@/lib/admin';
 import { MODO_GRATIS_TEMPORAL } from '@/lib/modoGratisTemporal';
 import { LIMITES, MAX_PUERTAS_POR_MODULO } from '@/lib/limites';
+import { ESPESORES_MELAMINA, ESPESOR_POR_DEFECTO_CUBIERTA, espesorCubierta } from '@/lib/shared';
 import { calcularPrecioUSD } from '@/lib/precios';
 import { registrarEvento, gtagSeguro } from '@/lib/analitica';
 import { guardarBorrador, leerBorrador, borrarBorrador, URL_RESTAURAR } from '@/lib/borradorConfigurador';
@@ -138,7 +139,7 @@ const VALORES_POR_MODULO = {
   bajo_cocina: {
     H: 900, P: 560,
     isla: false,
-    cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
+    cubiertaIncluir: false, cubiertaMaterial: 'postformada', cubiertaEspesor: 28,
     secciones: [
       { tipo: 'estandar', config: 'solo_cajones', nP: 0, nC: 3, ancho: 400 },
     ],
@@ -157,7 +158,7 @@ const VALORES_POR_MODULO = {
     A: 600, H: 850, P: 450,
     nP: 0, nC: 2, repisas: 0, config: 'solo_cajones',
     soporte: 'patas', sifon: true,
-    cubiertaIncluir: false, cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
+    cubiertaIncluir: false, cubiertaMaterial: 'postformada', cubiertaEspesor: 28,
     colorInterior: 'blanco', colorExterior: 'gris_claro',
     espesorPuertas: 15,
   },
@@ -188,7 +189,7 @@ const VALORES_POR_MODULO = {
   escritorio: {
     A: 1200, H: 720, P: 550,
     anchoCajonera: 450, ladoCajonera: 'derecha', configCajonera: 'solo_cajones', nC: 3,
-    cubiertaMaterial: 'melamina', cubiertaEspesor: 20,
+    cubiertaMaterial: 'melamina', cubiertaEspesor: 18,
     colorInterior: 'blanco', colorExterior: 'blanco',
   },
   librero: {
@@ -570,6 +571,46 @@ export default function Configurador() {
 
   function actualizar(campo, valor) {
     setForm(f => ({ ...f, [campo]: valor }));
+  }
+
+  // Al cambiar el material de la cubierta, el espesor pasa al típico de ese
+  // material (ver ESPESOR_POR_DEFECTO_CUBIERTA en shared.js).
+  function cambiarMaterialCubierta(material) {
+    setForm(f => ({ ...f, cubiertaMaterial: material, cubiertaEspesor: ESPESOR_POR_DEFECTO_CUBIERTA[material] ?? f.cubiertaEspesor }));
+  }
+
+  // Material y espesor de la cubierta. La melamina solo se ofrece en los
+  // espesores que se venden; el resto lleva el espesor real de lo que se va a
+  // comprar. La postformada (la que se compra hecha) aplica a cocina y
+  // vanitorio, no al escritorio.
+  function camposCubierta({ conPostformada, etiqueta }) {
+    return (
+      <>
+        <label>{etiqueta}</label>
+        <select value={form.cubiertaMaterial} onChange={e => cambiarMaterialCubierta(e.target.value)}>
+          {conPostformada && <option value="postformada">Postformada (se compra hecha)</option>}
+          <option value="melamina">Melamina (se corta con el resto del mueble)</option>
+          <option value="cuarzo">Cuarzo (proveedor aparte)</option>
+          <option value="granito">Granito (proveedor aparte)</option>
+          <option value="marmol">Mármol (proveedor aparte)</option>
+        </select>
+
+        <label>
+          Espesor de la cubierta (mm)
+          {form.cubiertaMaterial === 'postformada' && <Ayuda>Mira el espesor de la que vas a comprar: en Chile suele venir de 28 mm o más.</Ayuda>}
+        </label>
+        {form.cubiertaMaterial === 'melamina' ? (
+          <select
+            value={String(espesorCubierta({ material: 'melamina', espesor: form.cubiertaEspesor }))}
+            onChange={e => actualizar('cubiertaEspesor', e.target.value)}
+          >
+            {ESPESORES_MELAMINA.map(espesor => <option key={espesor} value={espesor}>{espesor} mm</option>)}
+          </select>
+        ) : (
+          <input type="number" min={10} max={80} value={form.cubiertaEspesor} onChange={e => actualizar('cubiertaEspesor', e.target.value)} />
+        )}
+      </>
+    );
   }
 
   function cambiarModulo(modulo) {
@@ -1423,16 +1464,7 @@ export default function Configurador() {
                 </>
               )}
 
-              <label>Material de la cubierta (superficie de trabajo)</label>
-              <select value={form.cubiertaMaterial} onChange={e => actualizar('cubiertaMaterial', e.target.value)}>
-                <option value="melamina">Melamina (se corta y anida con el resto)</option>
-                <option value="cuarzo">Cuarzo (proveedor aparte, no se anida)</option>
-                <option value="granito">Granito (proveedor aparte, no se anida)</option>
-                <option value="marmol">Mármol (proveedor aparte, no se anida)</option>
-              </select>
-
-              <label>Espesor cubierta (mm)</label>
-              <input type="number" min={10} value={form.cubiertaEspesor} onChange={e => actualizar('cubiertaEspesor', e.target.value)} />
+              {camposCubierta({ conPostformada: false, etiqueta: 'Material de la cubierta (superficie de trabajo)' })}
             </>
           )}
 
@@ -1495,24 +1527,11 @@ export default function Configurador() {
                   checked={!!form.cubiertaIncluir}
                   onChange={e => actualizar('cubiertaIncluir', e.target.checked)}
                 />
-                Incluir cubierta (superficie)
-                {form.modulo === 'bajo_cocina' ? ' + lavaplatos' : ' + lavamanos'}
-               <Ayuda>Aunque no la agregues acá, el "Alto" de arriba ya es la altura {alturaEsDesdeElPiso ? 'desde el piso ' : ''} hasta la superficie de la cubierta, y la "Profundidad" ya es la profundidad de la cubierta — se la puedes encargar a otro proveedor (piedra, por ejemplo) con esas mismas medidas.</Ayuda></label>
+                Incluir la cubierta en el despiece
+                {form.modulo === 'bajo_cocina' ? ' (+ lavaplatos)' : ' (+ lavamanos)'}
+               <Ayuda>El "Alto" de arriba llega {alturaEsDesdeElPiso ? 'desde el piso ' : ''}hasta la superficie de la cubierta, y la "Profundidad" es la de la cubierta. Arriba del mueble se reserva el espesor de la cubierta que elijas acá abajo, la incluyas o no en el despiece — si no la incluyes, la puedes encargar aparte con esas mismas medidas.</Ayuda></label>
 
-              {form.cubiertaIncluir && (
-                <>
-                  <label>Material de la cubierta</label>
-                  <select value={form.cubiertaMaterial} onChange={e => actualizar('cubiertaMaterial', e.target.value)}>
-                    <option value="melamina">Melamina (se corta y anida con el resto)</option>
-                    <option value="cuarzo">Cuarzo (proveedor aparte, no se anida)</option>
-                    <option value="granito">Granito (proveedor aparte, no se anida)</option>
-                    <option value="marmol">Mármol (proveedor aparte, no se anida)</option>
-                  </select>
-
-                  <label>Espesor cubierta (mm)</label>
-                  <input type="number" min={10} value={form.cubiertaEspesor} onChange={e => actualizar('cubiertaEspesor', e.target.value)} />
-                </>
-              )}
+              {camposCubierta({ conPostformada: true, etiqueta: 'Material de la cubierta' })}
             </>
           )}
 
