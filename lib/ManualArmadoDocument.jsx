@@ -426,6 +426,19 @@ export function crearManualArmadoPdf({ nombre, modulo, despiece }) {
 
             <ListaPasos items={pasosOrdenCuerpo} />
 
+            {piezas.some(p => p.id === 'faldon') && (
+              <View style={{ marginBottom: 6 }}>
+                <Text style={styles.h3}>Faldón (travesaño trasero)</Text>
+                <ListaPiezasPersonalizada piezas={piezas.filter(p => p.id === 'faldon')} />
+                <Text style={styles.nota}>
+                  Con la cajonera armada, ubica el panel de apoyo y la cajonera a la distancia final y
+                  atornilla el faldón entre los dos: atrás, a ras de su borde trasero y a ras de arriba,
+                  con 2 tornillos por lado (desde afuera del panel de apoyo y desde adentro de la
+                  cajonera). Revisa que quede a escuadra antes de poner la cubierta.
+                </Text>
+              </View>
+            )}
+
             {tieneCubierta && (
               <Text style={styles.nota}>
                 Tu mueble incluye cubierta: instálala recién cuando el cuerpo esté armado, a escuadra y
